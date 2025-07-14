@@ -1,4 +1,4 @@
-recipe: "Test"
+recipe: "4_machine"
 conditions:
   - machine: "Warehouse"
     header: METHOD
@@ -31,46 +31,6 @@ conditions:
   - machine: "Cell5"
     header: METHOD
     node: "result"
-    value: True
-  - machine: "Cell_Conveyor"
-    header: METHOD
-    node: "result"
-    value: True
-  - machine: "Cell_Conveyor"
-    header: METHOD
-    node: "result"
-    value: True
-  - machine: "Cell1"
-    header: METHOD
-    node: "accepted"
-    value: True
-  - machine: "Cell1"
-    header: METHOD
-    node: "accepted"
-    value: True
-  - machine: "Cell1"
-    header: METHOD
-    node: "boardOut"
-    value: True
-  - machine: "Cell_Conveyor"
-    header: METHOD
-    node: "result"
-    value: True
-  - machine: "Cell_Conveyor"
-    header: METHOD
-    node: "result"
-    value: True
-  - machine: "Cell2"
-    header: METHOD
-    node: "accepted"
-    value: True
-  - machine: "Cell2"
-    header: METHOD
-    node: "Done"
-    value: True
-  - machine: "Cell2"
-    header: METHOD
-    node: "accepted"
     value: True
   - machine: "Cell_Conveyor"
     header: METHOD
