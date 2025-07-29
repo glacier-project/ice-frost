@@ -1,0 +1,15 @@
+[package]
+name = "ice-frost"
+version = "0.1.0"
+
+[[app]]
+name = "Main"
+main = "src/ICE/src/Main.lf"
+target = "Python"
+platform = "Native"
+
+[app.properties]
+fast = false
+
+[dependencies]
+frost = {version=">=0.1", git="https://github.com/esd-univr/frost", branch="main"}
