@@ -1,7 +1,7 @@
 target Python{
     fast: true,
     timeout: 3600s,
-    files: [../models/l_formatter.py, ../models/time_utils.py, ../models/singleton_meta.py],
+    files: [utils/l_formatter.py, utils/time_utils.py, utils/singleton_meta.py],
 }
 
 import Cell1 from "Cell1.lf"
@@ -12,15 +12,14 @@ import Warehouse from "Warehouse.lf"
 import Kairos from "Kairos.lf"
 import Cell_Conveyor from "Cell_Conveyor.lf"
 
-import FrostBus from <frost/FrostBus.lf>
+import FrostBus from "../frost/src/lib/FrostBus.lf"
 import Scheduler from "Scheduler.lf"
-
 preamble{=
     import yaml
     import math 
     import os 
     from enum import Enum
-    CONFIG_PATH = "models/configuration.yaml"
+    CONFIG_PATH = "../src/utils/configuration.yaml"
     from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
     from machine_data_model.protocols.frost_v1.frost_header import MsgType, MsgNamespace, ProtocolMsgName, FrostHeader
     from machine_data_model.protocols.frost_v1.frost_payload import VariablePayload, ProtocolPayload, MethodPayload 

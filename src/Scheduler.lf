@@ -1,6 +1,6 @@
 target Python
 {
-    files: [../recipes/handle_recipe.py]
+    files: [recipes/handle_recipe.py]
 }
 
 preamble{=
