@@ -63,8 +63,8 @@ main reactor{
     warehouse = new Warehouse(model_path = "src/models/Warehouse.yml")
     kairos_aa = new Kairos(model_path = "src/models/RBKairos.yml")
     conveyor = new Cell_Conveyor(model_path= "src/models/Cell_Conveyor.yml")
-    scheduler = new Scheduler(recipe_path = "src/recipes/recipes/test_recipe.yaml",
-                condition_path = "src/recipes/conditions/test_conditions.yaml")
+    scheduler = new Scheduler(recipe_path = "src/recipes/test_recipe.yaml",
+                condition_path = "src/recipes/test_conditions.yaml")
     bus = new FrostBus(model_path = "src/models/Common_Bus.yml",width = 8)
 
     #Full demo

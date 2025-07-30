@@ -146,6 +146,37 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet"
       args: [4]
+  #CONVEYOR + CELL4
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+      args: [4, 41]  
+  - sender: "Scheduler"
+    target: "Cell4"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_GADGET_ASSEMBLY_DB"
+      args: [0, 1]
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet"
+      args: [4]
   #CONVEYOR + CELL2
   - sender: "Scheduler"
     target: "Cell_Conveyor"

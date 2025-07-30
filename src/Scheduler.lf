@@ -81,8 +81,12 @@ reactor Scheduler(recipe_path = "recipes/recipes/conveyor.yaml",
 
             
             if self.conditions[self.i].check_condition(message):
+                self.logger.warning(f"Passed condition: {self.conditions[self.i]}")
                 self.i += 1
                 routine.schedule(SEC(2))
+            else:
+                self.logger.warning(f"Failed condition: {self.conditions[self.i]}")
+                self.logger.warning(f"Message: {message}")
 
         if self.i >= len(self.recipe)-1:
             self.counter += 1            

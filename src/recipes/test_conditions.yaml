@@ -1,5 +1,6 @@
 recipe: "Test"
 conditions:
+  # WAREHOUSE + KAIROS
   - machine: "Warehouse"
     header: METHOD
     node: "TrayNumber"
@@ -20,6 +21,7 @@ conditions:
     header: METHOD
     node: "Result"
     value: True
+  # CONVEYOR + KAIROS
   - machine: "Cell_Conveyor"
     header: METHOD
     node: "result"
@@ -36,6 +38,7 @@ conditions:
     header: METHOD
     node: "result"
     value: True
+  # CONVEYOR + CELL1
   - machine: "Cell_Conveyor"
     header: METHOD
     node: "result"
@@ -56,6 +59,20 @@ conditions:
     header: METHOD
     node: "result"
     value: True
+  # CONVEYOR + CELL4
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell4"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  ## CONVEYOR + CELL2
   - machine: "Cell_Conveyor"
     header: METHOD
     node: "result"
@@ -76,6 +93,7 @@ conditions:
     header: METHOD
     node: "result"
     value: True
+  # CONVEYOR + KAIROS
   - machine: "Cell_Conveyor"
     header: METHOD
     node: "result"

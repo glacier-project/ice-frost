@@ -182,9 +182,6 @@ root:
                 - !!BooleanVariableNode
                   name: "result"
                   description: ""
-                - !!NumericalVariableNode
-                  name: "errorCode"
-                  description: ""
         - !!FolderNode
           name: "DataBlocksGlobal"
           description: "DataBlocksInstance"
