@@ -156,7 +156,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 21]
+      args: [4, 23]
   - sender: "Scheduler"
     target: "Cell2"
     header:
