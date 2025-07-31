@@ -9,7 +9,7 @@ root:
   description: "OPCUA"
   children:
     - !!StringVariableNode
-      name: "command"
+      name: "dynamic_node"
       description: ""
       initial_value: ""
     - !!BooleanVariableNode
@@ -75,12 +75,15 @@ root:
                             - $palletNumber
                             - $destination
                         - !!ReadVariableNode
-                          variable: "Cell_Conveyor/command"
+                          variable: "Cell_Conveyor/dynamic_node"
                           store_as: "seekingnode"
                         - !!WaitConditionNode
                           variable: "$seekingnode"
                           operator: "=="
                           rhs: $palletNumber
+                        - !!WriteVariableNode
+                          variable: "Cell_Conveyor/output"
+                          value: True
                         - !!ReadVariableNode
                           variable: "Cell_Conveyor/output"
                           store_as: "result"
@@ -233,12 +236,15 @@ root:
                           args: 
                             - $palletNumber
                         - !!ReadVariableNode
-                          variable: "Cell_Conveyor/command"
+                          variable: "Cell_Conveyor/dynamic_node"
                           store_as: "seekingnode"
                         - !!WaitConditionNode
                           variable: $seekingnode
                           operator: "=="
                           rhs: 0
+                        - !!WriteVariableNode
+                          variable: "Cell_Conveyor/output"
+                          value: True
                         - !!ReadVariableNode
                           variable: "Cell_Conveyor/output"
                           store_as: "result"

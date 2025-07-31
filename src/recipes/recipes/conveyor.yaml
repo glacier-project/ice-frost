@@ -19,28 +19,8 @@ steps:
       namespace: "METHOD"
       msg_name: "INVOKE"
     payload:
-      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet"
-      args: [4]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
-    payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 11]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
-    payload:
-      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet"
-      args: [4]
+      args: [4, 0]
   - sender: "Scheduler"
     target: "Cell_Conveyor"
     header:
@@ -59,5 +39,65 @@ steps:
       namespace: "METHOD"
       msg_name: "INVOKE"
     payload:
-      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet"
-      args: [4]
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+      args: [4, 0]
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+      args: [4, 43]
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+      args: [4, 0]
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+      args: [4, 11]
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+      args: [4, 0]
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+      args: [4, 32]
+  - sender: "Scheduler"
+    target: "Cell_Conveyor"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+      args: [4, 0]

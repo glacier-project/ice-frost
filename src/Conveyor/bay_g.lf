@@ -14,7 +14,7 @@ reactor bay_G(param = "default"){
     //Physical links
     input IN
     output OUT
-    
+    output FROST_OUT
 
     //Controller Links
     input command
@@ -35,7 +35,7 @@ reactor bay_G(param = "default"){
     it sends a message to the warehouse that the pallet has arrived.
     Ohterwise, it sends the pallet to the next destination by reading the pallet action.
     '''
-    reaction(handle_pallet)-> ask, OUT{=
+    reaction(handle_pallet)-> ask, OUT, FROST_OUT{=
         if self.pallet is not None:
             self.pallet.position = self.name
 
@@ -45,6 +45,7 @@ reactor bay_G(param = "default"){
                 
             else: 
                 self.pallet.action = "OUT"
+                FROST_OUT.set(self.pallet.pallet_id)
                 OUT.set(self.pallet)
                 ask.set(["PalletReleased", self.pallet.pallet_id])
                 self.pallet = None
@@ -53,10 +54,11 @@ reactor bay_G(param = "default"){
     '''
     When a pallet arrives at the switch, it is stored in the pallet variable and 
     it schedules the handle_pallet action to handle the pallet.''' 
-    reaction(IN)-> handle_pallet, ask{=
+    reaction(IN)-> handle_pallet, ask, FROST_OUT{=
         if IN.value is not None:
             self.pallet = IN.value            
             handle_pallet.schedule(0)
+            FROST_OUT.set(self.pallet.pallet_id)
     =}
 
     '''

@@ -167,4 +167,61 @@ reactor Conveyor{
     reaction(Controller.FROST_OUT) -> to_frost{=
         to_frost.set(Controller.FROST_OUT.value)
     =}
+
+    output Segment1
+    reaction(ML.FROST_OUT) -> Segment1{=
+        Segment1.set(ML.FROST_OUT.value)
+    =}
+    output Segment2
+    reaction(LI.FROST_OUT) -> Segment2{=
+        Segment2.set(LI.FROST_OUT.value)
+    =}
+    output Segment3
+    reaction(IH.FROST_OUT) -> Segment3{=
+        Segment3.set(IH.FROST_OUT.value)
+    =}
+    output Segment4
+    reaction(HG.FROST_OUT) -> Segment4{=
+        Segment4.set(HG.FROST_OUT.value)
+    =}
+    reaction(GF.FROST_OUT) -> Segment4{=
+        Segment5.set(GF.FROST_OUT.value)
+    =}
+    output Segment5
+    reaction(AB.FROST_OUT) -> Segment5{=
+        Segment5.set(AB.FROST_OUT.value)
+    =}
+    output Segment6
+    reaction(BC.FROST_OUT) -> Segment6{=
+        Segment6.set(FG.FROST_OUT.value)
+    =}
+    output Segment7
+    reaction(CD.FROST_OUT) -> Segment7{=
+        Segment7.set(EF.FROST_OUT.value)
+    =}
+    output Segment8
+    reaction(DE.FROST_OUT) -> Segment8{=
+        Segment8.set(DE.FROST_OUT.value)
+    =}
+
+    output Bay1
+    reaction(Z.FROST_OUT) -> Bay1{=
+        Bay1.set(Z.FROST_OUT.value)
+    =}
+    output Bay2
+    reaction(P.FROST_OUT) -> Bay2{=
+        Bay2.set(P.FROST_OUT.value)
+    =}
+    output Bay3
+    reaction(O.FROST_OUT) -> Bay3{=
+        Bay3.set(O.FROST_OUT.value)
+    =}
+    output Bay4
+    reaction(N.FROST_OUT) -> Bay4{=
+        Bay4.set(N.FROST_OUT.value)
+    =}
+    output Bay5
+    reaction(G.FROST_OUT) -> Bay5{=
+        Bay5.set(G.FROST_OUT.value)
+    =}
 }

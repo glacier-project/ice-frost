@@ -1,6 +1,6 @@
 target Python{
     fast: true,
-    timeout: 3600s,
+    timeout: 500s,
     files: [utils/l_formatter.py, utils/time_utils.py, utils/singleton_meta.py],
 }
 
@@ -55,21 +55,21 @@ main reactor{
         recipe_path = os.environ.get("RECIPE_PATH")
         conditions_path = os.environ.get("CONDITIONS_PATH")
     =}
-
+    /*
     cell1 = new Cell1(model_path = "src/models/Cell1.yml")
     cell2 = new Cell2(model_path = "src/models/Cell2.yml")
     cell4 = new Cell4(model_path = "src/models/Cell4.yml")
     cell5 = new Cell5(model_path = "src/models/Cell5.yml")
     warehouse = new Warehouse(model_path = "src/models/Warehouse.yml")
-    kairos_aa = new Kairos(model_path = "src/models/RBKairos.yml")
+    kairos_aa = new Kairos(model_path = "src/models/RBKairos.yml")*/
     conveyor = new Cell_Conveyor(model_path= "src/models/Cell_Conveyor.yml")
-    scheduler = new Scheduler(recipe_path = "src/recipes/test_recipe.yaml",
-                condition_path = "src/recipes/test_conditions.yaml")
-    bus = new FrostBus(model_path = "src/models/Common_Bus.yml",width = 8)
+    scheduler = new Scheduler(recipe_path = "src/recipes/recipes/conveyor.yaml",
+                condition_path = "src/recipes/conditions/conveyor.yaml")
+    bus = new FrostBus(model_path = "src/models/Common_Bus.yml",width = 2)
 
     #Full demo
-    cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.channel_in after 0
-    bus.channel_out -> cell1.channel_in, cell2.channel_in, cell5.channel_in, warehouse.channel_in, scheduler.channel_in, kairos_aa.channel_in, conveyor.channel_in, cell4.channel_in after 0
+    //cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.channel_in after 0
+    //bus.channel_out -> cell1.channel_in, cell2.channel_in, cell5.channel_in, warehouse.channel_in, scheduler.channel_in, kairos_aa.channel_in, conveyor.channel_in, cell4.channel_in after 0
 
     #Demo with 2 machine recipe
     //warehouse.channel_out, kairos_aa.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
@@ -80,6 +80,6 @@ main reactor{
     //bus.channel_out -> cell5.channel_in, warehouse.channel_in, kairos_aa.channel_in, scheduler.channel_in, conveyor.channel_in after 1 msec
 
     #Demo with just Conveyor
-    //conveyor.channel_out, scheduler.channel_out -> bus.channel_in after 100 msec
-    //bus.channel_out -> conveyor.channel_in, scheduler.channel_in after 100 msec
+    conveyor.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
+    bus.channel_out -> conveyor.channel_in, scheduler.channel_in after 1 msec
 }

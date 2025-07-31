@@ -71,22 +71,22 @@ reactor Scheduler(recipe_path = "recipes/recipes/conveyor.yaml",
         assert isinstance(messages, list) and all(isinstance(item, Message) for item in messages), f"Received invalid messages: {messages}"
         for message in messages:
             if message.header.matches(MsgType.REQUEST, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
-                self.logger.warning(f"{message.sender} requests to register to {message.target}.")
+                self.logger.info(f"{message.sender} requests to register to {message.target}.")
                 continue
             if message.header.matches(MsgType.RESPONSE, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
-                self.logger.warning(f"{message.sender} notify registration to {message.target}.")
+                self.logger.info(f"{message.sender} notify registration to {message.target}.")
                 continue
             else:
                 self.logger.warning(f"{message.sender} to {message.target} with header {message.header} and payload {message.payload}\n")
 
             
             if self.conditions[self.i].check_condition(message):
-                self.logger.warning(f"Passed condition: {self.conditions[self.i]}")
+                self.logger.info(f"Passed condition: {self.conditions[self.i]}")
                 self.i += 1
                 routine.schedule(SEC(2))
             else:
-                self.logger.warning(f"Failed condition: {self.conditions[self.i]}")
-                self.logger.warning(f"Message: {message}")
+                self.logger.info(f"Failed condition: {self.conditions[self.i]}")
+                self.logger.info(f"Message: {message}")
 
         if self.i >= len(self.recipe)-1:
             self.counter += 1            

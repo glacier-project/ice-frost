@@ -13,6 +13,7 @@ reactor Bay_Z(param = "default"){
     state pallet
     input IN
     output OUT
+    output FROST_OUT
     input command
     output ask
 
@@ -28,7 +29,7 @@ reactor Bay_Z(param = "default"){
             ask.set(y)  
     =}
 
-    reaction(command) -> OUT, ask{=
+    reaction(command) -> OUT, ask, FROST_OUT{=
         if isinstance(command.value[0], Material):
             self.pallet.object = command.value[0]
             ask.set(["giveWorkpiece", "Conveyor", True])
@@ -41,9 +42,10 @@ reactor Bay_Z(param = "default"){
         elif command.value[0] == "Move":            
             if self.pallet is not None:
                 if len(command.value) > 1 and command.value[1] == "OUT":
-                    ask.set(["PalletReleased", self.pallet.pallet_id]) 
-                    OUT.set(self.pallet)                
-                    self.pallet = None                            
+                    ask.set(["PalletReleased", self.pallet.pallet_id])
+                    FROST_OUT.set(self.pallet.pallet_id, self.name)
+                    OUT.set(self.pallet)
+                    self.pallet = None
                 else:
                     y = "Move", self.name, self.pallet
                     ask.set(y)

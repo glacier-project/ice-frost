@@ -15,8 +15,7 @@ reactor Bay_Switch(param = "default"){
     input IN
     output OUT
     input CROSS_IN
-    output CROSS
-    
+    output CROSS   
 
     //Controller Links
     input command

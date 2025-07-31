@@ -368,6 +368,7 @@ reactor Controller{
         control_DL.schedule(0)
         control_CI.schedule(1)
     =}
+    #8
     reaction(SEG_DE) -> control_DL, control_EM{=
         self.conveyor["D"] = True
         self.conveyor["L"] = True
@@ -382,6 +383,7 @@ reactor Controller{
         control_EM.schedule(0)
         control_DL.schedule(1)
     =}
+    #1
     reaction(SEG_ML) -> control_EM, control_DL{=
         self.conveyor["M"] = True
         self.conveyor["E"] = True
@@ -514,7 +516,6 @@ reactor Controller{
         elif BAY_N_IN.value[0] == "Pallet_incoming":
             self.BH_buffers["BAY"] = BAY_N_IN.value[1]
             control_BH.schedule(0)
-
 
     =}
 
@@ -698,9 +699,5 @@ reactor Controller{
         
         else:
             notify_frost.schedule(0, from_G.value)
-    =}
-
-    reaction(notify_frost) -> FROST_OUT{=
-        FROST_OUT.set(notify_frost.value)
     =}
 }
