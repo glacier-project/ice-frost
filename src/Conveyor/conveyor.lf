@@ -140,9 +140,9 @@ reactor Conveyor{
     MZ = new Interchange(param = "MZ")
 
     //Links to bays
-    L.BAY_OUT, I.BAY_OUT, H.BAY_OUT -> PL.IN_DOWN, OE.IN_DOWN, NH.IN_DOWN after 4sec
+    L.BAY_OUT, I.BAY_OUT, H.BAY_OUT -> PL.IN_DOWN, OE.IN_DOWN, NH.IN_DOWN after 2sec
     PL.OUT_UP, OE.OUT_UP, NH.OUT_UP-> P.IN, O.IN, N.IN
-    P.OUT, O.OUT, N.OUT-> PL.IN_UP, OE.IN_UP, NH.IN_UP after 4sec
+    P.OUT, O.OUT, N.OUT-> PL.IN_UP, OE.IN_UP, NH.IN_UP after 2sec
     PL.OUT_DOWN, OE.OUT_DOWN, NH.OUT_DOWN -> L.BAY_IN, I.BAY_IN, H.BAY_IN
 
     //Links between MZ and Z
@@ -169,6 +169,9 @@ reactor Conveyor{
 
     output to_frost
     input from_frost
+
+    output Release
+    Controller.Release -> Release after 0msec
 
     reaction(from_frost) -> Controller.FROST_IN{=
         Controller.FROST_IN.set(from_frost.value)

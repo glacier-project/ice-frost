@@ -78,7 +78,7 @@ reactor Controller{
     //INDIRECT COMMUNICATION PORT
     input FROST_IN
     output FROST_OUT
-
+    output Release
     //ACTIONS
     logical action control_AF
     logical action control_BH
@@ -165,7 +165,7 @@ reactor Controller{
             y = ["GF"]
             SEG_OUT.set(y)        
     =}
-    reaction(control_BH)-> SEG_OUT, BAY_OUT{=
+    reaction(control_BH)-> SEG_OUT, BAY_OUT, Release{=
         if self.conveyor["B"] == True or self.conveyor["H"] == True:
             y = PriorityAlgorithm(self.BH_buffers)
             if y != None:
@@ -188,8 +188,10 @@ reactor Controller{
                         SEG_OUT.set(y)
                 elif self.conveyor["B"] == True and self.conveyor["H"] == True:
                     if y == "BAY":
+                        Release.set(self.BH_buffers["BAY"].pallet_id)
                         self.BH_buffers["BAY"] = None
                         BAY_OUT.set(["Release", "N"])  
+                        
                         self.N_[0] = True          
                     elif y == "IN_UP":
                         self.BH_buffers["IN_UP"].pop(0)
@@ -211,7 +213,7 @@ reactor Controller{
                 self.conveyor["B"] = True
                 self.conveyor["H"] = True                          
     =}
-    reaction(control_CI)-> SEG_OUT, BAY_OUT{=
+    reaction(control_CI)-> SEG_OUT, BAY_OUT, Release{=
         if self.conveyor["C"] == True or self.conveyor["I"] == True:
             y = PriorityAlgorithm(self.CI_buffers)
             if y != None:
@@ -234,6 +236,7 @@ reactor Controller{
                         SEG_OUT.set(y)
                 elif self.conveyor["C"] == True and self.conveyor["I"] == True:
                     if y == "BAY":
+                        Release.set(self.CI_buffers["BAY"].pallet_id)
                         self.CI_buffers["BAY"] = None
                         BAY_OUT.set(["Release", "O"]) 
                         self.O_[0] = True
@@ -257,7 +260,7 @@ reactor Controller{
                 self.conveyor["C"] = True
                 self.conveyor["I"] = True                          
     =}
-    reaction(control_DL)-> SEG_OUT, BAY_OUT{=
+    reaction(control_DL)-> SEG_OUT, BAY_OUT, Release{=
         if self.conveyor["D"] == True or self.conveyor["L"] == True:
             y = PriorityAlgorithm(self.DL_buffers)
             if y != None:
@@ -281,6 +284,7 @@ reactor Controller{
                         SEG_OUT.set(y)
                 elif self.conveyor["D"] == True and self.conveyor["L"] == True:
                     if y == "BAY":
+                        Release.set(self.DL_buffers["BAY"].pallet_id)
                         self.DL_buffers["BAY"] = None
                         BAY_OUT.set(["Release", "P"])   
                         self.P_[0] = True
@@ -680,7 +684,6 @@ reactor Controller{
             temp.looping = route[0]
             temp.bay = route[1]
             temp.destination = route[2]
-            logging.error(f"Bay2: {self.P_}, Bay3: {self.O_}, Bay4: {self.N_}")
             if length_pos == 2:
                 if temp.position == "Z1":
                     y = ["Move", "OUT"]

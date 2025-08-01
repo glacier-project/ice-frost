@@ -15,7 +15,7 @@ reactor bay_G(param = "default"){
     input IN
     output OUT
     output FROST_OUT
-
+    
     //Controller Links
     input command
     output ask

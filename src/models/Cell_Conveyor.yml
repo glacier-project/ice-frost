@@ -8,6 +8,11 @@ root:
   name: "Cell_Conveyor"
   description: "OPCUA"
   children:
+    - !!NumericalVariableNode
+      name: "zero_node"
+      description: ""
+      measure_unit: "NoneMeasureUnits.NONE"
+      initial_value: 0
     - !!StringVariableNode
       name: "dynamic_node"
       description: ""
