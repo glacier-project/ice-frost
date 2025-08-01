@@ -188,7 +188,8 @@ reactor Controller{
                 elif self.conveyor["B"] == True and self.conveyor["H"] == True:
                     if y == "BAY":
                         self.BH_buffers["BAY"] = None
-                        BAY_OUT.set(["Release", "N"])                    
+                        BAY_OUT.set(["Release", "N"])  
+                        self.N_ = [True, True, True]          
                     elif y == "IN_UP":
                         self.BH_buffers["IN_UP"].pop(0)
                         y = ["IH"]
@@ -233,7 +234,8 @@ reactor Controller{
                 elif self.conveyor["C"] == True and self.conveyor["I"] == True:
                     if y == "BAY":
                         self.CI_buffers["BAY"] = None
-                        BAY_OUT.set(["Release", "O"])                    
+                        BAY_OUT.set(["Release", "O"]) 
+                        self.O_ = [True, True, True]
                     elif y == "IN_UP":
                         self.CI_buffers["IN_UP"].pop(0)
                         y = ["LI"]
@@ -279,7 +281,8 @@ reactor Controller{
                 elif self.conveyor["D"] == True and self.conveyor["L"] == True:
                     if y == "BAY":
                         self.DL_buffers["BAY"] = None
-                        BAY_OUT.set(["Release", "P"])                    
+                        BAY_OUT.set(["Release", "P"])   
+                        self.P_ = [True, True, True]
                     elif y == "IN_UP":
                         self.DL_buffers["IN_UP"].pop(0)
                         y = ["ML"]
@@ -369,7 +372,6 @@ reactor Controller{
         control_DL.schedule(0)
         control_CI.schedule(1)
     =}
-    #8
     reaction(SEG_DE) -> control_DL, control_EM{=
         self.conveyor["D"] = True
         self.conveyor["L"] = True
@@ -384,7 +386,6 @@ reactor Controller{
         control_EM.schedule(0)
         control_DL.schedule(1)
     =}
-    #1
     reaction(SEG_ML) -> control_EM, control_DL{=
         self.conveyor["M"] = True
         self.conveyor["E"] = True
@@ -472,6 +473,7 @@ reactor Controller{
 
         elif BAY_P_IN.value[0] == "Pallet_incoming":
             self.DL_buffers["BAY"] = BAY_P_IN.value[1]
+            self.P_buffers = [False, False, False]
             control_DL.schedule(0)
     =}
 
@@ -494,6 +496,7 @@ reactor Controller{
         
         elif BAY_O_IN.value[0] == "Pallet_incoming":
             self.CI_buffers["BAY"] = BAY_O_IN.value[1]
+            self.O_buffers = [False, False, False]
             control_CI.schedule(0)        
     =}
 
@@ -516,6 +519,7 @@ reactor Controller{
 
         elif BAY_N_IN.value[0] == "Pallet_incoming":
             self.BH_buffers["BAY"] = BAY_N_IN.value[1]
+            self.N_ = [False, False, False]
             control_BH.schedule(0)
 
     =}
@@ -666,6 +670,7 @@ reactor Controller{
             temp = self.pallets[args[0]]
             temp.looping = True
             temp.bay = None
+            loc = int(temp.destination[1])
             temp.destination = None
             pos = temp.position
             out_data = []
@@ -678,17 +683,17 @@ reactor Controller{
                 if pos == "Z1":
                     BAY_Z_OUT.set(["Move", "OUT"])
                 else:
+                    loc = "OUT" if loc == 3 else "CROSS"
                     if pos[0] == "N":
-                        BAY_OUT.set(["Move", pos, "OUT"])
+                        BAY_OUT.set(["Move", pos, loc])
                         i = 4
                     elif pos[0] == "O":
-                        BAY_OUT.set(["Move", pos, "OUT"])
+                        BAY_OUT.set(["Move", pos, loc])
                         i = 3
                     elif pos[0] == "P":
-                        BAY_OUT.set(["Move", pos, "OUT"])
+                        BAY_OUT.set(["Move", pos, loc])
                         i = 2
                     notify_frost.schedule(0, [7, [i, pos[1]]])
-            
     =}
 
     reaction(from_G) -> notify_frost, to_G{=

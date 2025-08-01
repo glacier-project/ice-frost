@@ -32,15 +32,15 @@ reactor Bay(param = "default"){
     //First Block
     Plat1.OUT -> INTER_1.IN_DOWN after 1 sec
     INTER_1.OUT_DOWN -> Plat1.IN after 1 sec  
-    Plat1.FROST_OUT -> FROST_OUT_1 after 0msec
+    Plat1.FROST_OUT -> FROST_OUT_1 after 1msec
     //Second Block
     INTER_1.OUT_UP, INTER_2.OUT_DOWN -> Plat2.IN, Plat2.CROSS_IN after 1 sec
     Plat2.OUT, Plat2.CROSS -> INTER_2.IN_DOWN, INTER_1.IN_UP after 1 sec
-    Plat2.FROST_OUT -> FROST_OUT_2 after 0msec
+    Plat2.FROST_OUT -> FROST_OUT_2 after 1msec
     //Third Block
     INTER_2.OUT_UP -> Plat3.IN after 1 sec
     Plat3.OUT -> INTER_2.IN_UP after 1 sec
-    Plat3.FROST_OUT -> FROST_OUT_3 after 0msec
+    Plat3.FROST_OUT -> FROST_OUT_3 after 1msec
 
     //Controller Links
     input command

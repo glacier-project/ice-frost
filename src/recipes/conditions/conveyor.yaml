@@ -48,4 +48,36 @@ conditions:
     header: METHOD
     node: "result"
     value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True  
   

@@ -140,9 +140,9 @@ reactor Conveyor{
     MZ = new Interchange(param = "MZ")
 
     //Links to bays
-    L.BAY_OUT, I.BAY_OUT, H.BAY_OUT -> PL.IN_DOWN, OE.IN_DOWN, NH.IN_DOWN after 5000msec
+    L.BAY_OUT, I.BAY_OUT, H.BAY_OUT -> PL.IN_DOWN, OE.IN_DOWN, NH.IN_DOWN after 4sec
     PL.OUT_UP, OE.OUT_UP, NH.OUT_UP-> P.IN, O.IN, N.IN
-    P.OUT, O.OUT, N.OUT-> PL.IN_UP, OE.IN_UP, NH.IN_UP after 5000msec
+    P.OUT, O.OUT, N.OUT-> PL.IN_UP, OE.IN_UP, NH.IN_UP after 4sec
     PL.OUT_DOWN, OE.OUT_DOWN, NH.OUT_DOWN -> L.BAY_IN, I.BAY_IN, H.BAY_IN
 
     //Links between MZ and Z
@@ -154,18 +154,18 @@ reactor Conveyor{
     //Controller instantiation
     Controller = new Controller()
     //SWITCHES CONNECTIONS
-    A.ask, B.ask, C.ask, D.ask, E.ask, F.ask, H.ask, I.ask, L.ask, M.ask -> Controller.A_IN, Controller.B_IN , Controller.C_IN, Controller.D_IN, Controller.E_IN, Controller.F_IN, Controller.H_IN, Controller.I_IN, Controller.L_IN, Controller.M_IN after 0msec
-    Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT -> A.command, B.command, C.command, D.command, E.command, F.command, H.command, I.command, L.command, M.command after 0msec
+    A.ask, B.ask, C.ask, D.ask, E.ask, F.ask, H.ask, I.ask, L.ask, M.ask -> Controller.A_IN, Controller.B_IN , Controller.C_IN, Controller.D_IN, Controller.E_IN, Controller.F_IN, Controller.H_IN, Controller.I_IN, Controller.L_IN, Controller.M_IN after 1msec
+    Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT -> A.command, B.command, C.command, D.command, E.command, F.command, H.command, I.command, L.command, M.command after 1msec
     //BAYS CONNECTIONS
-    P.ask, O.ask, N.ask, Z.ask -> Controller.BAY_P_IN, Controller.BAY_O_IN, Controller.BAY_N_IN, Controller.BAY_Z_IN after 0msec
-    Controller.BAY_OUT, Controller.BAY_OUT, Controller.BAY_OUT, Controller.BAY_Z_OUT -> P.command, O.command, N.command, Z.command after 0msec
+    P.ask, O.ask, N.ask, Z.ask -> Controller.BAY_P_IN, Controller.BAY_O_IN, Controller.BAY_N_IN, Controller.BAY_Z_IN after 1msec
+    Controller.BAY_OUT, Controller.BAY_OUT, Controller.BAY_OUT, Controller.BAY_Z_OUT -> P.command, O.command, N.command, Z.command after 1msec
     //SEGMENTS CONNECTIONS
-    AB.ask, BC.ask, CD.ask, DE.ask, GF.ask, HG.ask, IH.ask, LI.ask, ML.ask -> Controller.SEG_AB, Controller.SEG_BC, Controller.SEG_CD, Controller.SEG_DE, Controller.SEG_GF, Controller.SEG_HG, Controller.SEG_IH, Controller.SEG_LI, Controller.SEG_ML after 0msec
-    Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT -> AB.command, BC.command, CD.command, DE.command, GF.command, HG.command, IH.command, LI.command, ML.command after 0msec
+    AB.ask, BC.ask, CD.ask, DE.ask, GF.ask, HG.ask, IH.ask, LI.ask, ML.ask -> Controller.SEG_AB, Controller.SEG_BC, Controller.SEG_CD, Controller.SEG_DE, Controller.SEG_GF, Controller.SEG_HG, Controller.SEG_IH, Controller.SEG_LI, Controller.SEG_ML after 1msec
+    Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT, Controller.SEG_OUT -> AB.command, BC.command, CD.command, DE.command, GF.command, HG.command, IH.command, LI.command, ML.command after 1msec
     
     //CONNECTIONS TO THE G BAY
-    Controller.to_G -> G.command after 0msec
-    G.ask -> Controller.from_G
+    Controller.to_G -> G.command after 1msec
+    G.ask -> Controller.from_G after 1msec
 
     output to_frost
     input from_frost
@@ -218,32 +218,43 @@ reactor Conveyor{
     reaction(Z.FROST_OUT) -> Bay1{=
         Bay1.set(Z.FROST_OUT.value)
     =}
-    output Bay2
-    reaction(P.FROST_OUT_1, P.FROST_OUT_2, P.FROST_OUT_3) -> Bay2{=
-        if P.FROST_OUT_1.is_present:
-            Bay2.set(P.FROST_OUT_1.value)
-        elif P.FROST_OUT_2.is_present:
-            Bay2.set(P.FROST_OUT_2.value)
-        elif P.FROST_OUT_3.is_present:
-            Bay2.set(P.FROST_OUT_3.value)
+    output Bay2_1
+    reaction(P.FROST_OUT_1) -> Bay2_1{=
+        Bay2_1.set(P.FROST_OUT_1.value)
     =}
-    output Bay3
-    reaction(O.FROST_OUT_1, O.FROST_OUT_2, O.FROST_OUT_3) -> Bay3{=
-        if O.FROST_OUT_1.is_present:
-            Bay3.set(O.FROST_OUT_1.value)
-        elif O.FROST_OUT_2.is_present:
-            Bay3.set(O.FROST_OUT_2.value)
-        elif O.FROST_OUT_3.is_present:
-            Bay3.set(O.FROST_OUT_3.value)
+    output Bay2_2
+    reaction(P.FROST_OUT_2) -> Bay2_2{=
+        Bay2_2.set(P.FROST_OUT_2.value)
     =}
-    output Bay4
-    reaction(N.FROST_OUT_1, N.FROST_OUT_2, N.FROST_OUT_3) -> Bay4{=
-        if N.FROST_OUT_1.is_present:
-            Bay4.set(N.FROST_OUT_1.value)
-        elif N.FROST_OUT_2.is_present:
-            Bay4.set(N.FROST_OUT_2.value)
-        elif N.FROST_OUT_3.is_present:
-            Bay4.set(N.FROST_OUT_3.value)
+    output Bay2_3
+    reaction(P.FROST_OUT_3) -> Bay2_3{=
+        Bay2_3.set(P.FROST_OUT_3.value)
+    =}
+
+    output Bay3_1
+    reaction(O.FROST_OUT_1) -> Bay3_1{=
+        Bay3_1.set(O.FROST_OUT_1.value)
+    =}
+    output Bay3_2
+    reaction(O.FROST_OUT_2) -> Bay3_2{=
+        Bay3_2.set(O.FROST_OUT_2.value)
+    =}
+    output Bay3_3
+    reaction(O.FROST_OUT_3) -> Bay3_3{=
+        Bay3_3.set(O.FROST_OUT_3.value)
+    =}
+
+    output Bay4_1
+    reaction(N.FROST_OUT_1) -> Bay4_1{=
+        Bay4_1.set(N.FROST_OUT_1.value)
+    =}
+    output Bay4_2
+    reaction(N.FROST_OUT_2) -> Bay4_2{=
+        Bay4_2.set(N.FROST_OUT_2.value)
+    =}
+    output Bay4_3
+    reaction(N.FROST_OUT_3) -> Bay4_3{=
+        Bay4_3.set(N.FROST_OUT_3.value)
     =}
     output Bay5
     reaction(G.FROST_OUT) -> Bay5{=

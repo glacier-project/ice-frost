@@ -41,7 +41,7 @@ reactor Bay_Switch(param = "default"){
             position_list[1] = self.name
             self.pallet.position = "".join(position_list)
             #logging.info(f"Bay Switch {self.name} received pallet {self.pallet.pallet_id} at position {self.pallet.position}, destination {self.pallet.destination}")
-            FROST_OUT.set([self.pallet.pallet_id, self.name, 1])
+            FROST_OUT.set([self.pallet.pallet_id, self.name, self.pallet.pallet_id])
             #Check if pallet has reached its destination. If not ask controller for route
             if self.pallet.looping:
                 ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
@@ -64,11 +64,11 @@ reactor Bay_Switch(param = "default"){
         
         elif command.value[0] == "Move" and self.pallet is not None:
             if command.value[2] == "CROSS":
-                FROST_OUT.set([self.pallet.pallet_id, self.name, -1])
+                FROST_OUT.set([self.pallet.pallet_id, self.name, 0])
                 CROSS.set(self.pallet)             
 
             elif command.value[2] == "OUT":
-                FROST_OUT.set([self.pallet.pallet_id, self.name, -1])
+                FROST_OUT.set([self.pallet.pallet_id, self.name, 0])
                 OUT.set(self.pallet)
 
             self.pallet = None
@@ -93,7 +93,7 @@ reactor Bay_Switch(param = "default"){
             position_list = list(self.pallet.position)
             position_list[1] = self.name
             self.pallet.position = "".join(position_list)
-            FROST_OUT.set([self.pallet.pallet_id, self.name, 1])
+            FROST_OUT.set([self.pallet.pallet_id, self.name, self.pallet.pallet_id])
             #logging.info(f"Bay Switch {self.name} received pallet {self.pallet.pallet_id} at position {self.pallet.position}, destination {self.pallet.destination}")
             #Check if pallet has reached its destination. If not ask controller for route
             if self.pallet.looping:

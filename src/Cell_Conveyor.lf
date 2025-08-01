@@ -201,8 +201,8 @@ reactor Cell_Conveyor extends FrostMachine{
         :param value: The value to set for the bay.
         """
         # Set the pallet number at the given position in the bay
-        bay.get_property(self.PalletPosition.format(n=int(position))).get_property(self.palletNum).value = pallet if value > 0 else 0
-        logging.info(f"{bay.name} position {position} updated with pallet {pallet if value > 0 else 0}")
+        bay.get_property(self.PalletPosition.format(n=int(position))).get_property(self.palletNum).value = value
+        logging.info(f"{bay.name} position {position} updated with {value}")
     =}
     
     reaction(conveyor.Segment1){=
@@ -260,24 +260,62 @@ reactor Cell_Conveyor extends FrostMachine{
         """
         self.update_single_bay(self.bay1, conveyor.Bay1.value)
     =}
-    reaction(conveyor.Bay2){=
+    reaction(conveyor.Bay2_1){=
         """
-        Updates the bay2 state with the value from the conveyor system.
+        Updates the bay2 state at position 1 with the value from the conveyor system.
         """
-        self.update_bay(self.bay2, conveyor.Bay2.value[0], conveyor.Bay2.value[1], conveyor.Bay2.value[2])
+        self.update_bay(self.bay2, conveyor.Bay2_1.value[0], conveyor.Bay2_1.value[1], conveyor.Bay2_1.value[2])
     =}
-    reaction(conveyor.Bay3){=
+    reaction(conveyor.Bay2_2){=
         """
-        Updates the bay3 state with the value from the conveyor system.
+        Updates the bay2 state at position 2 with the value from the conveyor system.
         """
-        self.update_bay(self.bay3, conveyor.Bay3.value[0], conveyor.Bay3.value[1], conveyor.Bay3.value[2])
+        self.update_bay(self.bay2, conveyor.Bay2_2.value[0], conveyor.Bay2_2.value[1], conveyor.Bay2_2.value[2])
     =}
-    reaction(conveyor.Bay4){=
+    reaction(conveyor.Bay2_3){=
         """
-        Updates the bay4 state with the value from the conveyor system. 
+        Updates the bay2 state at position 3 with the value from the conveyor system.
         """
-        self.update_bay(self.bay4, conveyor.Bay4.value[0], conveyor.Bay4.value[1], conveyor.Bay4.value[2])
-    =}  
+        self.update_bay(self.bay2, conveyor.Bay2_3.value[0], conveyor.Bay2_3.value[1], conveyor.Bay2_3.value[2])
+    =}
+
+    reaction(conveyor.Bay3_1){=
+        """
+        Updates the bay3 state at position 1 with the value from the conveyor system.
+        """
+        self.update_bay(self.bay3, conveyor.Bay3_1.value[0], conveyor.Bay3_1.value[1], conveyor.Bay3_1.value[2])
+    =}
+    reaction(conveyor.Bay3_2){=
+        """
+        Updates the bay3 state at position 2 with the value from the conveyor system.
+        """
+        self.update_bay(self.bay3, conveyor.Bay3_2.value[0], conveyor.Bay3_2.value[1], conveyor.Bay3_2.value[2])
+    =}
+    reaction(conveyor.Bay3_3){=
+        """
+        Updates the bay3 state at position 3 with the value from the conveyor system.
+        """
+        self.update_bay(self.bay3, conveyor.Bay3_3.value[0], conveyor.Bay3_3.value[1], conveyor.Bay3_3.value[2])
+    =}
+
+    reaction(conveyor.Bay4_1){=
+        """
+        Updates the bay4 state at position 1 with the value from the conveyor system.
+        """
+        self.update_bay(self.bay4, conveyor.Bay4_1.value[0], conveyor.Bay4_1.value[1], conveyor.Bay4_1.value[2])
+    =}
+    reaction(conveyor.Bay4_2){=
+        """
+        Updates the bay4 state at position 2 with the value from the conveyor system.
+        """
+        self.update_bay(self.bay4, conveyor.Bay4_2.value[0], conveyor.Bay4_2.value[1], conveyor.Bay4_2.value[2])
+    =}
+    reaction(conveyor.Bay4_3){=
+        """
+        Updates the bay4 state at position 3 with the value from the conveyor system.
+        """
+        self.update_bay(self.bay4, conveyor.Bay4_3.value[0], conveyor.Bay4_3.value[1], conveyor.Bay4_3.value[2])
+    =}
     reaction(conveyor.Bay5){=
         """
         Updates the Bay5 state with the value from the conveyor system.
