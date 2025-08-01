@@ -19,6 +19,7 @@ preamble{=
     from new_destination import New_Destination
     from bay_control import Bay_Control   
     from bay_control import Update_Truth_Table
+    from bay_control import Update_Bay
     from enum import Enum
     from material import Material
 =}
@@ -189,7 +190,7 @@ reactor Controller{
                     if y == "BAY":
                         self.BH_buffers["BAY"] = None
                         BAY_OUT.set(["Release", "N"])  
-                        self.N_ = [True, True, True]          
+                        self.N_[0] = True          
                     elif y == "IN_UP":
                         self.BH_buffers["IN_UP"].pop(0)
                         y = ["IH"]
@@ -235,7 +236,7 @@ reactor Controller{
                     if y == "BAY":
                         self.CI_buffers["BAY"] = None
                         BAY_OUT.set(["Release", "O"]) 
-                        self.O_ = [True, True, True]
+                        self.O_[0] = True
                     elif y == "IN_UP":
                         self.CI_buffers["IN_UP"].pop(0)
                         y = ["LI"]
@@ -282,7 +283,7 @@ reactor Controller{
                     if y == "BAY":
                         self.DL_buffers["BAY"] = None
                         BAY_OUT.set(["Release", "P"])   
-                        self.P_ = [True, True, True]
+                        self.P_[0] = True
                     elif y == "IN_UP":
                         self.DL_buffers["IN_UP"].pop(0)
                         y = ["ML"]
@@ -461,11 +462,20 @@ reactor Controller{
         elif BAY_P_IN.value[0] == "Move":
             s = "P" + BAY_P_IN.value[1]
             route =  Bay_Routing(s, BAY_P_IN.value[2], "P")
+            n = int(BAY_P_IN.value[1])
+            Update_Bay(self.P_, n, route[0])
+
             y = "Move", s, route[0]
             BAY_OUT.set(y)
 
         elif BAY_P_IN.value[0] == "_pallet_arrived":
-            notify_frost.schedule(0, [1, [2, BAY_P_IN.value[1:]]])
+            n = int(BAY_P_IN.value[2]) - 1
+            self.P_[n] = False            
+            if n == 1:
+                self.P_[2] = True
+            elif n == 0:
+                self.P_[2] = True
+                self.P_[1] = True
 
         elif BAY_P_IN.value == "Free":
             self.conveyor["L"] = True
@@ -473,7 +483,6 @@ reactor Controller{
 
         elif BAY_P_IN.value[0] == "Pallet_incoming":
             self.DL_buffers["BAY"] = BAY_P_IN.value[1]
-            self.P_buffers = [False, False, False]
             control_DL.schedule(0)
     =}
 
@@ -484,11 +493,20 @@ reactor Controller{
         elif BAY_O_IN.value[0] == "Move":
             s = "O" + BAY_O_IN.value[1]
             route =  Bay_Routing(s, BAY_O_IN.value[2], "O")
+            n = int(BAY_O_IN.value[1])
+            Update_Bay(self.O_, n, route[0])
+
             y = "Move", s, route[0]
             BAY_OUT.set(y)
 
         elif BAY_O_IN.value[0] == "_pallet_arrived":
-            notify_frost.schedule(0, [1, [3, BAY_O_IN.value[1:]]])
+            n = int(BAY_O_IN.value[2]) - 1
+            self.O_[n] = False            
+            if n == 1:
+                self.O_[2] = True
+            elif n == 0:
+                self.O_[2] = True
+                self.O_[1] = True
 
         elif BAY_O_IN.value == "Free":
             self.conveyor["I"] = True
@@ -496,7 +514,6 @@ reactor Controller{
         
         elif BAY_O_IN.value[0] == "Pallet_incoming":
             self.CI_buffers["BAY"] = BAY_O_IN.value[1]
-            self.O_buffers = [False, False, False]
             control_CI.schedule(0)        
     =}
 
@@ -507,11 +524,20 @@ reactor Controller{
         elif BAY_N_IN.value[0] == "Move":
             s = "N" + BAY_N_IN.value[1]
             route =  Bay_Routing(s, BAY_N_IN.value[2], "N")
+            n = int(BAY_N_IN.value[1])
+            Update_Bay(self.N_, n, route[0])
+
             y = "Move", s, route[0]
             BAY_OUT.set(y)
 
         elif BAY_N_IN.value[0] == "_pallet_arrived":
-            notify_frost.schedule(0, [1, [4, BAY_N_IN.value[1:]]])
+            n = int(BAY_N_IN.value[2]) - 1
+            self.N_[n] = False            
+            if n == 1:
+                self.N_[2] = True
+            elif n == 0:
+                self.N_[2] = True
+                self.N_[1] = True
 
         elif BAY_N_IN.value == "Free":
             self.conveyor["B"] = True
@@ -519,7 +545,6 @@ reactor Controller{
 
         elif BAY_N_IN.value[0] == "Pallet_incoming":
             self.BH_buffers["BAY"] = BAY_N_IN.value[1]
-            self.N_ = [False, False, False]
             control_BH.schedule(0)
 
     =}
@@ -592,7 +617,7 @@ reactor Controller{
 
             if route == "BAY":
                 if Bay_Control(self.N_, int(H_IN.value[2][1])):
-                    self.N_ = Update_Truth_Table(self.N_, int(H_IN.value[2][1]))
+                    Update_Truth_Table(self.N_, int(H_IN.value[2][1]))
                     y = "Move", "H", route,                       
                 else:
                     y = "Move", "H", "OUT"
@@ -605,7 +630,7 @@ reactor Controller{
             y = "Move", "I", route
             if route == "BAY":
                 if Bay_Control(self.O_, int(I_IN.value[2][1])):   
-                        self.O_ = Update_Truth_Table(self.O_, int(I_IN.value[2][1]))
+                        Update_Truth_Table(self.O_, int(I_IN.value[2][1]))
                         y = "Move", "I", route,                      
                 else:
                     y = "Move", "I","OUT"
@@ -617,7 +642,7 @@ reactor Controller{
             y = "Move", "L", route
             if route == "BAY":
                 if Bay_Control( self.P_, int(L_IN.value[2][1])):
-                    self.P_ = Update_Truth_Table(self.P_, int(L_IN.value[2][1]))
+                    Update_Truth_Table(self.P_, int(L_IN.value[2][1]))
                     y = "Move", "L", "BAY"
                 else:
                     y = "Move", "L", "OUT"
@@ -655,6 +680,7 @@ reactor Controller{
             temp.looping = route[0]
             temp.bay = route[1]
             temp.destination = route[2]
+            logging.error(f"Bay2: {self.P_}, Bay3: {self.O_}, Bay4: {self.N_}")
             if length_pos == 2:
                 if temp.position == "Z1":
                     y = ["Move", "OUT"]
@@ -683,15 +709,18 @@ reactor Controller{
                 if pos == "Z1":
                     BAY_Z_OUT.set(["Move", "OUT"])
                 else:
-                    loc = "OUT" if loc == 3 else "CROSS"
+                    x = "OUT" if loc == 3 else "CROSS"
                     if pos[0] == "N":
-                        BAY_OUT.set(["Move", pos, loc])
+                        Update_Bay(self.N_, loc, x)
+                        BAY_OUT.set(["Move", pos, x])
                         i = 4
                     elif pos[0] == "O":
-                        BAY_OUT.set(["Move", pos, loc])
+                        Update_Bay(self.O_, loc, x)
+                        BAY_OUT.set(["Move", pos, x])
                         i = 3
                     elif pos[0] == "P":
-                        BAY_OUT.set(["Move", pos, loc])
+                        Update_Bay(Bay = self.P_, n = loc, route = x)
+                        BAY_OUT.set(["Move", pos, x])
                         i = 2
                     notify_frost.schedule(0, [7, [i, pos[1]]])
     =}

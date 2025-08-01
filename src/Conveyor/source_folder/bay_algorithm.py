@@ -16,7 +16,7 @@ def Bay_Routing(position, destination, bay):
         if destination[0] != position[0]:
             return "CROSS", bay + "1"
         elif destination[1] in ["2", "3"]:
-            return "OUT", bay + "P1"
+            return "OUT", bay + "1"
             
     elif position[1] == "2" :
         if destination[0] != position[0]:
