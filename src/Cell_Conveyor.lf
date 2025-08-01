@@ -115,17 +115,20 @@ reactor Cell_Conveyor extends FrostMachine{
         :return: The target node as a string.
         """
         if destination == 5:
-            return self.conveyor_obj + self.Bayes + self.Bay5 + self.LoadUnloadZone + self.IndexPosition + self.palletNum
-        elif destination == 1:
-            return self.conveyor_obj + self.Bayes + self.Bay1 + self.PalletPosition.format(n=destination) + self.palletNum
-        elif destination == 2:
-            return self.conveyor_obj + self.Bayes + self.Bay2 + self.PalletPosition.format(n=destination) + self.palletNum
-        elif destination == 3:
-            return self.conveyor_obj + self.Bayes + self.Bay3 + self.PalletPosition.format(n=destination) + self.palletNum
-        elif destination == 4:
-            return self.conveyor_obj + self.Bayes + self.Bay4 + self.PalletPosition.format(n=destination) + self.palletNum
-        else:
-            raise ValueError("Invalid destination value")
+            return self.conveyor_obj + self.Bayes + self.Bay5 + "/" + self.IndexPosition + "/" + self.palletNum
+        bay_map = {
+            1: self.Bay1,
+            2: self.Bay2,
+            3: self.Bay3,
+            4: self.Bay4
+        }
+        bay_num = int(destination / 10)
+        pos_num = destination % 10
+        bay = bay_map.get(bay_num)
+        if bay:
+            s = self.conveyor_obj + self.Bayes + bay + "/" + self.PalletPosition.format(n=pos_num) + "/" + self.palletNum
+            return s
+        raise ValueError("Invalid destination value")
     =}
     
     method setPalletDest(palletNumber, destination){=
@@ -140,7 +143,8 @@ reactor Cell_Conveyor extends FrostMachine{
             self.move_pallet_to_LTU(palletNumber)
             return res
         
-        self.dynamic_node.value = self.getTargetNode(int(res[1]))
+        self.dynamic_node.value = self.getTargetNode(destination)
+        logging.warning(f"Setting destination for pallet {palletNumber} to {destination}")
         pallet = self.pallets[palletNumber-1]
         (pallet.get_property("destination")).value =  destination
         temp1 = destination
@@ -159,7 +163,8 @@ reactor Cell_Conveyor extends FrostMachine{
         :param palletNumber: The number of the pallet to be released.
         :return: True if the pallet was successfully released, False otherwise.
         """
-        self.dynamic_node.value = self.data_model.get_node(self.conveyor_obj + self.zero_node.name)
+        self.dynamic_node.value = self.conveyor_obj + self.zero_node.name
+        self.zero_node.value = palletNumber
         self.messages_to_conveyor.append([7, [palletNumber]])
         return True
     =}
@@ -181,33 +186,53 @@ reactor Cell_Conveyor extends FrostMachine{
         """
         temp = segment.get_property(self.FIFO)
         temp.get_property(self.size).value += value[0]
+        ls = []
         if value[0] > 0:
-            for i in range(0, 9):
+            for i in range(0, 9):                
                 if temp.get_property(self.item.format(n=i)).value == 0:
                     temp.get_property(self.item.format(n=i)).value = value[1]
-                    break            
+                    ls.append(temp.get_property(self.item.format(n=i)).value)
+                    break       
+                ls.append(temp.get_property(self.item.format(n=i)).value)  
         else:
             for i in range(0, 8):
+                ls.append(temp.get_property(self.item.format(n=i)).value)
                 temp.get_property(self.item.format(n=i)).value = temp.get_property(self.item.format(n=i+1)).value
             temp.get_property(self.item.format(n=9)).value = 0
+            
+        logging.info(f"Segment {segment.name} updated with values: {ls}")    
      =}
 
-    method update_bay(bay, value){=
+    method update_single_bay(bay, value){=
         """
         Updates the bay state with the given value.
         :param bay: The bay to be updated.
+        :param value: The value to set for the pallet at the given position.
+        """
+        ls = []
+        if bay == self.bay1:
+            bay.get_property(self.PalletPosition.format(n=1)).get_property(self.palletNum).value = value[0] if value[1] > 0 else 0
+            ls.append(self.bay1.get_property(self.PalletPosition.format(n=1)).get_property(self.palletNum).value)
+        elif bay == self.bay5:
+            self.bay5.get_property(self.IndexPosition).get_property(self.palletNum).value = value[0] if value[1] > 0 else 0
+            ls.append(self.bay5.get_property(self.IndexPosition).get_property(self.palletNum).value)
+        else:
+            raise ValueError("Invalid bay for update")
+
+        logging.info(f"{bay.name} updated with values: {ls}")
+    =}
+
+    method update_bay(bay, pallet, position, value){=
+        """
+        Updates the bay state with the given value.
+        :param bay: The bay to be updated.
+        :param pallet: The pallet number to set.
+        :param position: The position in the bay.
         :param value: The value to set for the bay.
         """
-        if bay == self.bay1:
-            self.bay1.get_property(self.PalletPosition.format(n=1)).get_property(self.palletNum).value = value[0]
-        elif bay == self.bay2:
-            self.bay2.get_property(self.PalletPosition.format(n=value[1])).get_property(self.palletNum).value = value[0]
-        elif bay == self.bay3:
-            self.bay3.get_property(self.PalletPosition.format(n=value[1])).get_property(self.palletNum).value = value[0]
-        elif bay == self.bay4:
-            self.bay4.get_property(self.PalletPosition.format(n=value[1])).get_property(self.palletNum).value = value[0]
-        elif bay == self.bay5:
-            self.bay5.get_property(self.IndexPosition).get_property(self.palletNum).value = value[0]
+        # Set the pallet number at the given position in the bay
+        bay.get_property(self.PalletPosition.format(n=int(position))).get_property(self.palletNum).value = pallet if value > 0 else 0
+        logging.info(f"{bay.name} position {position} updated with pallet {pallet if value > 0 else 0}")
     =}
     
     reaction(conveyor.Segment1){=
@@ -263,30 +288,30 @@ reactor Cell_Conveyor extends FrostMachine{
         """
         Updates the bay1 state with the value from the conveyor system.
         """
-        self.update_bay(self.bay1, conveyor.Bay1.value)
+        self.update_single_bay(self.bay1, conveyor.Bay1.value)
     =}
     reaction(conveyor.Bay2){=
         """
         Updates the bay2 state with the value from the conveyor system.
         """
-        self.update_bay(self.bay2, conveyor.Bay2.value)
+        self.update_bay(self.bay2, conveyor.Bay2.value[0], conveyor.Bay2.value[1], conveyor.Bay2.value[2])
     =}
     reaction(conveyor.Bay3){=
         """
         Updates the bay3 state with the value from the conveyor system.
         """
-        self.update_bay(self.bay3, conveyor.Bay3.value)
+        self.update_bay(self.bay3, conveyor.Bay3.value[0], conveyor.Bay3.value[1], conveyor.Bay3.value[2])
     =}
     reaction(conveyor.Bay4){=
         """
         Updates the bay4 state with the value from the conveyor system. 
         """
-        self.update_bay(self.bay4, conveyor.Bay4.value)
+        self.update_bay(self.bay4, conveyor.Bay4.value[0], conveyor.Bay4.value[1], conveyor.Bay4.value[2])
     =}  
     reaction(conveyor.Bay5){=
         """
         Updates the Bay5 state with the value from the conveyor system.
         """
-        self.update_bay(self.bay5, conveyor.Bay5.value)
+        self.update_single_bay(self.bay5, conveyor.Bay5.value)
     =}
 }

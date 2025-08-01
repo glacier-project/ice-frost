@@ -57,7 +57,7 @@ reactor Scheduler(recipe_path = "recipes/recipes/conveyor.yaml",
         Sends the next message in the recipe to the communication channel.
         If the index `i` is out of bounds, it resets to 0.
         """
-        self.logger.warning(f"Scheduler: {self.name} is sending {self.recipe[self.i]}")
+        #self.logger.warning(f"Scheduler: {self.name} is sending {self.recipe[self.i]}")
         channel_out.set(self.recipe[self.i])        
     =}
     state counter = 0
@@ -76,19 +76,17 @@ reactor Scheduler(recipe_path = "recipes/recipes/conveyor.yaml",
             if message.header.matches(MsgType.RESPONSE, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
                 self.logger.info(f"{message.sender} notify registration to {message.target}.")
                 continue
-            else:
-                self.logger.warning(f"{message.sender} to {message.target} with header {message.header} and payload {message.payload}\n")
 
-            
             if self.conditions[self.i].check_condition(message):
                 self.logger.info(f"Passed condition: {self.conditions[self.i]}")
+                self.logger.warning(f"sending message to {message.target}, action: {message.header.msg_name}, payload: {message.payload}\n")
                 self.i += 1
                 routine.schedule(SEC(2))
-            else:
-                self.logger.info(f"Failed condition: {self.conditions[self.i]}")
-                self.logger.info(f"Message: {message}")
+            #else:
+                #self.logger.info(f"Failed condition: {self.conditions[self.i]}")
+                #self.logger.info(f"Message: {message}")
 
-        if self.i >= len(self.recipe)-1:
+        if self.i >= len(self.recipe):
             self.counter += 1            
             self.i = 0
     =}

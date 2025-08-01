@@ -118,6 +118,16 @@ reactor Conveyor{
     AB.OUT -> B.IN
     A.OUT -> AB.IN after 3333 msec
 
+
+    // 
+    //   Z         P         O         N
+    //   |         |         |         |
+    //   |         |         |         |
+    //   M ------- L ------- I ------- H ------- G--- F
+    //   |         |         |         |              |
+    //   |         |         |         |              |
+    //   E ------- D ------- C ------- B ------------ A
+    //
     //Links bays to P O N Z
     P = new Bay(param = "P")
     O = new Bay(param = "O")
@@ -185,7 +195,7 @@ reactor Conveyor{
         Segment4.set(HG.FROST_OUT.value)
     =}
     reaction(GF.FROST_OUT) -> Segment4{=
-        Segment5.set(GF.FROST_OUT.value)
+        Segment4.set(GF.FROST_OUT.value)
     =}
     output Segment5
     reaction(AB.FROST_OUT) -> Segment5{=
@@ -193,11 +203,11 @@ reactor Conveyor{
     =}
     output Segment6
     reaction(BC.FROST_OUT) -> Segment6{=
-        Segment6.set(FG.FROST_OUT.value)
+        Segment6.set(BC.FROST_OUT.value)
     =}
     output Segment7
     reaction(CD.FROST_OUT) -> Segment7{=
-        Segment7.set(EF.FROST_OUT.value)
+        Segment7.set(CD.FROST_OUT.value)
     =}
     output Segment8
     reaction(DE.FROST_OUT) -> Segment8{=
@@ -209,16 +219,31 @@ reactor Conveyor{
         Bay1.set(Z.FROST_OUT.value)
     =}
     output Bay2
-    reaction(P.FROST_OUT) -> Bay2{=
-        Bay2.set(P.FROST_OUT.value)
+    reaction(P.FROST_OUT_1, P.FROST_OUT_2, P.FROST_OUT_3) -> Bay2{=
+        if P.FROST_OUT_1.is_present:
+            Bay2.set(P.FROST_OUT_1.value)
+        elif P.FROST_OUT_2.is_present:
+            Bay2.set(P.FROST_OUT_2.value)
+        elif P.FROST_OUT_3.is_present:
+            Bay2.set(P.FROST_OUT_3.value)
     =}
     output Bay3
-    reaction(O.FROST_OUT) -> Bay3{=
-        Bay3.set(O.FROST_OUT.value)
+    reaction(O.FROST_OUT_1, O.FROST_OUT_2, O.FROST_OUT_3) -> Bay3{=
+        if O.FROST_OUT_1.is_present:
+            Bay3.set(O.FROST_OUT_1.value)
+        elif O.FROST_OUT_2.is_present:
+            Bay3.set(O.FROST_OUT_2.value)
+        elif O.FROST_OUT_3.is_present:
+            Bay3.set(O.FROST_OUT_3.value)
     =}
     output Bay4
-    reaction(N.FROST_OUT) -> Bay4{=
-        Bay4.set(N.FROST_OUT.value)
+    reaction(N.FROST_OUT_1, N.FROST_OUT_2, N.FROST_OUT_3) -> Bay4{=
+        if N.FROST_OUT_1.is_present:
+            Bay4.set(N.FROST_OUT_1.value)
+        elif N.FROST_OUT_2.is_present:
+            Bay4.set(N.FROST_OUT_2.value)
+        elif N.FROST_OUT_3.is_present:
+            Bay4.set(N.FROST_OUT_3.value)
     =}
     output Bay5
     reaction(G.FROST_OUT) -> Bay5{=

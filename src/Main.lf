@@ -1,6 +1,6 @@
 target Python{
     fast: true,
-    timeout: 500s,
+    timeout: 800s,
     files: [utils/l_formatter.py, utils/time_utils.py, utils/singleton_meta.py],
 }
 

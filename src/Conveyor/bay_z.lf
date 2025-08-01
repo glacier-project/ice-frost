@@ -21,8 +21,9 @@ reactor Bay_Z(param = "default"){
         self.pallet = None
     =}
 
-    reaction(IN) -> ask{=
+    reaction(IN) -> ask, FROST_OUT{=
         self.pallet = IN.value
+        FROST_OUT.set([self.pallet.pallet_id, 1])
         self.pallet.position = self.name
         if self.pallet.destination == self.name:
             y = "_pallet_arrived", self.pallet.pallet_id
@@ -43,7 +44,7 @@ reactor Bay_Z(param = "default"){
             if self.pallet is not None:
                 if len(command.value) > 1 and command.value[1] == "OUT":
                     ask.set(["PalletReleased", self.pallet.pallet_id])
-                    FROST_OUT.set(self.pallet.pallet_id, self.name)
+                    FROST_OUT.set([self.pallet.pallet_id, -1])
                     OUT.set(self.pallet)
                     self.pallet = None
                 else:

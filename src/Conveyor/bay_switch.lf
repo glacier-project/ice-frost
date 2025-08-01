@@ -16,7 +16,7 @@ reactor Bay_Switch(param = "default"){
     output OUT
     input CROSS_IN
     output CROSS   
-
+    output FROST_OUT
     //Controller Links
     input command
     output ask
@@ -33,19 +33,20 @@ reactor Bay_Switch(param = "default"){
     If so, it sends a message to the main reactor to inform the pallet has arrived.
     Otherwise, it asks the controller for the pallet route.
     '''
-    reaction(IN)-> ask{=
+    reaction(IN)-> ask, FROST_OUT{=
         if IN.value is not None:
             self.pallet = IN.value
-            logging.info(f"Bay Switch {self.name} received pallet {self.pallet.pallet_id} at position {self.pallet.position}")
             #Update pallet position
             position_list = list(self.pallet.position)
             position_list[1] = self.name
             self.pallet.position = "".join(position_list)
-            
+            #logging.info(f"Bay Switch {self.name} received pallet {self.pallet.pallet_id} at position {self.pallet.position}, destination {self.pallet.destination}")
+            FROST_OUT.set([self.pallet.pallet_id, self.name, 1])
             #Check if pallet has reached its destination. If not ask controller for route
             if self.pallet.looping:
                 ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
-            elif self.pallet.destination[0] in ["N","O","P"] and self.pallet.destination[1] == self.name:
+            elif self.pallet.destination[0] == self.pallet.position[0] and self.pallet.destination[1] == self.name:
+                #logging.warning(f"Eurekaaaaa")
                 ask.set(["_pallet_arrived", self.pallet.pallet_id, self.name])                
             else:
                 ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
@@ -56,16 +57,18 @@ reactor Bay_Switch(param = "default"){
     and asks the controller for the pallet route.
     If the command is to move a pallet, the bay switch sends the pallet to appropriate port.
     '''
-    reaction(command) -> ask, OUT, CROSS{=
+    reaction(command) -> ask, OUT, CROSS, FROST_OUT{=
         if command.value[0] == "Create":
             self.pallet = command.value[1]
             ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
         
         elif command.value[0] == "Move" and self.pallet is not None:
             if command.value[2] == "CROSS":
+                FROST_OUT.set([self.pallet.pallet_id, self.name, -1])
                 CROSS.set(self.pallet)             
 
             elif command.value[2] == "OUT":
+                FROST_OUT.set([self.pallet.pallet_id, self.name, -1])
                 OUT.set(self.pallet)
 
             self.pallet = None
@@ -82,7 +85,7 @@ reactor Bay_Switch(param = "default"){
     As before, it checks if the pallet has reached its destination, and if not,
     it asks the controller for the pallet route.
     '''
-    reaction(CROSS_IN)-> ask{=
+    reaction(CROSS_IN)-> ask, FROST_OUT{=
         if CROSS_IN.value is not None:
             self.pallet = CROSS_IN.value
 
@@ -90,13 +93,15 @@ reactor Bay_Switch(param = "default"){
             position_list = list(self.pallet.position)
             position_list[1] = self.name
             self.pallet.position = "".join(position_list)
-
+            FROST_OUT.set([self.pallet.pallet_id, self.name, 1])
+            #logging.info(f"Bay Switch {self.name} received pallet {self.pallet.pallet_id} at position {self.pallet.position}, destination {self.pallet.destination}")
             #Check if pallet has reached its destination. If not ask controller for route
             if self.pallet.looping:
                 ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
-            elif not (self.pallet.destination[0] in ["N","O","P"] and self.pallet.destination[1] == self.name):
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
-            else:
+            elif self.pallet.destination[0] == self.pallet.position[0] and self.pallet.destination[1] == self.name:
+                #logging.warning(f"Eurekaaaaa")
                 ask.set(["_pallet_arrived", self.pallet.pallet_id, self.name])
+            else:            
+                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
     =}
 }

@@ -16,7 +16,9 @@ reactor Bay(param = "default"){
     state crossing_pallet
     input IN
     output OUT
-    output FROST_OUT
+    output FROST_OUT_1
+    output FROST_OUT_2
+    output FROST_OUT_3
     state plat1 = 1
     state plat2 = 2
     state plat3 = 3
@@ -28,42 +30,17 @@ reactor Bay(param = "default"){
     INTER_2 = new Interchange(param = "2-3")
 
     //First Block
-    Plat1.OUT -> INTER_1.IN_DOWN after 2 sec
-    INTER_1.OUT_DOWN -> Plat1.IN after 0msec
+    Plat1.OUT -> INTER_1.IN_DOWN after 1 sec
+    INTER_1.OUT_DOWN -> Plat1.IN after 1 sec  
+    Plat1.FROST_OUT -> FROST_OUT_1 after 0msec
     //Second Block
-    INTER_1.OUT_UP, INTER_2.OUT_DOWN -> Plat2.IN, Plat2.CROSS_IN after 0msec
-    Plat2.OUT, Plat2.CROSS -> INTER_2.IN_DOWN, INTER_1.IN_UP after 2 sec
+    INTER_1.OUT_UP, INTER_2.OUT_DOWN -> Plat2.IN, Plat2.CROSS_IN after 1 sec
+    Plat2.OUT, Plat2.CROSS -> INTER_2.IN_DOWN, INTER_1.IN_UP after 1 sec
+    Plat2.FROST_OUT -> FROST_OUT_2 after 0msec
     //Third Block
-    INTER_2.OUT_UP -> Plat3.IN after 0msec
-    Plat3.OUT -> INTER_2.IN_UP after 2 sec
-
-    reaction(INTER_1.OUT_DOWN) -> FROST_OUT{=
-        """
-        This reaction sends the pallet received from the first bay switch to the FROST_OUT port.
-        """
-        FROST_OUT.set([INTER_1.OUT_DOWN.value.pallet_id, self.plat1])
-    =}
-
-    reaction(INTER_1.OUT_UP) -> FROST_OUT{=
-        """
-        This reaction sends the pallet received from the first interchange (up port) to the FROST_OUT port.
-        """
-        FROST_OUT.set([INTER_1.OUT_UP.value.pallet_id, self.plat2])
-    =}
-
-    reaction(INTER_2.OUT_DOWN) -> FROST_OUT{=
-        """
-        This reaction sends the pallet received from the second interchange (down port) to the FROST_OUT port.
-        """
-        FROST_OUT.set([INTER_2.OUT_DOWN.value.pallet_id, self.plat2])
-    =}
-
-    reaction(INTER_2.OUT_UP) -> FROST_OUT{=
-        """
-        This reaction sends the pallet received from the second interchange (up port) to the FROST_OUT port.
-        """
-        FROST_OUT.set([INTER_2.OUT_UP.value.pallet_id, self.plat3])
-    =}
+    INTER_2.OUT_UP -> Plat3.IN after 1 sec
+    Plat3.OUT -> INTER_2.IN_UP after 1 sec
+    Plat3.FROST_OUT -> FROST_OUT_3 after 0msec
 
     //Controller Links
     input command
@@ -79,11 +56,10 @@ reactor Bay(param = "default"){
 
     '''when a pallet arrives, the bay switch receives it and sends it to the first switch
     then it schedules the free_switch event'''
-    reaction(IN) -> Plat1.CROSS_IN, free_switch, FROST_OUT{=
+    reaction(IN) -> Plat1.CROSS_IN, free_switch{=
         temp = IN.value
-        logging.info(f"Bay {self.name} received pallet {temp.pallet_id} at position {temp.position}")
+        #logging.info(f"Bay {self.name} received pallet {temp.pallet_id} at position {temp.position}")
         temp.position = self.name + "0"
-        FROST_OUT.set([temp.pallet_id, self.plat1])
         Plat1.CROSS_IN.set(temp)
         free_switch.schedule(0)
     =}
