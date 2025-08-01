@@ -5,15 +5,18 @@ The conveyor belt system is composed of multiple reactors, instantiated via `con
 In Frost, the conveyor reactor is instantiated within `Cell_Conveyor.lf`. Pallets move automatically along the ring structure.
 
 ### Conveyor Layout
+```
+Data Model Version
+  Bay 1        Bay 2        Bay 3       Bay 4  Bay G
+   |            |          |            |       |
+   |            |          |            |       |
+   ◼ Segment1  ◼ Segment2 ◼  Segment3 ◼  Segment4  ◼
+   |            |          |            |             |          
+   |            |          |            |             |          
+   ◼  Segment8 ◼ Segment7 ◼  Segment6 ◼  Segment5  ◼ 
 
-```
-Segment1 -> Segment2 -> Segment3
-   |           |            |
-   |           |            |
-Segment8 <- Segment7 <- Segment6
-```
 
-```
+Model Version
    Z         P         O         N
    |         |         |         |
    |         |         |         |
