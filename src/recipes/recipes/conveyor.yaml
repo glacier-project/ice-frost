@@ -20,16 +20,6 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 0]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
-    header:
-      type: "REQUEST"
-      version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
-    payload:
-      node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [4, 11]
   - sender: "Scheduler"
     target: "Cell_Conveyor"
@@ -50,7 +40,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 22]
+      args: [2, 22]
   - sender: "Scheduler"
     target: "Cell_Conveyor"
     header:
@@ -60,7 +50,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 0]
+      args: [2, 0]
   - sender: "Scheduler"
     target: "Cell_Conveyor"
     header:
@@ -90,7 +80,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 11]
+      args: [7, 11]
   - sender: "Scheduler"
     target: "Cell_Conveyor"
     header:
@@ -100,7 +90,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 0]
+      args: [7, 0]
   - sender: "Scheduler"
     target: "Cell_Conveyor"
     header:
@@ -110,7 +100,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 32]
+      args: [9, 32]
   - sender: "Scheduler"
     target: "Cell_Conveyor"
     header:
@@ -120,4 +110,4 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 0]
+      args: [9, 0]

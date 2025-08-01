@@ -1,4 +1,6 @@
-target Python 
+target Python{
+    files: [Conveyor/conveyor_utils.py]
+}
 
 import FrostMachine from "../frost/src/lib/FrostMachine.lf"
 import Conveyor from "Conveyor/conveyor.lf"
@@ -6,46 +8,14 @@ import Conveyor from "Conveyor/conveyor.lf"
 reactor Cell_Conveyor extends FrostMachine{
 
     preamble{=
-        conveyor_obj = "Cell_Conveyor/ConveyorHMI/ConveyorObjects/"
-        Pallets = "Pallets/"
-        Bayes = "Bayes/"
-        Segments = "Segments/"
-        Commands = "Commands/"
-        commands_pointer = "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/"
-        IndexPosition = "IndexPosition"
-        setDestination = "setDestination"
-        PalletPosition = "PalletPosition{n}"
-        palletNum = "palletNum"
-        Pallet = "Pallet{n}"
-        Pallet1 = Pallet.format(n=1)
-        Pallet2 = Pallet.format(n=2)
-        Pallet3 = Pallet.format(n=3)
-        Pallet4 = Pallet.format(n=4)
-        Pallet5 = Pallet.format(n=5)
-        Pallet6 = Pallet.format(n=6)
-        Pallet7 = Pallet.format(n=7)
-        Pallet8 = Pallet.format(n=8)
-        Pallet9 = Pallet.format(n=9)
-        Pallet10 = Pallet.format(n=10)
-        Bay = "Bay{n}"
-        Bay1 = Bay.format(n=1)
-        Bay2 = Bay.format(n=2)
-        Bay3 = Bay.format(n=3)
-        Bay4 = Bay.format(n=4)
-        Bay5 = "LoadUnloadZone"
-        Segment = "Segment{n}"
-        Segment1 = Segment.format(n=1)
-        Segment2 = Segment.format(n=2)
-        Segment3 = Segment.format(n=3)
-        Segment4 = Segment.format(n=4)
-        Segment5 = Segment.format(n=5)
-        Segment6 = Segment.format(n=6)
-        Segment7 = Segment.format(n=7)
-        Segment8 = Segment.format(n=8)
-        FIFO = "FIFO"
-        size = "size"
-        item = "item{n}"
-
+       from conveyor_utils import (
+            conveyor_obj, Pallets, Bayes, Segments, Commands, commands_pointer,
+            IndexPosition, setDestination, PalletPosition, palletNum,
+            Pallet, Pallet1, Pallet2, Pallet3, Pallet4, Pallet5, Pallet6, Pallet7, Pallet8, Pallet9, Pallet10,
+            Bay, Bay1, Bay2, Bay3, Bay4, Bay5,
+            Segment, Segment1, Segment2, Segment3, Segment4, Segment5, Segment6, Segment7, Segment8,
+            FIFO, size, item
+        )
     =}
 
     //PALLETS
@@ -96,11 +66,11 @@ reactor Cell_Conveyor extends FrostMachine{
                     
     conveyor = new Conveyor()
 
-    logical action check
-    
-    
+    // Periodically send messages to the conveyor system
+    logical action check   
     state messages_to_conveyor = {=[]=}
     reaction(check) -> conveyor.from_frost{=
+        # If there are messages, send the next one immediately; otherwise, wait 1 second
         if self.messages_to_conveyor:
             conveyor.from_frost.set(self.messages_to_conveyor.pop(0))
             check.schedule(0)
@@ -137,19 +107,19 @@ reactor Cell_Conveyor extends FrostMachine{
         :param palletNumber: The number of the pallet to set the destination for.
         :param destination: The destination to set for the pallet.
         :return: The destination as a string.
-        """        
+        """   
+        pallet = self.pallets[palletNumber-1]
+        (pallet.get_property("destination")).value =  destination     
         res = str(destination)
         if destination == 0:
             self.move_pallet_to_LTU(palletNumber)
             return res
         
         self.dynamic_node.value = self.getTargetNode(destination)
-        logging.warning(f"Setting destination for pallet {palletNumber} to {destination}")
-        pallet = self.pallets[palletNumber-1]
-        (pallet.get_property("destination")).value =  destination
+        logging.warning(f"Setting destination for pallet {palletNumber} to {destination}")        
         temp1 = destination
         temp2 = ""
-        if temp1 != 5:
+        if temp1 != int(self.Bay.format(n=5)[-1]):
             temp1 = destination / 10
             temp2 = str(destination % 10)
         letter = self.dict_bay_conveyor[int(temp1)]
