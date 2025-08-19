@@ -10,7 +10,7 @@ reactors:
       # kafka_security_protocol: SASL_PLAINTEXT
       # kafka_sasl_mechanism: SCRAM-SHA-512
   frost_bus:
-    logging_level: DEBUG
+    logging_level: WARNING
     parameters:
       data_model_path: "resources/data_model/frost_bus.yml"
   conveyor:

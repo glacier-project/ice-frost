@@ -10,9 +10,9 @@ RUN apk add --update --no-cache --virtual .tmp-build-deps git gcc g++ libc-dev m
 # Install Lingua Franca compiler (lfc)
 RUN curl -Ls https://install.lf-lang.org | bash -s cli
 
-# Frost dependencies
-RUN /venv/bin/pip install git+https://github.com/esd-univr/machine-data-model.git
-RUN /venv/bin/pip install typing-extensions
+# ICE Frost dependencies
+COPY requirements.txt /tmp/requirements.txt
+RUN /venv/bin/pip install -r /tmp/requirements.txt
 
 # Build the project
 WORKDIR /tmp
@@ -25,7 +25,7 @@ COPY --from=venv_builder /venv /venv
 COPY --from=venv_builder /tmp/src-gen /app/src-gen
 
 # Copy the configuration files and data models
-COPY --from=venv_builder /tmp/src/ /app/src/
+COPY resources /app/resources
 
 WORKDIR /app
 
