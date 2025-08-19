@@ -1,6 +1,14 @@
 target Python{
-    fast: true,
-    files: [utils/l_formatter.py, utils/time_utils.py, utils/singleton_meta.py],
+    fast: false,
+    timeout: 800s,
+    files: [
+        "../frost/src/python_lib/frost.py",
+        "../frost/src/python_lib/l_formatter.py",
+        "../frost/src/python_lib/time_utils.py",
+        "python_utils/ice_proxy.py",
+    ],
+    logging: error,
+    single-threaded: false,
 }
 
 import Cell1 from "Cell1.lf"
@@ -10,10 +18,11 @@ import Cell5 from "Cell5.lf"
 import Warehouse from "Warehouse.lf"
 import Kairos from "Kairos.lf"
 import Cell_Conveyor from "Cell_Conveyor.lf"
+import ICEProxy from "ICEProxy.lf" 
 
 import FrostBus from "../frost/src/lib/FrostBus.lf"
 import Scheduler from "Scheduler.lf"
-preamble{=
+preamble{= 
     import yaml
     import math 
     import os 
@@ -21,7 +30,7 @@ preamble{=
     CONFIG_PATH = "src/utils/configuration.yaml"
     from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
     from machine_data_model.protocols.frost_v1.frost_header import MsgType, MsgNamespace, ProtocolMsgName, FrostHeader
-    from machine_data_model.protocols.frost_v1.frost_payload import VariablePayload, ProtocolPayload, MethodPayload 
+    from machine_data_model.protocols.frost_v1.frost_payload import VariablePayload, ProtocolPayload, MethodPayload, ErrorPayload
     from machine_data_model.protocols.frost_v1.frost_protocol_mng import FrostProtocolMng
     from machine_data_model.builder.data_model_builder import DataModelBuilder
     from machine_data_model.protocols.protocol_mng import Message
@@ -30,11 +39,12 @@ preamble{=
     from machine_data_model.nodes.variable_node import NumericalVariableNode, StringVariableNode, BooleanVariableNode, ObjectVariableNode
     from machine_data_model.nodes.folder_node import FolderNode
     import uuid
-    import logging
-    from singleton_meta import SingletonMeta
-    from enum import IntEnum
-    from time_utils import TimeUtils, TimeFormat, convert, f_convert
-    from l_formatter import LFormatter    
+    # # import logging
+    # from singleton_meta import SingletonMeta
+    # from enum import IntEnum
+    # from time_utils import TimeUtils, TimeFormat, convert, f_convert
+    # from l_formatter import LFormatter    
+    from frost import FROST_CONFIG, is_target_valid
     RECIPE_PATH = os.environ.get("RECIPE_PATH")
     CONDITIONS_PATH = os.environ.get("CONDITIONS_PATH")
 =}
@@ -42,15 +52,17 @@ preamble{=
 
 main reactor{
     preamble{=
-        with open(CONFIG_PATH) as stream:
-            config = yaml.safe_load(stream)
-        TIME_FORMAT = TimeFormat[config["time_format"]]
+        # with open(CONFIG_PATH) as stream:
+        #     config = yaml.safe_load(stream)
+        # TIME_FORMAT = TimeFormat[config["time_format"]]
 
-        handler = logging.StreamHandler()
-        handler.setFormatter(LFormatter(lf.time.logical_elapsed, TIME_FORMAT))
-        logger = logging.getLogger()
-        logger.setLevel(logging.INFO)
-        logger.addHandler(handler)
+        # handler = logging.StreamHandler()
+        # handler.setFormatter(LFormatter(lf.time.logical_elapsed, TIME_FORMAT))
+        # logger = logging.getLogger()
+        # logger.setLevel(logging.INFO)
+        # initialize_logger(logging.INFO, TimeFormat.MSECS)
+        logging.getLogger("kafka").setLevel(logging.WARNING)
+        # logger.addHandler(handler)
         recipe_path = os.environ.get("RECIPE_PATH")
         conditions_path = os.environ.get("CONDITIONS_PATH")
     =}
@@ -61,10 +73,14 @@ main reactor{
     cell5 = new Cell5(model_path = "src/models/Cell5.yml")
     warehouse = new Warehouse(model_path = "src/models/Warehouse.yml")
     kairos_aa = new Kairos(model_path = "src/models/RBKairos.yml")*/
-    conveyor = new Cell_Conveyor(model_path= "src/models/Cell_Conveyor.yml")
-    scheduler = new Scheduler(recipe_path = "src/recipes/recipes/conveyor.yaml",
-                condition_path = "src/recipes/conditions/conveyor.yaml")
-    bus = new FrostBus(model_path = "src/models/Common_Bus.yml",width = 2)
+    conveyor = new Cell_Conveyor(name="conveyor")
+    // scheduler = new Scheduler(recipe_path = "src/recipes/recipes/conveyor.yaml",
+    //             condition_path = "src/recipes/conditions/conveyor.yaml")
+    bus = new FrostBus(name="frost_bus", width = 2)
+    ice_proxy = new ICEProxy(name="iceproxy")
+
+    conveyor.channel_out, ice_proxy.channel_out -> bus.channel_in after 0
+    bus.channel_out -> conveyor.channel_in, ice_proxy.channel_in after 0
 
     #Full demo
     //cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.channel_in after 0
@@ -79,6 +95,6 @@ main reactor{
     //bus.channel_out -> cell5.channel_in, warehouse.channel_in, kairos_aa.channel_in, scheduler.channel_in, conveyor.channel_in after 1 msec
 
     #Demo with just Conveyor
-    conveyor.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
-    bus.channel_out -> conveyor.channel_in, scheduler.channel_in after 1 msec
+    // conveyor.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
+    // bus.channel_out -> conveyor.channel_in, scheduler.channel_in after 1 msec
 }

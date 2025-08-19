@@ -19,52 +19,90 @@ reactor Cell_Conveyor extends FrostMachine{
     =}
 
     //PALLETS
-    state pallet_1 = {= self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet1) =}
-    state pallet_2 = {= self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet2) =}
-    state pallet_3 = {= self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet3) =}
-    state pallet_4 = {= self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet4) =}
-    state pallet_5 = {= self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet5) =}
-    state pallet_6 = {= self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet6) =}
-    state pallet_7 = {= self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet7) =}
-    state pallet_8 = {= self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet8) =}
-    state pallet_9 = {= self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet9) =}
-    state pallet_10 = {= self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet10) =}
-    //BAYES     
-    state bay1 = {= self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay1) =}
-    state bay2 = {= self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay2) =}
-    state bay3 = {= self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay3) =}
-    state bay4 = {= self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay4) =}
-    state bay5 = {= self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay5) =}
+    state pallet_1
+    state pallet_2
+    state pallet_3
+    state pallet_4
+    state pallet_5
+    state pallet_6
+    state pallet_7
+    state pallet_8
+    state pallet_9
+    state pallet_10
+    //BAYES
+    state bay1
+    state bay2
+    state bay3
+    state bay4
+    state bay5
 
-    state pallets_in_bay = {={1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None, 8: None, 9: None, 10: None}=}
+    state pallets_in_bay
 
     //SEGMENTS
-    state segment_1 = {= self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment1) =}
-    state segment_2 = {= self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment2) =}
-    state segment_3 = {= self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment3) =}
-    state segment_4 = {= self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment4) =}
-    state segment_5 = {= self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment5) =}
-    state segment_6 = {= self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment6) =}
-    state segment_7 = {= self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment7) =}
-    state segment_8 = {= self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment8) =}
+    state segment_1 
+    state segment_2 
+    state segment_3 
+    state segment_4 
+    state segment_5 
+    state segment_6 
+    state segment_7 
+    state segment_8 
     
     //METHODS
-    state setPalletDestination = {= self.data_model.get_node(self.commands_pointer + "setDestination") =}    
+    state setPalletDestination
     //COMMANDS
-    state dynamic_node = {= self.data_model.get_node("Cell_Conveyor/dynamic_node") =}  
-    state zero_node = {=self.data_model.get_node("Cell_Conveyor/zero_node") =}  
+    state dynamic_node  
+    state zero_node  
     //LocalVariables
-    state pallets = {= [self.pallet_1, self.pallet_2, self.pallet_3, self.pallet_4, self.pallet_5, self.pallet_6, self.pallet_7, self.pallet_8, self.pallet_9, self.pallet_10] =}
-    state bayes = {= {5: self.bay5, 11:self.bay1, 21:self.bay2, 31:self.bay3, 41:self.bay4} =}    
-    state dict_bay_conveyor = {= {
-                        1:"Z",
-                        2:"P", 
-                        3:"O", 
-                        4:"N",
-                        5:"G",
-    } =}
+    state pallets 
+    state bayes    
+    state dict_bay_conveyor
                     
     conveyor = new Conveyor()
+
+    reaction (startup){=
+        """Initialize the Conveyor reactor."""
+        self.pallet_1 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet1)
+        self.pallet_2 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet2)
+        self.pallet_3 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet3)
+        self.pallet_4 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet4)
+        self.pallet_5 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet5)
+        self.pallet_6 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet6)
+        self.pallet_7 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet7)
+        self.pallet_8 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet8)
+        self.pallet_9 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet9)
+        self.pallet_10 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet10)
+        self.bay1 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay1)
+        self.bay2 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay2)
+        self.bay3 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay3)
+        self.bay4 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay4)
+        self.bay5 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay5)      
+        pallets_in_bay = {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None, 8: None, 9: None, 10: None}
+        self.pallets      
+        self.segment_1 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment1)    
+        self.segment_2 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment2)
+        self.segment_3 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment3)
+        self.segment_4 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment4)
+        self.segment_5 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment5)
+        self.segment_6 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment6)
+        self.segment_7 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment7)
+        self.segment_8 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment8)
+
+        # Methods
+        self.setPalletDestination = self.data_model.get_node(self.commands_pointer + "setDestination")
+        self.dynamic_node = self.data_model.get_node("Cell_Conveyor/dynamic_node")
+        self.zero_node = self.data_model.get_node("Cell_Conveyor/zero_node")
+        self.pallets = [self.pallet_1, self.pallet_2, self.pallet_3, self.pallet_4, self.pallet_5, self.pallet_6, self.pallet_7, self.pallet_8, self.pallet_9, self.pallet_10] 
+        self.bayes = {5: self.bay5, 11:self.bay1, 21:self.bay2, 31:self.bay3, 41:self.bay4}
+        self.dict_bay_conveyor = {
+            1:"Z",
+            2:"P", 
+            3:"O", 
+            4:"N",
+            5:"G",
+        } 
+    =}
+
 
     // Periodically send messages to the conveyor system
     logical action check   
@@ -155,6 +193,7 @@ reactor Cell_Conveyor extends FrostMachine{
         temp = segment.get_property(self.FIFO)
         temp.get_property(self.size).value += value[0]
         ls = []
+        # TODO: What is the meaning of value[0]?
         if value[0] > 0:
             for i in range(0, 9):                
                 if temp.get_property(self.item.format(n=i)).value == 0:
@@ -167,9 +206,10 @@ reactor Cell_Conveyor extends FrostMachine{
                 ls.append(temp.get_property(self.item.format(n=i)).value)
                 temp.get_property(self.item.format(n=i)).value = temp.get_property(self.item.format(n=i+1)).value
             temp.get_property(self.item.format(n=9)).value = 0
-            
-        logging.info(f"Segment {segment.name} updated with values: {ls}")    
-     =}
+
+        self.logger.info(f"Segment {segment.name} updated with values: {ls}")
+        self.logger.debug(f"FIFO value after update: {temp.value}")
+    =}
 
     method update_single_bay(bay, value){=
         """
@@ -211,48 +251,56 @@ reactor Cell_Conveyor extends FrostMachine{
         """
         Updates the Segment1 state with the value from the conveyor system.
         """
+        self.logger.debug(f"Updating Segment1 with value: {conveyor.Segment1.value}")
         self.update_segment(self.segment_1, conveyor.Segment1.value)
     =}
     reaction(conveyor.Segment2){=
         """
         Updates the Segment2 state with the value from the conveyor system.
         """
+        self.logger.debug(f"Updating Segment2 with value: {conveyor.Segment2.value}")
         self.update_segment(self.segment_2, conveyor.Segment2.value)
     =}
     reaction(conveyor.Segment3){=
         """
         Updates the Segment3 state with the value from the conveyor system.
         """
+        self.logger.debug(f"Updating Segment3 with value: {conveyor.Segment3.value}")
         self.update_segment(self.segment_3, conveyor.Segment3.value)
     =}
     reaction(conveyor.Segment4){=
         """
         Updates the Segment4 state with the value from the conveyor system. 
         """
+        self.logger.debug(f"Updating Segment4 with value: {conveyor.Segment4.value}")
         self.update_segment(self.segment_4, conveyor.Segment4.value)
     =}
     reaction(conveyor.Segment5){=
         """
         Updates the Segment5 state with the value from the conveyor system.
         """
+        self.logger.debug(f"Updating Segment5 with value: {conveyor.Segment5.value}")
         self.update_segment(self.segment_5, conveyor.Segment5.value)
     =}
     reaction(conveyor.Segment6){=
         """
         Updates the Segment6 state with the value from the conveyor system.
         """
+        self.logger.debug(f"Updating Segment6 with value: {conveyor.Segment6.value}")
         self.update_segment(self.segment_6, conveyor.Segment6.value)
     =}
     reaction(conveyor.Segment7){=
         """
         Updates the Segment7 state with the value from the conveyor system.
         """
+        self.logger.debug(f"Updating Segment7 with value: {conveyor.Segment7.value}")
         self.update_segment(self.segment_7, conveyor.Segment7.value)
     =}
     reaction(conveyor.Segment8){=
         """
         Updates the Segment8 state with the value from the conveyor system.
         """
+        self.logger.debug(f"Updating Segment8 with value: {conveyor.Segment8.value}")
         self.update_segment(self.segment_8, conveyor.Segment8.value)
     =}
     

@@ -1,0 +1,462 @@
+target Python;
+
+
+import FrostReactor from "../frost/src/lib/FrostReactor.lf"
+
+preamble{=
+import threading
+import time
+from aiokafka import AIOKafkaProducer
+import asyncio
+import uuid
+import aio_pika
+import json
+from ice_proxy import convert_to_frost_message, convert_to_ice_message
+from kafka import KafkaProducer
+KAFKA_BOOTSTRAP_SERVERS = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "localhost:9093")
+KAFKA_CLIENT_USER = os.environ.get("KAFKA_CLIENT_USER", "username")
+KAFKA_CLIENT_PASSWORD = os.environ.get("KAFKA_CLIENT_PASSWORD", "password")
+KAFKA_SECURITY_PROTOCOL = os.environ.get("KAFKA_SECURITY_PROTOCOL", "SASL_PLAINTEXT")
+KAFKA_SASL_MECHANISM = os.environ.get("KAFKA_SASL_MECHANISM", "SCRAM-SHA-512")
+RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "localhost")
+RABBITMQ_PORT = int(os.environ.get("RABBITMQ_PORT", 30690))
+RABBITMQ_VIRTUAL_HOST = os.environ.get("RABBITMQ_VIRTUAL_HOST", "/rpc")
+RABBITMQ_USERNAME = os.environ.get("RABBITMQ_USERNAME", "guest")
+RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD", "guest")
+
+from conveyor_utils import (
+    conveyor_obj, Pallets, Bayes, Segments, Commands, commands_pointer,
+    IndexPosition, setDestination, PalletPosition, palletNum,
+    Pallet, Pallet1, Pallet2, Pallet3, Pallet4, Pallet5, Pallet6, Pallet7, Pallet8, Pallet9, Pallet10,
+    Bay, Bay1, Bay2, Bay3, Bay4, Bay5,
+    Segment, Segment1, Segment2, Segment3, Segment4, Segment5, Segment6, Segment7, Segment8,
+    FIFO, size, item
+)
+from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
+from machine_data_model.protocols.frost_v1.frost_header import MsgType, MsgNamespace, ProtocolMsgName, FrostHeader, VariableMsgName
+from machine_data_model.protocols.frost_v1.frost_payload import VariablePayload, ProtocolPayload, MethodPayload
+import uuid
+import logging
+from influx_line_protocol import Metric
+=}
+ 
+reactor ICEProxy extends FrostReactor{
+    preamble{=
+        def run_asyncio_loop(
+            self,
+            shutdown_evt: asyncio.Event
+            ):
+
+            async def wait_for_event():
+                '''Wait for the shutdown event to be set.
+                '''
+                self.loop = asyncio.get_running_loop()
+                await asyncio.wait_for(shutdown_evt.wait(), None)
+            asyncio.run(wait_for_event())
+
+        async def start_kafka_producer(
+            self,
+            kafka_bootstrap_servers: str,
+            kafka_client_user: str,
+            kafka_client_password: str,
+            kafka_security_protocol: str,
+            kafka_sasl_mechanism: str
+        ):
+            '''Start the Kafka producer.
+            Args:
+                kafka_bootstrap_servers (str): The Kafka bootstrap servers.
+                kafka_client_user (str): The Kafka client user.
+                kafka_client_password (str): The Kafka client password.
+                kafka_security_protocol (str): The Kafka security protocol.
+                kafka_sasl_mechanism (str): The Kafka SASL mechanism.
+            '''
+            self.kafka_producer = AIOKafkaProducer(
+                bootstrap_servers=kafka_bootstrap_servers,
+                security_protocol=kafka_security_protocol,
+                sasl_mechanism=kafka_sasl_mechanism,
+                sasl_plain_username=kafka_client_user,
+                sasl_plain_password=kafka_client_password
+            )
+            await self.kafka_producer.start()
+            self.logger.debug(f"Kafka producer started with bootstrap servers: {kafka_bootstrap_servers}, user: {kafka_client_user}, security protocol: {kafka_security_protocol}, SASL mechanism: {kafka_sasl_mechanism}")
+            return True
+
+        async def stop_kafka_producer(self):
+            '''Stop the Kafka producer.
+            Args:
+                ice_proxy (ReactorBase): The ICEProxy reactor instance.
+            '''
+            if self.kafka_producer is not None:
+                await self.kafka_producer.stop()
+                self.kafka_producer = None
+                self.logger.debug("Kafka producer stopped")
+
+        async def send_message_to_kafka(
+            self,
+            topic: str,
+            message: str
+        ):
+            '''Send a message to the specified Kafka topic.
+            Args:
+                topic (str): The Kafka topic to send the message to.
+                message (str): The message to send.
+            '''
+            result = await self.kafka_producer.send_and_wait(topic, message.encode("utf-8"))
+            return result
+
+        async def start_rabbitmq_rpc(
+            self,
+            host: str = "localhost",
+            port: int = 5672,
+            virtual_host: str = "/",
+            username: str = "guest",
+            password: str = "guest"
+        ):
+            '''Start the RabbitMQ RPC client.
+            Args:
+                host (str): The RabbitMQ host.
+                port (int): The RabbitMQ port.
+                virtual_host (str): The RabbitMQ virtual host.
+                username (str): The RabbitMQ username.
+                password (str): The RabbitMQ password.
+
+            Returns:
+                aio_pika.Connection: The RabbitMQ connection.
+            '''
+            connection = await aio_pika.connect(
+                host=host, 
+                port=port,
+                virtualhost=virtual_host,
+                login=username,
+                password=password,
+                heartbeat=600
+            )
+
+            channel = await connection.channel()  # Create a channel
+            self.logger.debug(f"RabbitMQ connection established to {host}:{port} with virtual host {virtual_host} and user {username}")
+            
+            self.rabbitmq_connection = connection
+            self.rabbitmq_channel = channel
+            return True
+
+        async def stop_rabbitmq_rpc(self):
+            '''Stop the RabbitMQ RPC client.
+            '''
+            if self.rabbitmq_channel is not None:
+                await self.rabbitmq_channel.close()
+                self.rabbitmq_channel = None
+            if self.rabbitmq_connection is not None:
+                await self.rabbitmq_connection.close()
+                self.rabbitmq_connection = None
+            self.logger.debug("RabbitMQ connection closed")
+
+        def send_frost_message(
+            self,
+            ice_target: str,
+            correlation_id: uuid.UUID,
+            message: str,
+        ):
+            
+            self.rabbitmq_request.schedule(
+                0, 
+                convert_to_frost_message(
+                    correlation_id=str(correlation_id),
+                    message=message,
+                    sender=self._get_reactor_name(),
+                    target=ice_target
+                )
+            )
+
+        async def create_and_listen_to_queue(
+            self,
+            queue_name: str,
+            ice_target: str,
+        ):
+            '''Create a RabbitMQ queue and start listening to it.
+            Args:
+                queue_name (str): The name of the queue to create.
+                ice_target (str): The name of the ICE target to forward messages to.
+            '''
+            queue = await self.rabbitmq_channel.declare_queue(queue_name, durable=False, auto_delete=True)
+            self.logger.debug(f"Declared RabbitMQ queue {queue_name}")
+
+            async with queue.iterator() as qiterator:
+                message: AbstractIncomingMessage
+                async for message in qiterator:
+                    body = json.loads(message.body.decode("utf-8"))
+                    self.logger.info(f"Received message from RabbitMQ queue {queue_name}: {body}")
+
+                    # Add the response queue to the dictionary
+                    correlation_id = message.correlation_id
+                    self.pending_requests[correlation_id] = message.reply_to
+
+                    # Forward the message to the ICE target
+                    self.send_frost_message(
+                        ice_target,
+                        correlation_id,
+                        body,
+                    )
+                    
+                    # Acknowledge the message
+                    await message.ack()
+
+        
+
+        async def forward_machine_response(self, response: FrostMessage, response_queue: str):
+            '''Forward the response message to the RabbitMQ queue.
+            Args:
+                response (FrostMessage): The response message to forward.
+                response_queue (str): The name of the RabbitMQ queue to forward the message to.
+            '''
+            
+            exchange = self.rabbitmq_channel.default_exchange
+            await exchange.publish(
+                aio_pika.Message(
+                    json.dumps(convert_to_ice_message(response)).encode("utf-8"),
+                    content_type="text/plain",
+                    correlation_id=str(response.correlation_id),
+                ),
+                routing_key=response_queue,
+            )
+
+    =}
+
+    physical action rabbitmq_request
+
+    state kafka_bootstrap_servers
+    state kafka_client_user
+    state kafka_client_password
+    state kafka_security_protocol
+    state kafka_sasl_mechanism
+    state rabbitmq_host
+    state rabbitmq_port
+    state rabbitmq_virtual_host
+    state rabbitmq_username
+    state rabbitmq_password
+    state pending_requests = {={}=}
+
+    # asyncio 
+    state kafka_producer
+    state rabbitmq_connection
+    state rabbitmq_channel
+    state shutdown_evt
+    state thread
+    state loop
+
+    timer test_msg(10s)
+
+    // @label _initialize_ice_proxy
+    reaction(startup) -> rabbitmq_request {=
+        '''Initialize the Kafka and RabbitMQ connections.'''
+
+        kafka_bootstrap_servers = self.kafka_bootstrap_servers if self.kafka_bootstrap_servers else KAFKA_BOOTSTRAP_SERVERS
+        kafka_client_user = self.kafka_client_user if self.kafka_client_user else KAFKA_CLIENT_USER
+        kafka_client_password = self.kafka_client_password if self.kafka_client_password else KAFKA_CLIENT_PASSWORD
+        kafka_security_protocol = self.kafka_security_protocol if self.kafka_security_protocol else KAFKA_SECURITY_PROTOCOL
+        kafka_sasl_mechanism = self.kafka_sasl_mechanism if self.kafka_sasl_mechanism else KAFKA_SASL_MECHANISM
+
+        self.shutdown_evt = asyncio.Event()
+        self.thread = threading.Thread(
+            target=self.run_asyncio_loop, 
+            daemon=True,
+            kwargs={
+                "shutdown_evt": self.shutdown_evt,
+            }
+        )
+        self.thread.start()
+
+        time.sleep(0.1)  # Give some time for the thread to start
+
+        asyncio.run_coroutine_threadsafe(
+            self.start_kafka_producer(
+                kafka_bootstrap_servers,
+                kafka_client_user,
+                kafka_client_password,
+                kafka_security_protocol,
+                kafka_sasl_mechanism
+            ), 
+            self.loop
+        ).result()  # Wait for the producer to start
+
+        # connecty to RabbitMQ
+        rabbitmq_host = self.rabbitmq_host if self.rabbitmq_host else RABBITMQ_HOST
+        rabbitmq_port = self.rabbitmq_port if self.rabbitmq_port else RABBITMQ_PORT
+        rabbitmq_virtual_host = self.rabbitmq_virtual_host if self.rabbitmq_virtual_host else RABBITMQ_VIRTUAL_HOST
+        rabbitmq_username = self.rabbitmq_username if self.rabbitmq_username else RABBITMQ_USERNAME
+        rabbitmq_password = self.rabbitmq_password if self.rabbitmq_password else RABBITMQ_PASSWORD 
+        asyncio.run_coroutine_threadsafe(
+            self.start_rabbitmq_rpc(
+                host=rabbitmq_host,
+                port=rabbitmq_port,
+                virtual_host=rabbitmq_virtual_host,
+                username=rabbitmq_username,
+                password=rabbitmq_password
+            ), 
+            self.loop
+        ).result()  # Wait for the RabbitMQ connection to be established
+
+        
+        self.loop.create_task(
+            self.create_and_listen_to_queue(
+                queue_name="conveyor_rpc_queue",
+                ice_target="conveyor"
+            )
+        )
+
+        # register rabbitmq_request 
+        self.rabbitmq_request = rabbitmq_request
+    =}
+
+    method create_subscribe_msg(machine, variable_path){=
+        '''Create a subscription message for the specified machine and variable path.
+        Args:
+            machine (str): The name of the machine to subscribe to.
+            variable_path (str): The path of the variable to subscribe to.
+        Returns:
+            FrostMessage: A message that requests subscription to the specified variable.
+        '''
+        return FrostMessage(
+            sender= self._get_reactor_name(),
+            target=machine,
+            identifier=str(uuid.uuid4()),
+            header=FrostHeader(
+                type=MsgType.REQUEST,
+                version=(1, 0, 0),
+                namespace=MsgNamespace.VARIABLE,
+                msg_name=VariableMsgName.SUBSCRIBE,
+            ),
+            payload=VariablePayload(node=variable_path),
+        )
+
+    =}
+
+    // @label _subscribe_to_conveyor
+    reaction(connected_to_bus) -> channel_out{=
+        '''Subscribe to the conveyor variables and send subscription messages to the bus.
+        Args:
+            connected_to_bus (logical action): The event that indicates the reactor is connected to the bus.
+        Returns:
+            channel_out (output): The output port for sending subscription messages.
+        '''
+        msgs = [
+            self.create_subscribe_msg("conveyor", conveyor_obj + Segments + segment + f"/{FIFO}" + f"/{variable}") for segment in [
+                Segment1, Segment2, Segment3, Segment4, Segment5, Segment6, Segment7, Segment8
+            ]
+            for variable in ["size", "item0", "item1", "item2", "item3", "item4", "item5", "item6", "item7", "item8", "item9"]
+        ]
+
+        # pallets 
+        msgs += [
+            self.create_subscribe_msg("conveyor", conveyor_obj + Pallets + pallet + f"/{attribute}") 
+            for pallet in [
+                Pallet1, Pallet2, Pallet3, Pallet4, Pallet5, Pallet6, Pallet7, Pallet8, Pallet9, Pallet10
+            ] 
+            for attribute in [
+                "destination", "reserved", "contentPosition1", "contentPosition2", "contentPosition3", "type"
+            ]
+        ]
+
+        self.logger.debug(f"Sending subscription messages: {msgs}")
+        self._set_output_port(msgs, channel_out)
+    =}
+
+    method send_conveyor_messages(message){=
+        '''Sends a message to the Kafka topics starting with 'ice_data_conveyor_*'.
+        
+        Args:
+            message (str): The message to send.
+        '''
+        # forward msgs as they are
+        path = message.payload.node
+        tags = {
+            "category": "state",
+            "datatype": "Integer",
+            "opcua_path": path,
+        }
+        metric = Metric("Conveyor")
+        metric.tags = tags
+        metric.add_value(path.split("/")[-1].capitalize(), message.payload.value)
+        metric.with_timestamp(lf.time.start() + lf.time.logical_elapsed())
+
+        result = asyncio.run_coroutine_threadsafe(
+            self.send_message_to_kafka(
+                "ice_data_conveyor_state",
+                str(metric)
+            ), 
+            self.loop
+        ).result()  # Wait for the message to be sent
+        self.logger.debug(f"Sent message to Kafka topic 'ice_data_conveyor_state': {metric} with result {result=}")
+    
+    =}
+    
+    method _handle_subscription_updates(update_message){=
+        '''Handle subscription updates from the ICE machines. The updates are forwarded to their respective Kafka topics.
+        Args:
+            update_message (FrostMessage): The message containing the subscription update.
+        '''
+
+        self.logger.debug(f"Handling subscription update: {update_message}")
+
+        if update_message.sender == "conveyor":
+            self.send_conveyor_messages(update_message)
+            return
+
+        self.logger.warning(f"Received subscription update from unknown sender: {update_message.sender}. Message: {update_message}")
+    =}
+
+    method _forward_response_to_rabbitmq(response_message){=
+        '''Forward the response message to the RabbitMQ queue.
+        Args:
+            response_message (FrostMessage): The response message to forward.
+        '''
+
+        self.logger.debug(f"Forwarding response message {response_message} to RabbitMQ queue {self.pending_requests[response_message.correlation_id]}")
+
+        asyncio.run_coroutine_threadsafe(
+            self.forward_machine_response(
+                response=response_message,
+                response_queue=self.pending_requests[response_message.correlation_id]
+            ),
+            self.loop
+        ).result()  # Wait for the response to be forwarded
+        del self.pending_requests[response_message.correlation_id]
+    =}
+
+    // @label _handle_responses
+    reaction(message_filter.responses){=
+        '''Process the response messages from the message filter, forwarding variable updates to Kafka and read, write, and invoke responses to RabbitMQ.
+
+        Args:
+            message_filter.responses (input): The input port for response messages.
+        '''
+
+        for bank_index, message in message_filter.responses.value:            
+            if message.correlation_id in self.pending_requests:
+                self._forward_response_to_rabbitmq(message)
+            elif message.header.namespace == MsgNamespace.VARIABLE and message.header.msg_name == VariableMsgName.UPDATE:
+                self._handle_subscription_updates(message)
+    =}
+
+    // @label _forward_external_requests
+    reaction(rabbitmq_request) -> channel_out{=
+        self._set_output_port(rabbitmq_request.value, channel_out)
+    =}
+
+    // @label _tear_down_ice_proxy
+    reaction(shutdown){=
+        '''Tear down the ICEProxy reactor and close the Kafka producer.'''
+        self.logger.debug("Shutting down ICEProxy reactor")
+
+        # close the RabbitMQ connection
+        asyncio.run_coroutine_threadsafe(self.stop_rabbitmq_rpc(), self.loop).result()  
+
+        # close the Kafka producer
+        asyncio.run_coroutine_threadsafe(self.stop_kafka_producer(), self.loop).result()
+
+        if self.thread is not None:
+            self.logger.debug("Waiting for the asyncio loop thread to finish")
+            self.shutdown_evt.set()  # Signal the thread to stop
+            self.thread.join()
+            self.logger.debug("Asyncio loop thread finished")
+    =}
+}

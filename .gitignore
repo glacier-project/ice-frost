@@ -173,3 +173,6 @@ bin/
 Lingo.lock
 *.csv
 *.tex
+.env
+.envrc
+.vscode
