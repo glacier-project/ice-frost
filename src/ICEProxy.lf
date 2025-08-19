@@ -12,7 +12,6 @@ import uuid
 import aio_pika
 import json
 from ice_proxy import convert_to_frost_message, convert_to_ice_message
-from kafka import KafkaProducer
 KAFKA_BOOTSTRAP_SERVERS = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "localhost:9093")
 KAFKA_CLIENT_USER = os.environ.get("KAFKA_CLIENT_USER", "username")
 KAFKA_CLIENT_PASSWORD = os.environ.get("KAFKA_CLIENT_PASSWORD", "password")
