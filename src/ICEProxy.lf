@@ -29,7 +29,9 @@ from conveyor_utils import (
     Pallet, Pallet1, Pallet2, Pallet3, Pallet4, Pallet5, Pallet6, Pallet7, Pallet8, Pallet9, Pallet10,
     Bay, Bay1, Bay2, Bay3, Bay4, Bay5,
     Segment, Segment1, Segment2, Segment3, Segment4, Segment5, Segment6, Segment7, Segment8,
-    FIFO, size, item
+    FIFO, size, item,
+    conveyor_data_exchange, Destinations,
+    destination_1_1, destination_2_1, destination_2_2, destination_2_3, destination_3_1, destination_3_2, destination_3_3, destination_4_1, destination_4_2, destination_4_3, destination_5_0
 )
 from machine_data_model.protocols.frost_v1.frost_message import FrostMessage
 from machine_data_model.protocols.frost_v1.frost_header import MsgType, MsgNamespace, ProtocolMsgName, FrostHeader, VariableMsgName
@@ -355,6 +357,14 @@ reactor ICEProxy extends FrostReactor{
             ]
         ]
 
+        # destinations
+        msgs += [
+            self.create_subscribe_msg("conveyor", conveyor_data_exchange + Destinations + destination)
+            for destination in [
+                destination_1_1, destination_2_1, destination_2_2, destination_2_3, destination_3_1, destination_3_2, destination_3_3, destination_4_1, destination_4_2, destination_4_3, destination_5_0
+            ]
+        ]
+
         self.logger.debug(f"Sending subscription messages: {msgs}")
         self._set_output_port(msgs, channel_out)
     =}
@@ -377,14 +387,22 @@ reactor ICEProxy extends FrostReactor{
         metric.add_value(path.split("/")[-1].capitalize(), message.payload.value)
         metric.with_timestamp(lf.time.start() + lf.time.logical_elapsed())
 
+        topic = ""
+        if conveyor_obj + Segments  in path:
+            topic = "ice_data_conveyor_fifos"
+        if conveyor_obj + Pallets in path:
+            topic = "ice_data_conveyor_control"
+        if conveyor_data_exchange + Destinations in path:
+            topic = "ice_data_conveyor_control"
+
         result = asyncio.run_coroutine_threadsafe(
             self.send_message_to_kafka(
-                "ice_data_conveyor_state",
+                topic,
                 str(metric)
             ), 
             self.loop
         ).result()  # Wait for the message to be sent
-        self.logger.debug(f"Sent message to Kafka topic 'ice_data_conveyor_state': {metric} with result {result=}")
+        self.logger.debug(f"Sent message to Kafka topic '{topic}': {metric} with result {result=}")
     
     =}
     
