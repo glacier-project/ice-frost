@@ -75,10 +75,10 @@ reactor Bay_Switch(param = "default"){
         elif command.value[0] == "giveWorkpiece":
             if isinstance(command.value[2], Material):
                 ask.set(["giveWorkpiece", "Controller", True])
-                self.pallet.object = command.value[2]
+                self.pallet.object1 = command.value[2]
             elif isinstance(command.value[2], str):
-                ask.set(["giveWorkpiece", command.value[2], self.pallet.object])
-                self.pallet.object = None
+                ask.set(["giveWorkpiece", command.value[2], self.pallet.object1])
+                self.pallet.object1 = None
     =}
 
     '''This reaction is triggered when a pallet arrives at the cross switch.

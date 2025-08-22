@@ -1,82 +1,82 @@
 recipe: "Test"
 conditions:
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True
-  - machine: "Cell_Conveyor"
+  - machine: "conveyor"
     header: METHOD
     node: "result"
     value: True  

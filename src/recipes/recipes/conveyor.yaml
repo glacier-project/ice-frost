@@ -1,8 +1,8 @@
 recipe: "Test"
 description: "Test recipe for the RBKairos system"
 steps:
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -11,8 +11,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [1, 23]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -21,8 +21,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [4, 21]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -31,8 +31,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [4, 0]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -41,8 +41,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [1, 0]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -52,8 +52,8 @@ steps:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [6, 22]
 #5
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -62,8 +62,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [6, 0]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -72,8 +72,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [4, 32]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -82,8 +82,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [4, 0]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -92,8 +92,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [7, 31]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -103,8 +103,8 @@ steps:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [7, 0]
 #10
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -113,8 +113,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [9, 11]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -123,8 +123,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [9, 0]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -133,8 +133,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [1, 23]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -143,8 +143,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [1, 0]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -154,8 +154,8 @@ steps:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [4, 43]
   #15
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -164,8 +164,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [4, 0]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -174,8 +174,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [6, 31]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -184,8 +184,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [6, 0]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]
@@ -194,8 +194,8 @@ steps:
     payload:
       node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [7, 5]
-  - sender: "Scheduler"
-    target: "Cell_Conveyor"
+  - sender: "scheduler"
+    target: "conveyor"
     header:
       type: "REQUEST"
       version: [1, 0, 0]

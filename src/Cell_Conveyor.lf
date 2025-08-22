@@ -78,7 +78,7 @@ reactor Cell_Conveyor extends FrostMachine{
         self.bay4 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay4)
         self.bay5 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay5)      
         pallets_in_bay = {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None, 8: None, 9: None, 10: None}
-        self.pallets      
+        self.pallets = self.data_model.get_node(self.conveyor_obj + self.Pallets[:-1])      
         self.segment_1 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment1)    
         self.segment_2 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment2)
         self.segment_3 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment3)
@@ -103,6 +103,22 @@ reactor Cell_Conveyor extends FrostMachine{
         } 
     =}
 
+    state model_pallets
+    
+    method _update_model_pallet_destination(pallet_index, value){=
+        if value == 0:
+            self.model_pallets[pallet_index].destination = None
+
+        self.model_pallets[pallet_index].destination = self.convert_destination(value)
+    =}
+
+    reaction(conveyor.Pallets){=
+        self.model_pallets = conveyor.Pallets.value
+        for i in range(1, 11):
+            pallet_node = getattr(self, f"pallet_{i}")
+            pallet_node.get_property("destination")._post_update_value = \
+            lambda prev_value, value, index=i: self._update_model_pallet_destination(index, value)
+    =}
 
     // Periodically send messages to the conveyor system
     logical action check   
@@ -139,29 +155,33 @@ reactor Cell_Conveyor extends FrostMachine{
         raise ValueError("Invalid destination value")
     =}
     
+    method convert_destination(destination){=
+        if destination is None:
+            return None
+        temp = destination
+        position = ""
+        if temp != int(self.Bay.format(n=5)[-1]):
+            temp = int(destination) / 10
+            position = str(destination % 10)
+        letter = self.dict_bay_conveyor[int(temp)]
+        return str(letter + position)
+    =}
+
     method setPalletDest(palletNumber, destination){=
         """
         Sets the destination of a pallet and sends a command to the conveyor system.
         :param palletNumber: The number of the pallet to set the destination for.
         :param destination: The destination to set for the pallet.
         :return: The destination as a string.
-        """   
-        pallet = self.pallets[palletNumber-1]
-        (pallet.get_property("destination")).value =  destination     
+        """                
         res = str(destination)
         if destination == 0:
             self.move_pallet_to_LTU(palletNumber)
-            return res
-        
+            return res        
+
         self.dynamic_node.value = self.getTargetNode(destination)
-        logging.warning(f"Setting destination for pallet {palletNumber} to {destination}")        
-        temp1 = destination
-        temp2 = ""
-        if temp1 != int(self.Bay.format(n=5)[-1]):
-            temp1 = destination / 10
-            temp2 = str(destination % 10)
-        letter = self.dict_bay_conveyor[int(temp1)]
-        self.messages_to_conveyor.append([1, [palletNumber, str(letter + temp2)]])
+        logging.warning(f"Setting destination for pallet {palletNumber} to {destination}")      
+        self.messages_to_conveyor.append([1, [palletNumber, self.convert_destination(destination)]])
         return res
     =}
     

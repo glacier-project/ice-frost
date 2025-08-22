@@ -79,6 +79,7 @@ reactor Controller{
     input FROST_IN
     output FROST_OUT
     output Release
+    output Pallets
     //ACTIONS
     logical action control_AF
     logical action control_BH
@@ -119,7 +120,7 @@ reactor Controller{
         logging.info(f"Conveyor state: {self.conveyor}")
     =}
 
-    reaction (startup)-> OUT, BAY_OUT, create_pallet{=
+    reaction (startup)-> OUT, BAY_OUT, create_pallet, Pallets{=
         self.pallet_on_G = False
         self.pallets_to_be_created = [2, 3, 4, 5, 6, 7, 8, 9, 10]
         self.BH_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
@@ -155,6 +156,7 @@ reactor Controller{
         self.pallets[10] = Pallet(pallet_id = 10, position = "I")
         for z in range(1, len(self.pallets)):
             create_pallet.schedule(z-1)
+        Pallets.set(self.pallets)
     =}
 
     reaction(control_AF) -> SEG_OUT{=
@@ -342,7 +344,7 @@ reactor Controller{
             if temp.action == "BAY" and Bay_Control(self.N_, int(temp.destination[1])):
                 temp.action = "OUT"
         self.BH_buffers["IN_DOWN"].append(temp)
-        out = "SEGMENT_AB", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object
+        out = "SEGMENT_AB", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
         control_BH.schedule(0)
         control_AF.schedule(1)        
     =}
@@ -357,7 +359,7 @@ reactor Controller{
             if temp.action == "BAY" and Bay_Control(self.O_, int(temp.destination[1])):
                 temp.action = "OUT"
         self.CI_buffers["IN_DOWN"].append(temp)
-        out = "SEGMENT_BC", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object
+        out = "SEGMENT_BC", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
         control_CI.schedule(0)
         control_BH.schedule(1)
     =}
@@ -373,7 +375,7 @@ reactor Controller{
                 temp.action = "OUT"
                 self.P_buffers.append(temp)
         self.DL_buffers["IN_DOWN"].append(temp)
-        out = "SEGMENT_CD", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object
+        out = "SEGMENT_CD", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
         control_DL.schedule(0)
         control_CI.schedule(1)
     =}
@@ -418,7 +420,7 @@ reactor Controller{
                 temp.action = "OUT"
                 self.O_buffers.append(temp)
         self.CI_buffers["IN_UP"].append(temp)   
-        out = "SEGMENT_LI", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object
+        out = "SEGMENT_LI", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
         control_CI.schedule(0)
         control_DL.schedule(1)
     =}
@@ -434,7 +436,7 @@ reactor Controller{
                 temp.action = "OUT"
                 self.N_buffers.append(temp)            
         self.BH_buffers["IN_UP"].append(temp)
-        out = "SEGMENT_IH", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object
+        out = "SEGMENT_IH", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
         control_CI.schedule(0)
         control_BH.schedule(1)
     =}
@@ -444,7 +446,7 @@ reactor Controller{
         temp = SEG_HG.value
         temp.action = "OUT"
         self.HG_buffers.append(temp)
-        out = "SEGMENT_HG", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object
+        out = "SEGMENT_HG", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
         control_G.schedule(0)
         control_BH.schedule(1)
     =}
@@ -453,7 +455,7 @@ reactor Controller{
         temp = SEG_GF.value
         temp.action = "OUT"
         self.GF_buffers.append(temp)
-        out = "SEGMENT_GF", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object
+        out = "SEGMENT_GF", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
         control_G.schedule(0)
         control_AF.schedule(1)
     =}
