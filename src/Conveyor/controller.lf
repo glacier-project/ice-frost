@@ -701,6 +701,8 @@ reactor Controller{
             temp = self.pallets[args[0]]
             temp.looping = True
             temp.bay = None
+            if temp.destination == None:
+                return
             loc = int(temp.destination[1])
             temp.destination = None
             pos = temp.position
