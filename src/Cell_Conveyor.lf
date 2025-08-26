@@ -87,11 +87,10 @@ reactor Cell_Conveyor extends FrostMachine{
         self.segment_6 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment6)
         self.segment_7 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment7)
         self.segment_8 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment8)
-
         # Methods
         self.setPalletDestination = self.data_model.get_node(self.commands_pointer + "setDestination")
-        self.dynamic_node = self.data_model.get_node("Cell_Conveyor/dynamic_node")
-        self.zero_node = self.data_model.get_node("Cell_Conveyor/zero_node")
+        self.dynamic_node = self.data_model.get_node("Objects/dynamic_node")
+        self.zero_node = self.data_model.get_node("Objects/zero_node")
         self.pallets = [self.pallet_1, self.pallet_2, self.pallet_3, self.pallet_4, self.pallet_5, self.pallet_6, self.pallet_7, self.pallet_8, self.pallet_9, self.pallet_10] 
         self.bayes = {5: self.bay5, 11:self.bay1, 21:self.bay2, 31:self.bay3, 41:self.bay4}
         self.dict_bay_conveyor = {

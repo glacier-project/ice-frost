@@ -467,10 +467,21 @@ reactor Controller{
 
         elif BAY_P_IN.value[0] == "Move":
             s = "P" + BAY_P_IN.value[1]
+            ctrl = int(BAY_P_IN.value[3]) if (BAY_P_IN.value[2]) == None else int(BAY_P_IN.value[2][1])
             route =  Bay_Routing(s, BAY_P_IN.value[2], "P")
             n = int(BAY_P_IN.value[1])
             Update_Bay(self.P_, n, route[0])
+            y = "Move", s, route[0]
+            BAY_OUT.set(y)
 
+        elif BAY_P_IN.value[0] == "Move_in_bay":
+            s = "P" + BAY_P_IN.value[1]
+            ctrl = int(BAY_P_IN.value[3]) if (BAY_P_IN.value[2]) == None else int(BAY_P_IN.value[2][1])
+            if not Bay_Control(self.P_, ctrl):
+                return None
+            route =  Bay_Routing(s, BAY_P_IN.value[2], "P")
+            n = int(BAY_P_IN.value[1])
+            Update_Bay(self.P_, n, route[0])
             y = "Move", s, route[0]
             BAY_OUT.set(y)
 
@@ -577,7 +588,7 @@ reactor Controller{
     =}
 
     ############################## SWITCH REACTIONS ##############################
-    reaction(A_IN)-> OUT{=
+    reaction (A_IN)-> OUT{=
         if A_IN.value is not None and A_IN.value[0] == "Move":
             route = Routing(A_IN.value[1], A_IN.value[2])  
             y = "Move", "A", route

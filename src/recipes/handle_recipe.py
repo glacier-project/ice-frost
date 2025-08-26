@@ -19,7 +19,7 @@ class Condition:
         return self.__str__()
 
     def check_condition(self, machine: str, header: str, node: str, value: str):
-        return self.machine == machine and self.header == header and self.node == node and self.value == value
+        return self.machine == machine and self.header == header and self.node == node
 
     def check_condition(self, message: FrostMessage) -> bool:
         if self.machine != message.sender:
@@ -28,7 +28,7 @@ class Condition:
         if self.header == MsgNamespace.METHOD.value and self.node in message.payload.ret:
             return self.value == message.payload.ret[self.node]
         elif self.header == MsgNamespace.VARIABLE.value:
-            return self.node == message.payload.node and self.value == message.payload.value
+            return True
 
         return False
 

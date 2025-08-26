@@ -28,12 +28,22 @@ reactor Bay_Switch(param = "default"){
         self.pallet = None
     =}
 
+    logical action pallet_to_be_moved
+
+    reaction(pallet_to_be_moved) ->ask, pallet_to_be_moved{=
+        if self.pallet:
+            return
+        if self.pallet.destination != None and (self.pallet.destination[0] == self.pallet.position[0] and self.pallet.destination[1] == self.name):
+            ask.set(["Move_in_bay", self.name, self.pallet.destination, self.pallet.pallet_id])
+        pallet_to_be_moved.schedule(SEC(2))
+    =}
+
     '''This reaction is triggered when a pallet arrives at the bay switch.
     Similarly to the switch it checks the pallet has reached its destination.
     If so, it sends a message to the main reactor to inform the pallet has arrived.
     Otherwise, it asks the controller for the pallet route.
     '''
-    reaction(IN)-> ask, FROST_OUT{=
+    reaction(IN)-> ask, FROST_OUT, pallet_to_be_moved{=
         if IN.value is not None:
             self.pallet = IN.value
             #Update pallet position
@@ -47,7 +57,8 @@ reactor Bay_Switch(param = "default"){
                 ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
             elif self.pallet.destination[0] == self.pallet.position[0] and self.pallet.destination[1] == self.name:
                 #logging.warning(f"Eurekaaaaa")
-                ask.set(["_pallet_arrived", self.pallet.pallet_id, self.name])                
+                ask.set(["_pallet_arrived", self.pallet.pallet_id, self.name])
+                pallet_to_be_moved.schedule(SEC(2)) 
             else:
                 ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
     =}

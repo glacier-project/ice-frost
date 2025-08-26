@@ -9,9 +9,9 @@ conditions:
     node: "result"
     value: True
   - machine: "conveyor"
-    header: METHOD
-    node: "result"
-    value: True
+    header: VARIABLE
+    node: "destination"
+    value: 0
   - machine: "conveyor"
     header: METHOD
     node: "result"
