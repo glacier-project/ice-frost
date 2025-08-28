@@ -1,16 +1,18 @@
-time_precision: MSECS
+time_precision: NSECS
 logging_level: WARNING
 reactors:
-  scheduler:
-    logging_level: WARNING
-    message_filter:
-        logging_level: WARNING
+  iceproxy:
+    logging_level: DEBUG
+    parameters:
+      # kafka_bootstrap_servers: localhost:9093
+      # kafka_client_user: username
+      # kafka_client_password: password
+      # kafka_security_protocol: SASL_PLAINTEXT
+      # kafka_sasl_mechanism: SCRAM-SHA-512
   frost_bus:
     logging_level: WARNING
     parameters:
       data_model_path: "resources/data_model/frost_bus.yml"
-    message_filter:
-        logging_level: WARNING
   conveyor:
     logging_level: WARNING
     parameters:
@@ -19,4 +21,8 @@ reactors:
       message_filter:
         logging_level: WARNING
       conveyor:
-        logging_level: INFO
+        logging_level: WARNING
+
+
+
+              
