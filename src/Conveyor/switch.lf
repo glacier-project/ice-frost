@@ -49,6 +49,7 @@ reactor Switch(param = "default"){
     reaction(handle_pallet)-> ask, OUT, CROSS, go_to_bay{=
         if self.pallet is not None:
             self.pallet.position = self.name
+
             if self.pallet.destination == self.name:
                 y = "_pallet_arrived", self.pallet.pallet_id
                 ask.set(y)

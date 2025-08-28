@@ -74,14 +74,14 @@ reactor bay_G(param = "default"){
     reaction(command) -> handle_pallet, ask{=
         temp = command.value[0]
         if isinstance(temp, Material):
-            self.pallet.object = temp
+            self.pallet.object1 = temp
             self.pallet.destination = None
             self.pallet.looping = True
             handle_pallet.schedule(0)
             ask.set(["Conveyor", True])
         elif temp == "KairosAA":
-                ask.set([temp, self.pallet.object])
-                self.pallet.object = None
+                ask.set([temp, self.pallet.object1])
+                self.pallet.object1 = None
         elif command.value[0] == "Create":
             self.pallet = command.value[2]
             if self.pallet.looping == True:

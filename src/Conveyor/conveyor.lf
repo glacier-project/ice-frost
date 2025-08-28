@@ -33,7 +33,7 @@ reactor Conveyor{
     D.OUT -> DE.IN after 12700 msec
     
     //Links among interchanges
-    L.CROSS, D.CROSS -> LD.IN_UP, LD.IN_DOWN after 7000msec  
+    L.CROSS, D.CROSS -> LD.IN_UP, LD.IN_DOWN after 3500msec  
     LD.OUT_UP, LD.OUT_DOWN -> L.CROSS_IN, D.CROSS_IN  
     //Links among mutexes
     E.OUT, EM.OUT  -> EM.IN, M.IN after 1250msec
@@ -58,7 +58,7 @@ reactor Conveyor{
     C.OUT -> CD.IN after 20200 msec
 
     //Links among interchange
-    I.CROSS, C.CROSS -> IC.IN_UP, IC.IN_DOWN after 7000msec
+    I.CROSS, C.CROSS -> IC.IN_UP, IC.IN_DOWN after 3500msec
     IC.OUT_UP, IC.OUT_DOWN -> I.CROSS_IN, C.CROSS_IN
 
     // 
@@ -180,6 +180,8 @@ reactor Conveyor{
     reaction(Controller.FROST_OUT) -> to_frost{=
         to_frost.set(Controller.FROST_OUT.value)
     =}
+    output Pallets
+    Controller.Pallets -> Pallets after 0msec
 
     output Segment1
     reaction(ML.FROST_OUT) -> Segment1{=

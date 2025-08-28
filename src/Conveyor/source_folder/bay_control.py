@@ -1,6 +1,6 @@
 def Bay_Control(buff, val):
-    for i in range(val, 1, -1):
-        if not buff[i-1]:
+    for i in range(0, val):
+        if not buff[i]:
             return False
     return True
 

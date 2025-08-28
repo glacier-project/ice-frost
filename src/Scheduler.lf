@@ -3,88 +3,61 @@ target Python
     files: [recipes/handle_recipe.py]
 }
 
+import FrostReactor from "../frost/src/lib/FrostReactor.lf"
+
 preamble{=
     from handle_recipe import *
 =}
 
 reactor Scheduler(recipe_path = "recipes/recipes/conveyor.yaml",
                 condition_path = "recipes/conditions/conveyor.yaml"
-){
-    input channel_in
-    output channel_out
-    state name = {="Scheduler"=}
+) extends FrostReactor{
     state recipe = {=get_messages(self.recipe_path)=}  
     state conditions = {=get_conditions(self.condition_path)=}  
 
     logical action routine
-
-    method generate_bus_registration_message(){=
-        """
-        Generates a `REGISTER` message to initiate the registration process with the CommonBus.
-
-        This method constructs a `FrostMessage` that requests registration in the 
-        communication system. The message is addressed to the `"CommonBus"` and follows 
-        the `PROTOCOL` namespace with the `REGISTER` message name.
-
-        :return: A `FrostMessage` representing the registration request.
-        """
-        return FrostMessage(
-            sender=self.name,
-            target="CommonBus",
-            identifier=str(uuid.uuid4()),
-            header=FrostHeader(
-                type=MsgType.REQUEST,
-                version=(1, 0, 0),
-                namespace=MsgNamespace.PROTOCOL,
-                msg_name=ProtocolMsgName.REGISTER,
-            ),
-            payload=ProtocolPayload(),
-        )
-    =}
 
     reaction(startup)-> channel_out, routine{=
         """        
         Initializes the Scheduler reactor, setting up the initial state and scheduling the first routine.
         It also sends a registration message to the communication channel.
         """
-        channel_out.set(self.generate_bus_registration_message())
-        self.logger = logging.getLogger("Scheduler")
-        routine.schedule(SEC(0))
+        routine.schedule(SEC(1))
     =}
     state i = 0
+    // @label send_next_message
     reaction(routine)-> channel_out{=
         """
         Sends the next message in the recipe to the communication channel.
         If the index `i` is out of bounds, it resets to 0.
         """
-        #self.logger.warning(f"Scheduler: {self.name} is sending {self.recipe[self.i]}")
-        channel_out.set(self.recipe[self.i])        
+        self.logger.info(f"Scheduler: {self.name} is sending {self.recipe[self.i]}")
+        self._set_output_port(self.recipe[self.i], channel_out)
     =}
     state counter = 0
-    reaction(channel_in) -> routine{=
+    // @label process_message
+    reaction(message_filter.responses) -> routine{=
         """
         Handles incoming messages from the communication channel, checking them against the conditions. 
         If a message matches the current condition, it increments the index and schedules the next routine.
         If all conditions are met, it resets the index and increments the counter.
         """
-        messages = channel_in.value
-        assert isinstance(messages, list) and all(isinstance(item, Message) for item in messages), f"Received invalid messages: {messages}"
-        for message in messages:
+        messages = message_filter.responses.value
+        self.logger.warning(f"Received messages: {messages}")
+        assert isinstance(messages, list) and all(isinstance(item[1], FrostMessage) for item in messages), f"Received invalid messages: {messages}"
+        for _, message in messages:
             if message.header.matches(MsgType.REQUEST, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
-                self.logger.info(f"{message.sender} requests to register to {message.target}.")
+                self.logger.debug(f"{message.sender} requests to register to {message.target}.")
                 continue
             if message.header.matches(MsgType.RESPONSE, MsgNamespace.PROTOCOL, ProtocolMsgName.REGISTER):
-                self.logger.info(f"{message.sender} notify registration to {message.target}.")
+                self.logger.debug(f"{message.sender} notify registration to {message.target}.")
                 continue
 
             if self.conditions[self.i].check_condition(message):
-                self.logger.info(f"Passed condition: {self.conditions[self.i]}")
-                self.logger.warning(f"sending message to {message.target}, action: {message.header.msg_name}, payload: {message.payload}\n")
+                self.logger.debug(f"Passed condition: {self.conditions[self.i]}")
+                self.logger.debug(f"sending message to {message.target}, action: {message.header.msg_name}, payload: {message.payload}\n")
                 self.i += 1
                 routine.schedule(SEC(2))
-            #else:
-                #self.logger.info(f"Failed condition: {self.conditions[self.i]}")
-                #self.logger.info(f"Message: {message}")
 
         if self.i >= len(self.recipe):
             self.counter += 1            

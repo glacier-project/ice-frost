@@ -1,4 +1,4 @@
-machine-data-model @ git+https://github.com/esd-univr/machine-data-model.git@bugfix/subscription-object-variable
+machine-data-model @ git+https://github.com/esd-univr/machine-data-model.git@dev
 typing_extensions==4.14.1
 influx_line_protocol==0.1.5
 asyncio==4.0.0
