@@ -1,10 +1,9 @@
 target Python{
-    files: [source_folder/pallet.py, source_folder/material.py]
+    files: [source_folder/pallet.py, source_folder/conveyor.py]
 };
 
 preamble{=
-    from pallet import Pallet 
-    from material import Material
+    from pallet import Pallet
 =}
 
 reactor bay_G(param = "default"){
@@ -15,7 +14,7 @@ reactor bay_G(param = "default"){
     input IN
     output OUT
     output FROST_OUT
-    
+
     //Controller Links
     input command
     output ask
@@ -47,7 +46,6 @@ reactor bay_G(param = "default"){
                 self.pallet.action = "OUT"
                 FROST_OUT.set([self.pallet.pallet_id, -1])
                 OUT.set(self.pallet)
-                ask.set(["PalletReleased", self.pallet.pallet_id])
                 self.pallet = None
     =}
 
@@ -61,28 +59,8 @@ reactor bay_G(param = "default"){
             FROST_OUT.set([self.pallet.pallet_id, 1])
     =}
 
-    '''
-    The following reaction is called when the controller sends a command to the switch.
-    If the command is to create a pallet, it stores the pallet in the pallet variable and asks the controller
-    where to send the pallet.
-    If the command is to move the pallet, it sends the pallet to appropriate port.
-    If the command is BAY, it sends the pallet to the BAY_OUT port.
-    If the command is Give, it sends the pallet object to the CROSS port.
-    This last one is used to send the material to any machines that interact with the material
-    on the pallet.
-    '''
     reaction(command) -> handle_pallet, ask{=
-        temp = command.value[0]
-        if isinstance(temp, Material):
-            self.pallet.object1 = temp
-            self.pallet.destination = None
-            self.pallet.looping = True
-            handle_pallet.schedule(0)
-            ask.set(["Conveyor", True])
-        elif temp == "KairosAA":
-                ask.set([temp, self.pallet.object1])
-                self.pallet.object1 = None
-        elif command.value[0] == "Create":
+        if command.value[0] == "Create":
             self.pallet = command.value[2]
             if self.pallet.looping == True:
                 self.pallet.action = "OUT"

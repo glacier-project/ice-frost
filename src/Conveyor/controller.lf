@@ -29,7 +29,8 @@ reactor Controller{
     preamble{=        
         class Events(Enum):
             pallet_arrived = "_pallet_arrived"
-            material_arrived = "_material_arrived"
+            move = "Move"
+            free = "Free"
     =}
 
     state pallets
@@ -88,7 +89,6 @@ reactor Controller{
     logical action control_EM
     logical action control_G
     logical action create_pallet
-    logical action notify_frost
 
     //Pallets
     state pallets_to_be_created
@@ -461,7 +461,7 @@ reactor Controller{
     =}
 
     ############################## BAY REACTIONS ##############################
-    reaction(BAY_P_IN) -> BAY_OUT, notify_frost, control_DL{=
+    reaction(BAY_P_IN) -> BAY_OUT, control_DL{=
         if BAY_P_IN.value[0] == "Move":
             s = "P" + BAY_P_IN.value[1]
             ctrl = int(BAY_P_IN.value[3]) if (BAY_P_IN.value[2]) == None else int(BAY_P_IN.value[2][1])
@@ -474,14 +474,12 @@ reactor Controller{
         elif BAY_P_IN.value[0] == "Move_in_bay":
             s = "P" + BAY_P_IN.value[1]
             ctrl = int(BAY_P_IN.value[1]) - 1
-            logging.error(self.P_)
             if not Bay_Control(self.P_, ctrl):
                 return None  
             route =  Bay_Routing(s, BAY_P_IN.value[2], "P")
             n = int(BAY_P_IN.value[1])
             Update_Bay(self.P_, n, route[0])
             y = "Move", s, route[0]
-            logging.warning(y)
             BAY_OUT.set(y)
 
         elif BAY_P_IN.value[0] == "_pallet_arrived":
@@ -502,7 +500,7 @@ reactor Controller{
             control_DL.schedule(0)
     =}
 
-    reaction(BAY_O_IN) -> BAY_OUT, notify_frost, control_CI{=
+    reaction(BAY_O_IN) -> BAY_OUT, control_CI{=
         if BAY_O_IN.value[0] == "Move_in_bay":
             s = "O" + BAY_O_IN.value[1]
             ctrl = int(BAY_O_IN.value[1]) - 1
@@ -541,7 +539,7 @@ reactor Controller{
             control_CI.schedule(0)        
     =}
 
-    reaction(BAY_N_IN) -> BAY_OUT, notify_frost, control_BH{=
+    reaction(BAY_N_IN) -> BAY_OUT, control_BH{=
         if BAY_N_IN.value[0] == "Move":
             s = "N" + BAY_N_IN.value[1]
             route =  Bay_Routing(s, BAY_N_IN.value[2], "N")
@@ -581,25 +579,19 @@ reactor Controller{
 
     =}
 
-    reaction(BAY_Z_IN) -> BAY_Z_OUT, notify_frost, SEG_OUT, control_EM{=
+    reaction(BAY_Z_IN) -> BAY_Z_OUT, SEG_OUT, control_EM{=
         temp = BAY_Z_IN.value
-        if temp[0] == "giveWorkpiece":
-            notify_frost.schedule(0, temp[1:])
-        elif temp[0] == "Move":
+        if temp[0] == "Move":
             SEG_OUT.set(["DE", "STOP"])
             self.M_buffers.append(temp[2])
-            notify_frost.schedule(0, [7, [1, BAY_Z_IN.value[1]]])
             BAY_Z_OUT.set(["Move", "OUT"])
         elif temp[0] == "_pallet_arrived":
             self.conveyor["E"] = True 
             self.conveyor["M"] = True
             SEG_OUT.set(["DE", "CONTINUE"])
-            notify_frost.schedule(0, [1, [1, BAY_Z_IN.value[1]]])
             self.Z = True
             
             control_EM.schedule(0)
-        elif temp[0] == "PalletReleased":
-            notify_frost.schedule(0, [7, [1, BAY_Z_IN.value[1]]])
     =}
 
     ############################## SWITCH REACTIONS ##############################
@@ -701,7 +693,7 @@ reactor Controller{
             OUT.set(y)
     =}
     ############################## FROST ##############################
-    reaction(FROST_IN)-> OUT, BAY_OUT, BAY_Z_OUT, to_G, notify_frost{=
+    reaction(FROST_IN)-> OUT, BAY_OUT, BAY_Z_OUT, to_G{=
         command = FROST_IN.value[0]
         args = FROST_IN.value[1]
         if FROST_IN.value[0] == 1:
@@ -750,17 +742,10 @@ reactor Controller{
                     elif pos[0] == "P":
                         BAY_OUT.set(["Move_in_bay", pos])
                         i = 2
-                    notify_frost.schedule(0, [7, [i, pos[1]]])
     =}
 
-    reaction(from_G) -> notify_frost, to_G{=
+    reaction(from_G){=
         if from_G.value[0] == self.Events.pallet_arrived.value:
             self.pallet_on_G = True           
-            notify_frost.schedule(0,[1, [from_G.value[1], 5]])
-        elif from_G.value[0] == "PalletReleased":
-            notify_frost.schedule(0, [7, [5, from_G.value[1]]])
-        
-        else:
-            notify_frost.schedule(0, from_G.value)
     =}
 }

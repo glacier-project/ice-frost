@@ -43,8 +43,6 @@ reactor Bay_Switch(param = "default"){
             if self.pallet.destination[1] != self.name:
                 ask.set(["Move_in_bay", self.name, self.pallet.destination, self.pallet.pallet_id])
         pallet_to_be_moved.schedule(SEC(2))
-        if self.name == "2" and self.pallet.position[0] == "P":
-            logging.warning(self.pallet.pallet_id)
     =}
 
     '''This reaction is triggered when a pallet arrives at the bay switch.
@@ -55,12 +53,10 @@ reactor Bay_Switch(param = "default"){
     reaction(IN)-> ask, FROST_OUT, pallet_to_be_moved{=
         if IN.value is not None:
             self.pallet = IN.value
-            #Update pallet position
             position_list = list(self.pallet.position)
             position_list[1] = self.name
             self.pallet.position = "".join(position_list)
             FROST_OUT.set([self.pallet.pallet_id, self.name, self.pallet.pallet_id])
-            #Check if pallet has reached its destination. If not ask controller for route
             if self.pallet.looping:
                 ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
             elif self.pallet.destination[0] == self.pallet.position[0] and self.pallet.destination[1] == self.name:
@@ -101,12 +97,11 @@ reactor Bay_Switch(param = "default"){
         if CROSS_IN.value is not None:
             self.pallet = CROSS_IN.value
 
-            #Update pallet position
             position_list = list(self.pallet.position)
             position_list[1] = self.name
             self.pallet.position = "".join(position_list)
+            
             FROST_OUT.set([self.pallet.pallet_id, self.name, self.pallet.pallet_id])
-             #Check if pallet has reached its destination. If not ask controller for route
             if self.pallet.looping:
                 ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
             elif self.pallet.destination[0] == self.pallet.position[0] and self.pallet.destination[1] == self.name:

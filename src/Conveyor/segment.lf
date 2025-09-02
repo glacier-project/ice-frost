@@ -5,21 +5,15 @@ target Python{
 reactor Segment(param = "default"){  
     //Internal variables  
     state name = param
-    state pallets
-    state work
+    state pallets = []
     //Physical links
     input IN 
-    output OUT
-    output FROST_OUT
+    output OUT    
     //Controller Links
     input command
     output ask
-
-    #The startup reaction is used to initialize the pallets list to zero
-    reaction(startup){=
-        self.pallets = []
-        self.work = True
-    =}
+    //FROST Link
+    output FROST_OUT
 
     '''
     In the following reaction, the upcoming pallet is added to the pallets list 
@@ -38,23 +32,19 @@ reactor Segment(param = "default"){
     '''
     reaction (command) -> OUT, FROST_OUT{=
         temp = command.value
-        if temp[0] == self.name and self.pallets and self.work: 
+        if temp[0] == self.name and self.pallets: 
             FROST_OUT.set([-1, self.pallets[0].pallet_id])
             OUT.set(self.pallets[0])
             self.pallets.pop(0)
 
         elif len(temp) > 1:
-            if temp[0] == "BOTH" and self.work:
+            if temp[0] == "BOTH":
                 if (self.name == temp[1] or self.name == temp[2]) and self.pallets:
                     FROST_OUT.set([-1, self.pallets[0].pallet_id])
                     OUT.set(self.pallets[0])
                     self.pallets.pop(0)
 
-            elif self.name == temp[0] and temp[1] == "STOP":
-                self.work = False
-
             elif self.name == temp[0] and temp[1] == "CONTINUE" and self.pallets:
-                self.work = True
                 FROST_OUT.set([-1, self.pallets[0].pallet_id])
                 OUT.set(self.pallets[0])
                 self.pallets.pop(0)

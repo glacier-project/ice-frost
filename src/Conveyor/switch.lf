@@ -50,9 +50,6 @@ reactor Switch(param = "default"){
         if self.pallet is not None:
             self.pallet.position = self.name
 
-            if self.name == "I":
-                logging.error(self.pallet.pallet_id)
-
             if self.pallet.destination == self.name:
                 y = "_pallet_arrived", self.pallet.pallet_id
                 ask.set(y)
@@ -135,8 +132,6 @@ reactor Switch(param = "default"){
             self.pallet = command.value[2]
             if self.pallet.looping == True:
                 self.pallet.action = "OUT"
-
-            handle_pallet.schedule(0)
         
         elif command.value[1] == self.name and command.value[0] == "Move" and self.pallet is not None:
             if command.value[2] == "CROSS":                
@@ -149,6 +144,6 @@ reactor Switch(param = "default"){
                 self.pallet.bay = True
                 self.pallet.action = command.value[2]
 
-            handle_pallet.schedule(0)        
+        handle_pallet.schedule(0)        
     =}
 }

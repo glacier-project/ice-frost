@@ -81,7 +81,6 @@ reactor Bay(param = "default"){
         
         elif temp[0] == "Release" and self.crossing_pallet != None:
             OUT.set(self.crossing_pallet)
-            logging.warning(f"{self.name} released pallet {self.crossing_pallet.pallet_id}")
             self.crossing_pallet = None
             ask.set("Pallet_outgoing")             
 
