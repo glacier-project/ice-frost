@@ -36,11 +36,11 @@ steps:
     header:
       type: "REQUEST"
       version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
+      namespace: "VARIABLE"
+      msg_name: "WRITE"
     payload:
-      node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 0]
+      node: "Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet4/destination"
+      value: 0 
   - sender: "scheduler"
     target: "conveyor"
     header:
@@ -57,11 +57,11 @@ steps:
     header:
       type: "REQUEST"
       version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
+      namespace: "VARIABLE"
+      msg_name: "WRITE"
     payload:
-      node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [6, 0]
+      node: "Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet6/destination"
+      value: 0 
   - sender: "scheduler"
     target: "conveyor"
     header:
@@ -77,11 +77,11 @@ steps:
     header:
       type: "REQUEST"
       version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
+      namespace: "VARIABLE"
+      msg_name: "WRITE"
     payload:
-      node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 0]
+      node: "Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet4/destination"
+      value: 0 
   - sender: "scheduler"
     target: "conveyor"
     header:
@@ -97,11 +97,11 @@ steps:
     header:
       type: "REQUEST"
       version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
+      namespace: "VARIABLE"
+      msg_name: "WRITE"
     payload:
-      node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [7, 0]
+      node: "Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet7/destination"
+      value: 0 
 #10
   - sender: "scheduler"
     target: "conveyor"
@@ -118,11 +118,11 @@ steps:
     header:
       type: "REQUEST"
       version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
+      namespace: "VARIABLE"
+      msg_name: "WRITE"
     payload:
-      node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [9, 0]
+      node: "Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet9/destination"
+      value: 0 
   - sender: "scheduler"
     target: "conveyor"
     header:
@@ -138,11 +138,11 @@ steps:
     header:
       type: "REQUEST"
       version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
+      namespace: "VARIABLE"
+      msg_name: "WRITE"
     payload:
-      node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [1, 0]
+      node: "Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet1/destination"
+      value: 0 
   - sender: "scheduler"
     target: "conveyor"
     header:
@@ -159,11 +159,11 @@ steps:
     header:
       type: "REQUEST"
       version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
+      namespace: "VARIABLE"
+      msg_name: "WRITE"
     payload:
-      node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 0]
+      node: "Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet4/destination"
+      value: 0 
   - sender: "scheduler"
     target: "conveyor"
     header:
@@ -179,11 +179,11 @@ steps:
     header:
       type: "REQUEST"
       version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
+      namespace: "VARIABLE"
+      msg_name: "WRITE"
     payload:
-      node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [6, 0]
+      node: "Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet6/destination"
+      value: 0 
   - sender: "scheduler"
     target: "conveyor"
     header:
@@ -199,9 +199,9 @@ steps:
     header:
       type: "REQUEST"
       version: [1, 0, 0]
-      namespace: "METHOD"
-      msg_name: "INVOKE"
+      namespace: "VARIABLE"
+      msg_name: "WRITE"
     payload:
-      node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [7, 5]
+      node: "Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet7/destination"
+      value: 0 
   

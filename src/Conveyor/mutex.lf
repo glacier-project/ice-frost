@@ -7,14 +7,5 @@ reactor Mutex(param = "default"){
     //Physical links
     input IN 
     output OUT
-
-    //Controller Links
-    input command
-    output ask
-
-    #It just passes the input to the output
-    
-    reaction (IN) -> OUT{=
-        OUT.set(IN.value)
-    =}
+    IN -> OUT after 0msec
 }

@@ -3,11 +3,11 @@ class PalletAction(Enum):
     OUT = 1
     CROSS = 2
     BAY = 3
-    LOOP = 4
 
-class Action(Enum):
-    MOVE = 1
-    CREATE = 2
-    RELEASE = 3
-    GIVE = 4
-
+class ConveyorMessage(Enum):
+    ARRIVED = "ARRIVED"
+    MOVE = "MOVE"
+    FREE = "FREE"
+    CREATE = "CREATE"
+    RELEASED = "RELEASED"
+    BAY_MOVE = "BAY_MOVE"

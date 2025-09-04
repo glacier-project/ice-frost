@@ -25,6 +25,6 @@ def PriorityAlgorithm(buffer):
             elif temp[0].action == "CROSS" and temp[0].bay == False:
                 return "IN_UP"
             else:
-                return "IN_DOWN"            
+                return "IN_DOWN"
     else:
         return str

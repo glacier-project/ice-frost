@@ -184,85 +184,50 @@ reactor Conveyor{
     Controller.Pallets -> Pallets after 0msec
 
     output Segment1
-    reaction(ML.FROST_OUT) -> Segment1{=
-        Segment1.set(ML.FROST_OUT.value)
-    =}
     output Segment2
-    reaction(LI.FROST_OUT) -> Segment2{=
-        Segment2.set(LI.FROST_OUT.value)
-    =}
     output Segment3
-    reaction(IH.FROST_OUT) -> Segment3{=
-        Segment3.set(IH.FROST_OUT.value)
-    =}
     output Segment4
-    reaction(HG.FROST_OUT) -> Segment4{=
+    output Segment5
+    output Segment6
+    output Segment7
+    output Segment8
+    output Bay1
+    output Bay2_1
+    output Bay2_2
+    output Bay2_3
+    output Bay3_1
+    output Bay3_2
+    output Bay3_3
+    output Bay4_1
+    output Bay4_2
+    output Bay4_3
+    output Bay5
+
+    ML.FROST_OUT -> Segment1
+    LI.FROST_OUT -> Segment2
+    IH.FROST_OUT -> Segment3
+    reaction(HG.FROST_OUT)-> Segment4{=
         Segment4.set(HG.FROST_OUT.value)
     =}
-    reaction(GF.FROST_OUT) -> Segment4{=
+    reaction(GF.FROST_OUT)-> Segment4{=
         Segment4.set(GF.FROST_OUT.value)
     =}
-    output Segment5
-    reaction(AB.FROST_OUT) -> Segment5{=
-        Segment5.set(AB.FROST_OUT.value)
-    =}
-    output Segment6
-    reaction(BC.FROST_OUT) -> Segment6{=
-        Segment6.set(BC.FROST_OUT.value)
-    =}
-    output Segment7
-    reaction(CD.FROST_OUT) -> Segment7{=
-        Segment7.set(CD.FROST_OUT.value)
-    =}
-    output Segment8
-    reaction(DE.FROST_OUT) -> Segment8{=
-        Segment8.set(DE.FROST_OUT.value)
-    =}
+    AB.FROST_OUT -> Segment5
+    BC.FROST_OUT -> Segment6
+    CD.FROST_OUT -> Segment7
+    DE.FROST_OUT -> Segment8
 
-    output Bay1
-    reaction(Z.FROST_OUT) -> Bay1{=
-        Bay1.set(Z.FROST_OUT.value)
-    =}
-    output Bay2_1
-    reaction(P.FROST_OUT_1) -> Bay2_1{=
-        Bay2_1.set(P.FROST_OUT_1.value)
-    =}
-    output Bay2_2
-    reaction(P.FROST_OUT_2) -> Bay2_2{=
-        Bay2_2.set(P.FROST_OUT_2.value)
-    =}
-    output Bay2_3
-    reaction(P.FROST_OUT_3) -> Bay2_3{=
-        Bay2_3.set(P.FROST_OUT_3.value)
-    =}
+    Z.FROST_OUT -> Bay1
+    P.FROST_OUT_1 -> Bay2_1
+    P.FROST_OUT_2 -> Bay2_2
+    P.FROST_OUT_3 -> Bay2_3
 
-    output Bay3_1
-    reaction(O.FROST_OUT_1) -> Bay3_1{=
-        Bay3_1.set(O.FROST_OUT_1.value)
-    =}
-    output Bay3_2
-    reaction(O.FROST_OUT_2) -> Bay3_2{=
-        Bay3_2.set(O.FROST_OUT_2.value)
-    =}
-    output Bay3_3
-    reaction(O.FROST_OUT_3) -> Bay3_3{=
-        Bay3_3.set(O.FROST_OUT_3.value)
-    =}
+    O.FROST_OUT_1 -> Bay3_1
+    O.FROST_OUT_2 -> Bay3_2
+    O.FROST_OUT_3 -> Bay3_3
 
-    output Bay4_1
-    reaction(N.FROST_OUT_1) -> Bay4_1{=
-        Bay4_1.set(N.FROST_OUT_1.value)
-    =}
-    output Bay4_2
-    reaction(N.FROST_OUT_2) -> Bay4_2{=
-        Bay4_2.set(N.FROST_OUT_2.value)
-    =}
-    output Bay4_3
-    reaction(N.FROST_OUT_3) -> Bay4_3{=
-        Bay4_3.set(N.FROST_OUT_3.value)
-    =}
-    output Bay5
-    reaction(G.FROST_OUT) -> Bay5{=
-        Bay5.set(G.FROST_OUT.value)
-    =}
+    N.FROST_OUT_1 -> Bay4_1
+    N.FROST_OUT_2 -> Bay4_2
+    N.FROST_OUT_3 -> Bay4_3
+    G.FROST_OUT -> Bay5
 }

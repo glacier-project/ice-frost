@@ -105,29 +105,13 @@ reactor Cell_Conveyor extends FrostMachine{
     state model_pallets
     
     method _update_model_pallet_destination(pallet, value){=
-        logging.debug(f"Updating model pallet {pallet.pallet_id} destination to {value}")
+        logging.debug(f"Updating model pallet {pallet} destination to {value}")
         if value == 0 or value == None:
-            pallet.destination = None
-            pallet.looping = True
-            self.messages_to_conveyor.append([7, [pallet.pallet_id]])
+            self.messages_to_conveyor.append([7, [pallet]])
         else:
-            pallet.destination = self.convert_destination(value)
-            pallet.looping = False
+            self.messages_to_conveyor.append([1, [pallet, self.convert_destination(value)]])
 
         return True
-    =}
-
-    reaction(conveyor.Pallets){=
-        self.model_pallets = conveyor.Pallets.value
-
-        for i in range(1, 11):
-            p = self.pallets[i-1]
-            m_p = self.model_pallets[i]
-            p.get_property("destination").set_post_update_value_callback(
-                lambda prev, curr, pallet=m_p, temp=p: (
-                    self._update_model_pallet_destination(pallet, temp.get_property("destination").value)
-                )
-            )
     =}
 
     // Periodically send messages to the conveyor system
@@ -137,7 +121,7 @@ reactor Cell_Conveyor extends FrostMachine{
         # If there are messages, send the next one immediately; otherwise, wait 1 second
         if self.messages_to_conveyor:
             conveyor.from_frost.set(self.messages_to_conveyor.pop(0))
-            check.schedule(0)
+            check.schedule(MSEC(1))
         else:
             check.schedule(SEC(1))
     =}
@@ -185,14 +169,11 @@ reactor Cell_Conveyor extends FrostMachine{
         :return: The destination as a string.
         """       
         res = str(destination)
-        if destination == 0:
-            self.move_pallet_to_LTU(palletNumber)
-            return res
 
         self.dynamic_node.value = self.getTargetNode(destination)
         logging.debug(f"Setting destination for pallet {palletNumber} to {destination}")
         self.pallets[palletNumber-1].get_property("destination").value = destination
-        #self.messages_to_conveyor.append([1, [palletNumber, self.convert_destination(destination)]])
+        self.messages_to_conveyor.append([1, [palletNumber, self.convert_destination(destination)]])
         return res
     =}
     
@@ -203,6 +184,7 @@ reactor Cell_Conveyor extends FrostMachine{
         :return: True if the pallet was successfully released, False otherwise.
         """
         self.dynamic_node.value = "Cell_Conveyor/zero_node"
+        self.zero_node.value = "Cell_Conveyor/zero_node"
         self.messages_to_conveyor.append([7, [palletNumber]])
         return True
     =}
@@ -213,6 +195,13 @@ reactor Cell_Conveyor extends FrostMachine{
         """
         check.schedule(SEC(1))
         self.setPalletDestination.callback = self.setPalletDest
+        for i in range(1, 11):
+            p = self.pallets[i-1]
+            p.get_property("destination").set_post_update_value_callback(
+                lambda prev, curr, pallet=i: (
+                    self._update_model_pallet_destination(pallet, curr)
+                )
+            )
     =}
 
     method update_segment(segment, value){=

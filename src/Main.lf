@@ -1,6 +1,6 @@
 target Python{
-    fast: false,
-    // timeout: 800s,
+    fast: True,
+    timeout: 3600s,
     files: [
         "../frost/src/python_lib/frost.py",
         "../frost/src/python_lib/l_formatter.py",
@@ -71,7 +71,7 @@ main reactor{
     conveyor = new Cell_Conveyor(name="conveyor")
     scheduler = new Scheduler(name = "scheduler", recipe_path = "src/recipes/recipes/conveyor.yaml", condition_path = "src/recipes/conditions/conveyor.yaml")
     bus = new FrostBus(name="frost_bus", width = 2)
-    ice_proxy = new ICEProxy(name="iceproxy")
+    #ice_proxy = new ICEProxy(name="iceproxy")
 
     conveyor.channel_out, scheduler.channel_out -> bus.channel_in after 0
     bus.channel_out -> conveyor.channel_in, scheduler.channel_in after 0

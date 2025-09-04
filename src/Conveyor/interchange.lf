@@ -12,11 +12,6 @@ reactor Interchange(param = "default"){
 
     '''The Interchange is a simple reactor that takes two inputs and forwards them
     to the corresponding outputs'''
-    reaction (IN_UP) -> OUT_DOWN{=
-            OUT_DOWN.set(IN_UP.value)
-    =}
-
-    reaction(IN_DOWN) -> OUT_UP{=
-        OUT_UP.set(IN_DOWN.value)
-    =}
+    IN_UP -> OUT_DOWN after 0msec
+    IN_DOWN -> OUT_UP after 0msec
 }

@@ -72,7 +72,6 @@ reactor Switch(param = "default"){
     reaction(IN)-> handle_pallet, ask{=        
         if IN.value is not None:
             self.pallet = IN.value
-            #logging.info(f"Switch {self.name} received pallet {self.pallet.pallet_id} at port IN")
             if self.name == "M":
                 self.pallet.position = self.name
                 ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
@@ -92,7 +91,6 @@ reactor Switch(param = "default"){
         if CROSS_IN.value is not None:
             self.pallet = CROSS_IN.value
             self.pallet.position = self.name
-            #logging.info(f"Switch {self.name} received pallet {self.pallet.pallet_id} at port IN")
             if self.pallet.looping:
                 self.pallet.action = "OUT"
                 handle_pallet.schedule(0)
@@ -134,8 +132,6 @@ reactor Switch(param = "default"){
             self.pallet = command.value[2]
             if self.pallet.looping == True:
                 self.pallet.action = "OUT"
-
-            handle_pallet.schedule(0)
         
         elif command.value[1] == self.name and command.value[0] == "Move" and self.pallet is not None:
             if command.value[2] == "CROSS":                
@@ -148,6 +144,6 @@ reactor Switch(param = "default"){
                 self.pallet.bay = True
                 self.pallet.action = command.value[2]
 
-            handle_pallet.schedule(0)        
+        handle_pallet.schedule(0)        
     =}
 }
