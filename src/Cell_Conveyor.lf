@@ -156,7 +156,8 @@ reactor Cell_Conveyor extends FrostMachine{
         temp = destination
         position = ""
         temp = int(destination / 8)
-        position = str(destination % 8)
+        if temp != 5:            
+            position = str(destination % 8)
         letter = self.dict_bay_conveyor[temp]
         return str(letter + position)
     =}
