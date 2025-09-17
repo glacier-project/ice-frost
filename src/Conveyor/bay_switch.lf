@@ -30,11 +30,12 @@ reactor Bay_Switch(param = "default"){
 
     logical action pallet_to_be_moved
 
-    reaction(pallet_to_be_moved) ->ask, pallet_to_be_moved, CROSS{=
+    reaction(pallet_to_be_moved) ->ask, pallet_to_be_moved, CROSS, FROST_OUT{=
         if not self.pallet:
             return
         if self.pallet.destination == None or self.pallet.destination[0] != self.pallet.position[0]:
             if self.name == "1":
+                FROST_OUT.set([self.pallet.pallet_id, self.name, 0])
                 CROSS.set(self.pallet)
                 self.pallet = None
             else:

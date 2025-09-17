@@ -100,22 +100,22 @@ root:
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                         - !!NumericalVariableNode
                           name: "destination"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                         - !!NumericalVariableNode
                           name: "reservationId"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                          value: 0
+                          default_value: 0
                       returns:
                         - !!BooleanVariableNode
                           name: "result"
                           description: ""
-                          value: True
+                          default_value: True
                     - !!MethodNode
                       name: "callFreePalletTo"
                       description: ""
@@ -392,50 +392,50 @@ root:
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
                   initial_value: 0
-                - !!BooleanVariableNode #skip
+                - !!BooleanVariableNode #true if a pallet is in that position
                   name: "destination_ok_1_1"
                   description: ""
-                  initial_value: True 
+                  initial_value: False 
                 - !!BooleanVariableNode
                   name: "destination_ok_2_1"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "destination_ok_2_2"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "destination_ok_2_3"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "destination_ok_3_1"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "destination_ok_3_2"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "destination_ok_3_3"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "destination_ok_4_1"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "destination_ok_4_2"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "destination_ok_4_3"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "destination_ok_5"
                   description: ""
-                  initial_value: True
+                  initial_value: False
             - !!FolderNode
               name: "Buttons"
               description: ""
@@ -443,51 +443,51 @@ root:
                 - !!BooleanVariableNode
                   name: "auxBay2"
                   description: ""
-                  initial_value: True 
+                  initial_value: False 
                 - !!BooleanVariableNode
                   name: "auxBay3"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "auxBay4"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "auxLoadUnloadZone"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "ackBay2"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "ackBay3"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "ackBay4"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "ackLoadUnloadZone"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "denialBay2"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "denialBay3"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "denialBay4"
                   description: ""
-                  initial_value: True
+                  initial_value: False
                 - !!BooleanVariableNode
                   name: "denialLoadUnloadZone"
                   description: ""
-                  initial_value: True
+                  initial_value: False
         - !!FolderNode
           name: "ConveyorObjects"
           description: ""
@@ -1467,330 +1467,329 @@ root:
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           initial_value: 0
-            - !!FolderNode #skip
-              name: "RunningMode"
-              description: ""
-              children:
-                - !!BooleanVariableNode
-                  name: "modeAutomatic"
-                  description: ""
-                  initial_value: True
-                - !!BooleanVariableNode
-                  name: "modeManual"
-                  description: ""
-                  initial_value: False    
-            - !!FolderNode #skip
-              name: "LTUMainBelts"
-              description: ""
-              children:
-                - !!ObjectVariableNode
-                  name: "LTUWarehouse"
-                  description: ""
-                  properties:
-                    - !!NumericalVariableNode
-                      name: "pallet"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-        - !!FolderNode #skip
-          name: ConveyorHMIVars
-          description: ""
-          children:
-            - !!BooleanVariableNode
-              name: "PANEL_ENABLED"
-              description: ""
-              initial_value: True   
-        - !!FolderNode #skip
-          name: "ConveyorSystemStatus"
-          description: ""
-          children:
-            - !!BooleanVariableNode
-              name: "MAIN_MOTORS_ON"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_MOTOR_ON"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_MOTOR_ON"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_MOTOR_ON"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_LTU_BACKWARD_MOTOR_ON"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_LTU_BACKWARD_MOTOR_ON"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_LTU_FORWARD_MOTOR_ON"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_LTU_BACKWARD_MOTOR_ON"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_LTU_FORWARD_MOTOR_ON"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_LTU_BACKWARD_MOTOR_ON"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "LTU_WAREHOUSE_MOTOR_ON"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "LTU_2_TO_1_MOTOR_ON"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_LTU_FORWARD_ACTIVE"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_LTU_BACKWARD_ACTIVE"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_LTU_FORWARD_ACTIVE"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_LTU_BACKWARD_ACTIVE"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_LTU_FORWARD_ACTIVE"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_LTU_BACKWARD_ACTIVE"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "LTU_WAREHOUSE_ACTIVE"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "LTU_2_TO_1_ACTIVE"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_INDEX_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_INDEX_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_INDEX_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "LOAD_UNLOAD_ZONE_INDEX_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_LTU_FORWARD_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_LTU_FORWARD_DOWN"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_LTU_BACKWARD_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_LTU_BACKWARD_DOWN"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_VARIABLE_STOPPER_LTU_SIDE_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_VARIABLE_STOPPER_BAY_SIDE_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_LTU_FORWARD_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_LTU_FORWARD_DOWN"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_LTU_BACKWARD_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_LTU_BACKWARD_DOWN"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_VARIABLE_STOPPER_LTU_SIDE_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_VARIABLE_STOPPER_BAY_SIDE_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_LTU_FORWARD_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_LTU_FORWARD_DOWN"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_LTU_BACKWARD_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode 
-              name: "BAY4_LTU_BACKWARD_DOWN"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_VARIABLE_STOPPER_LTU_SIDE_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_VARIABLE_STOPPER_BAY_SIDE_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "LTU_WAREHOUSE_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "LTU_2_TO_1_UP"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_POSITION_1_ENTRANCE_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_POSITION_1_EXIT_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_POSITION_2_ENTRANCE_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_POSITION_2_EXIT_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_POSITION_3_ENTRANCE_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY2_POSITION_3_EXIT_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_POSITION_1_ENTRANCE_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_POSITION_1_EXIT_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_POSITION_2_ENTRANCE_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_POSITION_2_EXIT_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_POSITION_3_ENTRANCE_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY3_POSITION_3_EXIT_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_POSITION_1_ENTRANCE_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_POSITION_1_EXIT_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_POSITION_2_ENTRANCE_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_POSITION_2_EXIT_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_POSITION_3_ENTRANCE_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "BAY4_POSITION_3_EXIT_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "LOAD_UNLOAD_ZONE_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "SEGMENT1_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "SEGMENT2_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "SEGMENT3_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "SEGMENT4_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "SEGMENT5_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "SEGMENT6_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "SEGMENT7_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
-            - !!BooleanVariableNode
-              name: "SEGMENT8_STOP_GATE_OPENED"
-              description: ""
-              initial_value: True
+#   - !!FolderNode #skip
+#              name: "RunningMode"
+#              description: ""
+#              children:
+#                - !!BooleanVariableNode
+#                  name: "modeAutomatic"
+#                  description: ""
+#                  initial_value: True
+#                - !!BooleanVariableNode
+#                  name: "modeManual"
+#                  description: ""
+#                  initial_value: False    
+#            - !!FolderNode #skip
+#              name: "LTUMainBelts"
+#              description: ""
+#              children:
+#                - !!ObjectVariableNode
+#                  name: "LTUWarehouse"
+#                  description: ""
+#                  properties:
+#                    - !!NumericalVariableNode
+#                      name: "pallet"
+#                      description: ""
+#                      measure_unit: "NoneMeasureUnits.NONE"
+#                      initial_value: 0
+#        - !!FolderNode #skip
+#          name: ConveyorHMIVars
+#          description: ""
+#          children:
+#            - !!BooleanVariableNode
+#              name: "PANEL_ENABLED"
+#              description: ""
+#              initial_value: True   
+#        - !!FolderNode #skip
+#          name: "ConveyorSystemStatus"
+#          description: ""
+#          children:
+#            - !!BooleanVariableNode
+#              name: "MAIN_MOTORS_ON"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_MOTOR_ON"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_MOTOR_ON"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_MOTOR_ON"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_LTU_BACKWARD_MOTOR_ON"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_LTU_BACKWARD_MOTOR_ON"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_LTU_FORWARD_MOTOR_ON"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_LTU_BACKWARD_MOTOR_ON"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_LTU_FORWARD_MOTOR_ON"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_LTU_BACKWARD_MOTOR_ON"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "LTU_WAREHOUSE_MOTOR_ON"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "LTU_2_TO_1_MOTOR_ON"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_LTU_FORWARD_ACTIVE"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_LTU_BACKWARD_ACTIVE"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_LTU_FORWARD_ACTIVE"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_LTU_BACKWARD_ACTIVE"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_LTU_FORWARD_ACTIVE"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_LTU_BACKWARD_ACTIVE"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "LTU_WAREHOUSE_ACTIVE"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "LTU_2_TO_1_ACTIVE"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_INDEX_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_INDEX_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_INDEX_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "LOAD_UNLOAD_ZONE_INDEX_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_LTU_FORWARD_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_LTU_FORWARD_DOWN"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_LTU_BACKWARD_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_LTU_BACKWARD_DOWN"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_VARIABLE_STOPPER_LTU_SIDE_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_VARIABLE_STOPPER_BAY_SIDE_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_LTU_FORWARD_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_LTU_FORWARD_DOWN"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_LTU_BACKWARD_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_LTU_BACKWARD_DOWN"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_VARIABLE_STOPPER_LTU_SIDE_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_VARIABLE_STOPPER_BAY_SIDE_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_LTU_FORWARD_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_LTU_FORWARD_DOWN"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_LTU_BACKWARD_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode 
+#              name: "BAY4_LTU_BACKWARD_DOWN"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_VARIABLE_STOPPER_LTU_SIDE_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_VARIABLE_STOPPER_BAY_SIDE_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "LTU_WAREHOUSE_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "LTU_2_TO_1_UP"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_POSITION_1_ENTRANCE_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_POSITION_1_EXIT_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_POSITION_2_ENTRANCE_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_POSITION_2_EXIT_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_POSITION_3_ENTRANCE_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY2_POSITION_3_EXIT_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_POSITION_1_ENTRANCE_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_POSITION_1_EXIT_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_POSITION_2_ENTRANCE_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_POSITION_2_EXIT_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_POSITION_3_ENTRANCE_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY3_POSITION_3_EXIT_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_POSITION_1_ENTRANCE_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_POSITION_1_EXIT_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_POSITION_2_ENTRANCE_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_POSITION_2_EXIT_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_POSITION_3_ENTRANCE_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "BAY4_POSITION_3_EXIT_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "LOAD_UNLOAD_ZONE_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "SEGMENT1_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "SEGMENT2_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "SEGMENT3_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "SEGMENT4_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "SEGMENT5_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "SEGMENT6_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "SEGMENT7_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True
+#            - !!BooleanVariableNode
+#              name: "SEGMENT8_STOP_GATE_OPENED"
+#              description: ""
+#              initial_value: True   - !!FolderNode #skip
 
 
-            
 
 
-            
+

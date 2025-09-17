@@ -9,8 +9,9 @@ reactor Cell_Conveyor extends FrostMachine{
 
     preamble{=
        from conveyor_utils import (
-            conveyor_obj, Pallets, Bayes, Segments, Commands, commands_pointer,
-            IndexPosition, setDestination, PalletPosition, palletNum,
+            conveyor_obj, conveyor_data_exchange, Pallets, Bayes, Segments, Commands, Destinations,
+            destination_1_1, destination_5, destination_pallet_id_, destination_ok_,
+            commands_pointer, IndexPosition, setDestination, PalletPosition, palletNum,
             Pallet, Pallet1, Pallet2, Pallet3, Pallet4, Pallet5, Pallet6, Pallet7, Pallet8, Pallet9, Pallet10,
             Bay, Bay1, Bay2, Bay3, Bay4, Bay5,
             Segment, Segment1, Segment2, Segment3, Segment4, Segment5, Segment6, Segment7, Segment8,
@@ -105,7 +106,7 @@ reactor Cell_Conveyor extends FrostMachine{
     state model_pallets
     
     method _update_model_pallet_destination(pallet, value){=
-        logging.debug(f"Updating model pallet {pallet} destination to {value}")
+        self.logger.debug(f"Updating model pallet {pallet} destination to {value}")
         if value == 0 or value == None:
             self.messages_to_conveyor.append([7, [pallet]])
         else:
@@ -171,7 +172,7 @@ reactor Cell_Conveyor extends FrostMachine{
         res = str(destination)
 
         self.dynamic_node.value = self.getTargetNode(destination)
-        logging.debug(f"Setting destination for pallet {palletNumber} to {destination}")
+        self.logger.debug(f"Setting destination for pallet {palletNumber} to {destination}")
         self.pallets[palletNumber-1].get_property("destination").value = destination
         self.messages_to_conveyor.append([1, [palletNumber, self.convert_destination(destination)]])
         return res
@@ -243,15 +244,19 @@ reactor Cell_Conveyor extends FrostMachine{
             if value[1] < 0:
                 self.zero_node.value = value[0]
             ls.append(self.bay1.get_property(self.PalletPosition.format(n=1)).get_property(self.palletNum).value)
+            self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_1_1).value = value[0] if value[1] > 0 else 0
+            self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_ok_.format(s="1_1")).value = True if value[1] > 0 else False
         elif bay == self.bay5:
             self.bay5.get_property(self.IndexPosition).get_property(self.palletNum).value = value[0] if value[1] > 0 else 0
             if value[1] < 0:
                 self.zero_node.value = value[0]
             ls.append(self.bay5.get_property(self.IndexPosition).get_property(self.palletNum).value)
+            self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_5).value = value[0] if value[1] > 0 else 0
+            self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_ok_.format(s="5")).value = True if value[1] > 0 else False
         else:
             raise ValueError("Invalid bay for update")
 
-        logging.info(f"{bay.name} updated with values: {ls}")
+        self.logger.info(f"{bay.name} updated with values: {ls}")
     =}
 
     method update_bay(bay, pallet, position, value){=
@@ -264,7 +269,9 @@ reactor Cell_Conveyor extends FrostMachine{
         """
         # Set the pallet number at the given position in the bay
         bay.get_property(self.PalletPosition.format(n=int(position))).get_property(self.palletNum).value = value
-        logging.info(f"{bay.name} position {position} updated with {value}")
+        self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_pallet_id_.format(bay=bay.name[-1], pos=position)).value = value
+        self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_ok_.format(s=f"{int(bay.name[-1])}_{position}")).value = True if value > 0 else False
+        self.logger.info(f"{bay.name} position {position} updated with {value}")
     =}
     
     reaction(conveyor.Segment1){=
