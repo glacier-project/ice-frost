@@ -1,4 +1,4 @@
 [submodule "frost"]
 	path = frost
 	url = https://github.com/esd-univr/frost
-	branch = feature/support-subscription-request
+	branch = dev
