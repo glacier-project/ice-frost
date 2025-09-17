@@ -9,7 +9,7 @@ def get_coordinates(value):
                 return (i, j)
     return None
 
-def get_BAY_coordinates(value):
+def get_bay_coordinates(value):
     if value == "Z1":
         return "M"
         
@@ -36,10 +36,10 @@ def calculate_next_position(current_position, destination):
     dest = get_coordinates(destination)
     
     if pos is None:
-        pos = get_coordinates(get_BAY_coordinates(current_position))
+        pos = get_coordinates(get_bay_coordinates(current_position))
         
     if dest is None:
-        dest = get_coordinates(get_BAY_coordinates(destination))
+        dest = get_coordinates(get_bay_coordinates(destination))
 
     if pos == dest:
         return "BAY"

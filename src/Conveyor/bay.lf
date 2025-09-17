@@ -1,6 +1,4 @@
-target Python{
-    files: [source_folder/pallet.py]
-};
+target Python
 
 import Bay_Switch from "bay_switch.lf"
 import Interchange from "interchange.lf"

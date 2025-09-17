@@ -1,10 +1,7 @@
-target Python{
-    files: [source_folder/pallet.py, source_folder/material.py]
-};
+target Python
 
 preamble{=
     from pallet import Pallet 
-    from material import Material
 =}
 
 reactor Switch(param = "default"){
@@ -51,7 +48,7 @@ reactor Switch(param = "default"){
             self.pallet.position = self.name
 
             if self.pallet.destination == self.name:
-                y = "_pallet_arrived", self.pallet.pallet_id
+                y = "_pallet_arrived", self.pallet.id
                 ask.set(y)
                 
             elif self.pallet.action == "OUT": 
@@ -74,7 +71,7 @@ reactor Switch(param = "default"){
             self.pallet = IN.value
             if self.name == "M":
                 self.pallet.position = self.name
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+                ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
 
             else:
                 handle_pallet.schedule(0)
@@ -82,8 +79,6 @@ reactor Switch(param = "default"){
 
     '''
     The following reaction is called when a pallet arrives at the switch from the cross.
-    if it is the switch G, it checks if the upcoming data is a material. 
-    If it is a material, it stores the material in the pallet object.
     For all the other switches, it stores the pallet in the pallet variable and asks for 
     where to send the pallet.
     '''
@@ -96,7 +91,7 @@ reactor Switch(param = "default"){
                 handle_pallet.schedule(0)
 
             elif self.pallet.destination != None:
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+                ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
     =}
 
     '''
@@ -114,7 +109,7 @@ reactor Switch(param = "default"){
                 handle_pallet.schedule(0)
 
             elif self.pallet.destination is not None:                
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+                ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
     =}
 
     '''
@@ -124,8 +119,6 @@ reactor Switch(param = "default"){
     If the command is to move the pallet, it sends the pallet to appropriate port.
     If the command is BAY, it sends the pallet to the BAY_OUT port.
     If the command is Give, it sends the pallet object to the CROSS port.
-    This last one is used to send the material to any machines that interact with the material
-    on the pallet.
     '''
     reaction(command) -> handle_pallet{=
         if command.value[1] == self.name and command.value[0] == "Create":

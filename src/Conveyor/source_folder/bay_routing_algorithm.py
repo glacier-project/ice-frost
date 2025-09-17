@@ -1,4 +1,4 @@
-def Bay_Routing(position, destination, bay):
+def compute_bay_route(position, destination, bay):
     if destination is None:
         destination = "A1"
     elif len(destination) == 1:
@@ -29,3 +29,28 @@ def Bay_Routing(position, destination, bay):
     elif position[1] == "3" :
             return "OUT", bay + "3"
     
+    raise Exception(f"Error in Bay_Routing {position}, {destination}, {bay}")
+
+def check_bay_available(buff, val):
+    for i in range(0, val):
+        if not buff[i]:
+            return False
+    return True
+
+def leave_bay(buff, val):    
+    buff[val-1] = False
+
+def update_bay_positions(Bay, n, route):
+    n = n - 1
+    if n == 0:
+        if route == "CROSS":
+            Bay[n] = True
+    if n == 1:
+        Bay[n] = True
+        if route == "CROSS":
+            Bay[0] = False
+        else:
+            Bay[2] = False
+    if n == 2:
+        Bay[2] = True
+        Bay[1] = False

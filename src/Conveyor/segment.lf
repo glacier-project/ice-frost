@@ -1,6 +1,4 @@
-target Python{
-    files: [source_folder/pallet.py]
-};
+target Python
 
 reactor Segment(param = "default"){  
     //Internal variables  
@@ -20,10 +18,12 @@ reactor Segment(param = "default"){
     and triggering even the controller which has to handle it
     '''
     reaction (IN) -> ask, FROST_OUT{=
-        IN.value.action = None
-        self.pallets.append(IN.value)
-        ask.set(IN.value)
-        FROST_OUT.set([1, IN.value.pallet_id])
+        if isinstance(IN.value, Pallet):            
+            IN.value.action = None
+            #IN.value.position = self.name
+            self.pallets.append(IN.value)
+            ask.set(IN.value)
+            FROST_OUT.set([1, IN.value.id])
     =}
 
     '''
@@ -33,19 +33,19 @@ reactor Segment(param = "default"){
     reaction (command) -> OUT, FROST_OUT{=
         temp = command.value
         if temp[0] == self.name and self.pallets: 
-            FROST_OUT.set([-1, self.pallets[0].pallet_id])
+            FROST_OUT.set([-1, self.pallets[0].id])
             OUT.set(self.pallets[0])
             self.pallets.pop(0)
 
         elif len(temp) > 1:
             if temp[0] == "BOTH":
                 if (self.name == temp[1] or self.name == temp[2]) and self.pallets:
-                    FROST_OUT.set([-1, self.pallets[0].pallet_id])
+                    FROST_OUT.set([-1, self.pallets[0].id])
                     OUT.set(self.pallets[0])
                     self.pallets.pop(0)
 
-            elif self.name == temp[0] and temp[1] == "CONTINUE" and self.pallets:
-                FROST_OUT.set([-1, self.pallets[0].pallet_id])
+            elif self.name == temp[0] and self.pallets:
+                FROST_OUT.set([-1, self.pallets[0].id])
                 OUT.set(self.pallets[0])
                 self.pallets.pop(0)
 

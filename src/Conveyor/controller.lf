@@ -1,58 +1,26 @@
 target Python{
-    files: [source_folder/material.py,
-        source_folder/priorityalgorithm.py, 
+    files: [
+        source_folder/controller_utils.py,
         source_folder/pallet.py, 
         source_folder/routing_algorithm.py, 
-        source_folder/bay_algorithm.py, 
-        source_folder/new_destination.py, 
-        source_folder/bay_control.py,
+        source_folder/bay_routing_algorithm.py,
+        source_folder/utils.py
     ]
 };
 
 preamble{=
-    import logging
-    from pallet import Pallet 
-    from material import Material
+    from pallet import Pallet
+    from controller_utils import new_destination, schedule_with_priority
+    from bay_routing_algorithm import compute_bay_route, check_bay_available, leave_bay, update_bay_positions
     from routing_algorithm import Routing
-    from bay_algorithm import Bay_Routing
-    from priorityalgorithm import PriorityAlgorithm 
-    from new_destination import New_Destination
-    from bay_control import Bay_Control   
-    from bay_control import Update_Truth_Table
-    from bay_control import Update_Bay
-    from enum import Enum
-    from material import Material
+    from utils import Events
 =}
 
 reactor Controller{
-
-    preamble{=        
-        class Events(Enum):
-            pallet_arrived = "_pallet_arrived"
-            move = "Move"
-            free = "Free"
-    =}
-
     state pallets
     state pallet_names
     state conveyor 
     state set
-
-    input A_IN
-    input B_IN
-    input C_IN 
-    input D_IN
-    input E_IN
-    input F_IN
-    input H_IN
-    input I_IN
-    input L_IN
-    input M_IN
-
-    input BAY_P_IN
-    input BAY_O_IN
-    input BAY_N_IN
-    input BAY_Z_IN
 
     input SEG_AB
     input SEG_BC
@@ -110,9 +78,9 @@ reactor Controller{
     reaction (create_pallet) -> OUT{=
         temp = self.pallets[self.pallets_to_be_created.pop(0)]        
         temp.looping = True
-        self.pallet_names.append(temp.pallet_id)         
+        self.pallet_names.append(temp.id)         
         self.conveyor[temp.position] = False
-        y = "Create", temp.position, self.pallets[temp.pallet_id]
+        y = "Create", temp.position, self.pallets[temp.id]
         OUT.set(y)
     =}
 
@@ -139,21 +107,21 @@ reactor Controller{
         self.O_ = [True, True, True]
         self.P_ = [True, True, True]
         self.conveyor = {"A" : True, "B" : True, "C" : True, "D" : True, "E" : True, "F" : True, "G" : True, "H" : True, "I" : True, "L" : True, "M" : True}
-        temp = Pallet(pallet_id = 1, position = "I")
+        temp = Pallet(id = 1, position = "I")
         temp.looping = True
-        self.pallets[temp.pallet_id] = temp
-        self.pallet_names.append(temp.pallet_id)         
-        y = "Create", temp.position, self.pallets[temp.pallet_id]
+        self.pallets[temp.id] = temp
+        self.pallet_names.append(temp.id)         
+        y = "Create", temp.position, self.pallets[temp.id]
         OUT.set(y)
-        self.pallets[2] = Pallet(pallet_id = 2, position = "M")
-        self.pallets[3] = Pallet(pallet_id = 3, position = "L")
-        self.pallets[4] = Pallet(pallet_id = 4, position = "C")
-        self.pallets[5] = Pallet(pallet_id = 5, position = "D")
-        self.pallets[6] = Pallet(pallet_id = 6, position = "E")
-        self.pallets[7] = Pallet(pallet_id = 7, position = "H")
-        self.pallets[8] = Pallet(pallet_id = 8, position = "A")
-        self.pallets[9] = Pallet(pallet_id = 9, position = "B")
-        self.pallets[10] = Pallet(pallet_id = 10, position = "I")
+        self.pallets[2] = Pallet(id = 2, position = "M")
+        self.pallets[3] = Pallet(id = 3, position = "L")
+        self.pallets[4] = Pallet(id = 4, position = "C")
+        self.pallets[5] = Pallet(id = 5, position = "D")
+        self.pallets[6] = Pallet(id = 6, position = "E")
+        self.pallets[7] = Pallet(id = 7, position = "H")
+        self.pallets[8] = Pallet(id = 8, position = "A")
+        self.pallets[9] = Pallet(id = 9, position = "B")
+        self.pallets[10] = Pallet(id = 10, position = "I")
         for z in range(1, len(self.pallets)):
             create_pallet.schedule(z-1)
         Pallets.set(self.pallets)
@@ -169,7 +137,7 @@ reactor Controller{
     =}
     reaction(control_BH)-> SEG_OUT, BAY_OUT, Release{=
         if self.conveyor["B"] == True or self.conveyor["H"] == True:
-            y = PriorityAlgorithm(self.BH_buffers)
+            y = schedule_with_priority(self.BH_buffers)
             if y != None:
                 temp = None
                 if y != "BOTH":
@@ -190,7 +158,7 @@ reactor Controller{
                         SEG_OUT.set(y)
                 elif self.conveyor["B"] == True and self.conveyor["H"] == True:
                     if y == "BAY":
-                        Release.set(self.BH_buffers["BAY"].pallet_id)
+                        Release.set(self.BH_buffers["BAY"].id)
                         self.BH_buffers["BAY"] = None
                         BAY_OUT.set(["Release", "N"])  
                         
@@ -217,7 +185,7 @@ reactor Controller{
     =}
     reaction(control_CI)-> SEG_OUT, BAY_OUT, Release{=
         if self.conveyor["C"] == True or self.conveyor["I"] == True:
-            y = PriorityAlgorithm(self.CI_buffers)
+            y = schedule_with_priority(self.CI_buffers)
             if y != None:
                 temp = None
                 if y != "BOTH":
@@ -238,7 +206,7 @@ reactor Controller{
                         SEG_OUT.set(y)
                 elif self.conveyor["C"] == True and self.conveyor["I"] == True:
                     if y == "BAY":
-                        Release.set(self.CI_buffers["BAY"].pallet_id)
+                        Release.set(self.CI_buffers["BAY"].id)
                         self.CI_buffers["BAY"] = None
                         BAY_OUT.set(["Release", "O"]) 
                         self.O_[0] = True
@@ -264,7 +232,7 @@ reactor Controller{
     =}
     reaction(control_DL)-> SEG_OUT, BAY_OUT, Release{=
         if self.conveyor["D"] == True or self.conveyor["L"] == True:
-            y = PriorityAlgorithm(self.DL_buffers)
+            y = schedule_with_priority(self.DL_buffers)
             if y != None:
                 temp = None
                 if y != "BOTH":
@@ -286,7 +254,7 @@ reactor Controller{
                         SEG_OUT.set(y)
                 elif self.conveyor["D"] == True and self.conveyor["L"] == True:
                     if y == "BAY":
-                        Release.set(self.DL_buffers["BAY"].pallet_id)
+                        Release.set(self.DL_buffers["BAY"].id)
                         self.DL_buffers["BAY"] = None
                         BAY_OUT.set(["Release", "P"])   
                         self.P_[0] = True
@@ -341,10 +309,10 @@ reactor Controller{
             temp.action = "OUT"             
         else:
             temp.action = Routing("B", temp.destination)
-            if temp.action == "BAY" and Bay_Control(self.N_, int(temp.destination[1])):
+            if temp.action == "BAY" and check_bay_available(self.N_, int(temp.destination[1])):
                 temp.action = "OUT"
         self.BH_buffers["IN_DOWN"].append(temp)
-        out = "SEGMENT_AB", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
+        out = "SEGMENT_AB", temp.id, temp.position, temp.destination, temp.action, temp.object1
         control_BH.schedule(0)
         control_AF.schedule(1)        
     =}
@@ -356,10 +324,10 @@ reactor Controller{
             temp.action = "OUT"             
         else:
             temp.action = Routing("C", temp.destination)
-            if temp.action == "BAY" and Bay_Control(self.O_, int(temp.destination[1])):
+            if temp.action == "BAY" and check_bay_available(self.O_, int(temp.destination[1])):
                 temp.action = "OUT"
         self.CI_buffers["IN_DOWN"].append(temp)
-        out = "SEGMENT_BC", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
+        out = "SEGMENT_BC", temp.id, temp.position, temp.destination, temp.action, temp.object1
         control_CI.schedule(0)
         control_BH.schedule(1)
     =}
@@ -371,11 +339,11 @@ reactor Controller{
             temp.action = "OUT"             
         else:
             temp.action = Routing("D", temp.destination)
-            if temp.action == "BAY" and Bay_Control(self.P_, int(temp.destination[1])):
+            if temp.action == "BAY" and check_bay_available(self.P_, int(temp.destination[1])):
                 temp.action = "OUT"
                 self.P_buffers.append(temp)
         self.DL_buffers["IN_DOWN"].append(temp)
-        out = "SEGMENT_CD", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
+        out = "SEGMENT_CD", temp.id, temp.position, temp.destination, temp.action, temp.object1
         control_DL.schedule(0)
         control_CI.schedule(1)
     =}
@@ -401,7 +369,7 @@ reactor Controller{
             temp.action = "OUT"             
         else:
             temp.action = Routing("L", temp.destination) 
-            if temp.action == "BAY" and not Bay_Control(self.P_, int(temp.destination[1])):
+            if temp.action == "BAY" and not check_bay_available(self.P_, int(temp.destination[1])):
                 temp.action = "OUT"
                 self.P_buffers.append(temp)
         self.DL_buffers["IN_UP"].append(temp)
@@ -416,11 +384,11 @@ reactor Controller{
             temp.action = "OUT"             
         else:
             temp.action = Routing("I", temp.destination)
-            if temp.action == "BAY" and not Bay_Control(self.O_, int(temp.destination[1])):
+            if temp.action == "BAY" and not check_bay_available(self.O_, int(temp.destination[1])):
                 temp.action = "OUT"
                 self.O_buffers.append(temp)
         self.CI_buffers["IN_UP"].append(temp)   
-        out = "SEGMENT_LI", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
+        out = "SEGMENT_LI", temp.id, temp.position, temp.destination, temp.action, temp.object1
         control_CI.schedule(0)
         control_DL.schedule(1)
     =}
@@ -432,11 +400,11 @@ reactor Controller{
             temp.action = "CROSS"             
         else:
             temp.action = Routing("H", temp.destination)
-            if temp.action =="BAY" and not Bay_Control(self.N_, int(temp.destination[1])):
+            if temp.action =="BAY" and not check_bay_available(self.N_, int(temp.destination[1])):
                 temp.action = "OUT"
                 self.N_buffers.append(temp)            
         self.BH_buffers["IN_UP"].append(temp)
-        out = "SEGMENT_IH", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
+        out = "SEGMENT_IH", temp.id, temp.position, temp.destination, temp.action, temp.object1
         control_CI.schedule(0)
         control_BH.schedule(1)
     =}
@@ -446,7 +414,7 @@ reactor Controller{
         temp = SEG_HG.value
         temp.action = "OUT"
         self.HG_buffers.append(temp)
-        out = "SEGMENT_HG", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
+        out = "SEGMENT_HG", temp.id, temp.position, temp.destination, temp.action, temp.object1
         control_G.schedule(0)
         control_BH.schedule(1)
     =}
@@ -455,30 +423,31 @@ reactor Controller{
         temp = SEG_GF.value
         temp.action = "OUT"
         self.GF_buffers.append(temp)
-        out = "SEGMENT_GF", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
+        out = "SEGMENT_GF", temp.id, temp.position, temp.destination, temp.action, temp.object1
         control_G.schedule(0)
         control_AF.schedule(1)
     =}
 
     ############################## BAY REACTIONS ##############################
+    input BAY_P_IN
     reaction(BAY_P_IN) -> BAY_OUT, control_DL{=
         if BAY_P_IN.value[0] == "Move":
             s = "P" + BAY_P_IN.value[1]
             ctrl = int(BAY_P_IN.value[3]) if (BAY_P_IN.value[2]) == None else int(BAY_P_IN.value[2][1])
-            route =  Bay_Routing(s, BAY_P_IN.value[2], "P")
+            route =  compute_bay_route(s, BAY_P_IN.value[2], "P")
             n = int(BAY_P_IN.value[1])
-            Update_Bay(self.P_, n, route[0])
+            update_bay_positions(self.P_, n, route[0])
             y = "Move", s, route[0]
             BAY_OUT.set(y)
 
         elif BAY_P_IN.value[0] == "Move_in_bay":
             s = "P" + BAY_P_IN.value[1]
             ctrl = int(BAY_P_IN.value[1]) - 1
-            if not Bay_Control(self.P_, ctrl):
+            if not check_bay_available(self.P_, ctrl):
                 return None  
-            route =  Bay_Routing(s, BAY_P_IN.value[2], "P")
+            route =  compute_bay_route(s, BAY_P_IN.value[2], "P")
             n = int(BAY_P_IN.value[1])
-            Update_Bay(self.P_, n, route[0])
+            update_bay_positions(self.P_, n, route[0])
             y = "Move", s, route[0]
             BAY_OUT.set(y)
 
@@ -499,24 +468,24 @@ reactor Controller{
             self.DL_buffers["BAY"] = BAY_P_IN.value[1]
             control_DL.schedule(0)
     =}
-
+    input BAY_O_IN
     reaction(BAY_O_IN) -> BAY_OUT, control_CI{=
         if BAY_O_IN.value[0] == "Move_in_bay":
             s = "O" + BAY_O_IN.value[1]
             ctrl = int(BAY_O_IN.value[1]) - 1
-            if not Bay_Control(self.O_, ctrl):
+            if not check_bay_available(self.O_, ctrl):
                 return None            
-            route =  Bay_Routing(s, BAY_O_IN.value[2], "O")
+            route =  compute_bay_route(s, BAY_O_IN.value[2], "O")
             n = int(BAY_O_IN.value[1])
-            Update_Bay(self.O_, n, route[0])
+            update_bay_positions(self.O_, n, route[0])
             y = "Move", s, route[0]
             BAY_OUT.set(y)
     
         elif BAY_O_IN.value[0] == "Move":
             s = "O" + BAY_O_IN.value[1]
-            route =  Bay_Routing(s, BAY_O_IN.value[2], "O")
+            route =  compute_bay_route(s, BAY_O_IN.value[2], "O")
             n = int(BAY_O_IN.value[1])
-            Update_Bay(self.O_, n, route[0])
+            update_bay_positions(self.O_, n, route[0])
 
             y = "Move", s, route[0]
             BAY_OUT.set(y)
@@ -538,13 +507,13 @@ reactor Controller{
             self.CI_buffers["BAY"] = BAY_O_IN.value[1]
             control_CI.schedule(0)        
     =}
-
+    input BAY_N_IN
     reaction(BAY_N_IN) -> BAY_OUT, control_BH{=
         if BAY_N_IN.value[0] == "Move":
             s = "N" + BAY_N_IN.value[1]
-            route =  Bay_Routing(s, BAY_N_IN.value[2], "N")
+            route =  compute_bay_route(s, BAY_N_IN.value[2], "N")
             n = int(BAY_N_IN.value[1])
-            Update_Bay(self.N_, n, route[0])
+            update_bay_positions(self.N_, n, route[0])
 
             y = "Move", s, route[0]
             BAY_OUT.set(y)
@@ -552,11 +521,11 @@ reactor Controller{
         elif BAY_N_IN.value[0] == "Move_in_bay":
             s = "N" + BAY_N_IN.value[1]
             ctrl = int(BAY_N_IN.value[1]) - 1
-            if not Bay_Control(self.N_, ctrl):
+            if not check_bay_available(self.N_, ctrl):
                 return None
-            route =  Bay_Routing(s, BAY_N_IN.value[2], "N")
+            route =  compute_bay_route(s, BAY_N_IN.value[2], "N")
             n = int(BAY_N_IN.value[1])
-            Update_Bay(self.N_, n, route[0])
+            update_bay_positions(self.N_, n, route[0])
             y = "Move", s, route[0]
             BAY_OUT.set(y)
 
@@ -578,7 +547,7 @@ reactor Controller{
             control_BH.schedule(0)
 
     =}
-
+    input BAY_Z_IN
     reaction(BAY_Z_IN) -> BAY_Z_OUT, SEG_OUT, control_EM{=
         temp = BAY_Z_IN.value
         if temp[0] == "Move":
@@ -588,51 +557,58 @@ reactor Controller{
         elif temp[0] == "_pallet_arrived":
             self.conveyor["E"] = True 
             self.conveyor["M"] = True
-            SEG_OUT.set(["DE", "CONTINUE"])
+            SEG_OUT.set(["DE"])
             self.Z = True
             
             control_EM.schedule(0)
     =}
 
     ############################## SWITCH REACTIONS ##############################
+    input A_IN
     reaction (A_IN)-> OUT{=
         if A_IN.value is not None and A_IN.value[0] == "Move":
             route = Routing(A_IN.value[1], A_IN.value[2])  
             y = "Move", "A", route
             OUT.set(y)
     =}
+    input B_IN
     reaction (B_IN) -> OUT{=
         if B_IN.value is not None and B_IN.value[0] == "Move":
             route = Routing(B_IN.value[1], B_IN.value[2])  
             y = "Move", "B", route
             OUT.set(y)
     =}
+    input C_IN
     reaction (C_IN) -> OUT{=
         if C_IN.value is not None and C_IN.value[0] == "Move":
             route = Routing(C_IN.value[1], C_IN.value[2])  
             y = "Move", "C", route
             OUT.set(y)
     =}
+    input D_IN
     reaction (D_IN) -> OUT{=
         if D_IN.value is not None and D_IN.value[0] == "Move":
             route = Routing(D_IN.value[1], D_IN.value[2])  
             if route == "BAY":
-                if Bay_Control( self.P_, int(D_IN.value[2][1])):
+                if check_bay_available( self.P_, int(D_IN.value[2][1])):
                     route = "OUT"
 
             y = "Move", "D", route                       
             OUT.set(y)
     =}
+    input E_IN
     reaction (E_IN) -> OUT{=
         if E_IN.value is not None and E_IN.value[0] == "Move":
             y = "Move", "E", "OUT"
             OUT.set(y)
     =}
+    input F_IN
     reaction (F_IN) -> OUT{=
         if F_IN.value is not None and F_IN.value[0] == "Move":
             y = "Move", "F", "OUT"
             OUT.set(y)
     =}
+    input H_IN
     reaction (H_IN) -> OUT{=
         if H_IN.value is not None and H_IN.value[0] == "Move":
             route = "OUT"
@@ -640,39 +616,42 @@ reactor Controller{
             y = "Move", "H", route
 
             if route == "BAY":
-                if Bay_Control(self.N_, int(H_IN.value[2][1])):
-                    Update_Truth_Table(self.N_, int(H_IN.value[2][1]))
+                if check_bay_available(self.N_, int(H_IN.value[2][1])):
+                    leave_bay(self.N_, int(H_IN.value[2][1]))
                     y = "Move", "H", route,                       
                 else:
                     y = "Move", "H", "OUT"
                 
             OUT.set(y)
     =}
+    input I_IN
     reaction (I_IN) -> OUT{=
         if I_IN.value is not None and I_IN.value[0] == "Move":
             route = Routing(I_IN.value[1], I_IN.value[2])
             y = "Move", "I", route
             if route == "BAY":
-                if Bay_Control(self.O_, int(I_IN.value[2][1])):   
-                        Update_Truth_Table(self.O_, int(I_IN.value[2][1]))
+                if check_bay_available(self.O_, int(I_IN.value[2][1])):   
+                        leave_bay(self.O_, int(I_IN.value[2][1]))
                         y = "Move", "I", route,                      
                 else:
                     y = "Move", "I","OUT"
             OUT.set(y)
     =}
+    input L_IN
     reaction (L_IN) -> OUT{=
         if L_IN.value is not None and L_IN.value[0] == "Move":
             route = Routing(L_IN.value[1], L_IN.value[2])
             y = "Move", "L", route
             if route == "BAY":
-                if Bay_Control( self.P_, int(L_IN.value[2][1])):
-                    Update_Truth_Table(self.P_, int(L_IN.value[2][1]))
+                if check_bay_available( self.P_, int(L_IN.value[2][1])):
+                    leave_bay(self.P_, int(L_IN.value[2][1]))
                     y = "Move", "L", "BAY"
                 else:
                     y = "Move", "L", "OUT"
 
             OUT.set(y)
     =}
+    input M_IN
     reaction (M_IN) -> OUT{=
         if M_IN.value is not None and M_IN.value[0] == "Move":
             route = "OUT"
@@ -700,7 +679,7 @@ reactor Controller{
             temp = self.pallets[FROST_IN.value[1][0]]
             length_pos = len(temp.position)
             dest = FROST_IN.value[1][1]
-            route = New_Destination(temp.position, dest, length_pos)
+            route = new_destination(dest, length_pos)
             temp.looping = route[0]
             temp.bay = route[1]
             temp.destination = route[2]
@@ -709,12 +688,11 @@ reactor Controller{
                     y = ["Move", "OUT"]
                     BAY_Z_OUT.set(y)
                 else:
-                    y = "Move", temp.position, Bay_Routing(temp.position, dest, temp.position[0])[0]
+                    y = "Move", temp.position, compute_bay_route(temp.position, dest, temp.position[0])[0]
                     BAY_OUT.set(y)
             elif temp.position == "G":
                 y = "Move", "OUT"
                 to_G.set(y)
-            
         elif command == 7:
             temp = self.pallets[args[0]]
             temp.looping = True
@@ -745,7 +723,7 @@ reactor Controller{
     =}
 
     reaction(from_G){=
-        if from_G.value[0] == self.Events.pallet_arrived.value:
+        if from_G.value[0] == Events.pallet_arrived:
             self.pallet_on_G = True           
     =}
 }

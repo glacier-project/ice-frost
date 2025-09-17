@@ -1,10 +1,7 @@
-target Python{
-    files: [source_folder/pallet.py, source_folder/material.py]
-};
+target Python
 
 preamble{=
     from pallet import Pallet 
-    from material import Material
 =}
 
 reactor Bay_Switch(param = "default"){
@@ -35,14 +32,14 @@ reactor Bay_Switch(param = "default"){
             return
         if self.pallet.destination == None or self.pallet.destination[0] != self.pallet.position[0]:
             if self.name == "1":
-                FROST_OUT.set([self.pallet.pallet_id, self.name, 0])
+                FROST_OUT.set([self.pallet.id, self.name, 0])
                 CROSS.set(self.pallet)
                 self.pallet = None
             else:
-                ask.set(["Move_in_bay", self.name, self.pallet.destination, self.pallet.pallet_id])
+                ask.set(["Move_in_bay", self.name, self.pallet.destination, self.pallet.id])
         else:
             if self.pallet.destination[1] != self.name:
-                ask.set(["Move_in_bay", self.name, self.pallet.destination, self.pallet.pallet_id])
+                ask.set(["Move_in_bay", self.name, self.pallet.destination, self.pallet.id])
         pallet_to_be_moved.schedule(SEC(2))
     =}
 
@@ -57,13 +54,13 @@ reactor Bay_Switch(param = "default"){
             position_list = list(self.pallet.position)
             position_list[1] = self.name
             self.pallet.position = "".join(position_list)
-            FROST_OUT.set([self.pallet.pallet_id, self.name, self.pallet.pallet_id])
+            FROST_OUT.set([self.pallet.id, self.name, self.pallet.id])
             if self.pallet.looping:
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+                ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
             elif self.pallet.destination[0] == self.pallet.position[0] and self.pallet.destination[1] == self.name:
-                ask.set(["_pallet_arrived", self.pallet.pallet_id, self.name])
+                ask.set(["_pallet_arrived", self.pallet.id, self.name])
             else:
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+                ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
     =}
 
     '''This reaction is triggered when the controller sends a command to the bay switch.
@@ -74,15 +71,15 @@ reactor Bay_Switch(param = "default"){
     reaction(command) -> ask, OUT, CROSS, FROST_OUT, pallet_to_be_moved{=
         if command.value[0] == "Create":
             self.pallet = command.value[1]
-            ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+            ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
         
         elif command.value[0] == "Move" and self.pallet is not None:
             if command.value[2] == "CROSS":
-                FROST_OUT.set([self.pallet.pallet_id, self.name, 0])
+                FROST_OUT.set([self.pallet.id, self.name, 0])
                 CROSS.set(self.pallet)      
                 
             elif command.value[2] == "OUT":
-                FROST_OUT.set([self.pallet.pallet_id, self.name, 0])
+                FROST_OUT.set([self.pallet.id, self.name, 0])
                 OUT.set(self.pallet)
 
             self.pallet = None
@@ -102,12 +99,12 @@ reactor Bay_Switch(param = "default"){
             position_list[1] = self.name
             self.pallet.position = "".join(position_list)
             
-            FROST_OUT.set([self.pallet.pallet_id, self.name, self.pallet.pallet_id])
+            FROST_OUT.set([self.pallet.id, self.name, self.pallet.id])
             if self.pallet.looping:
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+                ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
             elif self.pallet.destination[0] == self.pallet.position[0] and self.pallet.destination[1] == self.name:
-                ask.set(["_pallet_arrived", self.pallet.pallet_id, self.name])
+                ask.set(["_pallet_arrived", self.pallet.id, self.name])
             else:
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+                ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
     =}
 }
