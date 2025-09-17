@@ -133,7 +133,7 @@ reactor Cell_Conveyor extends FrostMachine{
         :param destination: The destination value to determine the target node.
         :return: The target node as a string.
         """
-        if destination == 5:
+        if destination == 40:
             return self.conveyor_obj + self.Bayes + self.Bay5 + "/" + self.IndexPosition + "/" + self.palletNum
         bay_map = {
             1: self.Bay1,
@@ -141,8 +141,8 @@ reactor Cell_Conveyor extends FrostMachine{
             3: self.Bay3,
             4: self.Bay4
         }
-        bay_num = int(destination / 10)
-        pos_num = destination % 10
+        bay_num = int(destination / 8)
+        pos_num = destination % 8
         bay = bay_map.get(bay_num)
         if bay:
             s = self.conveyor_obj + self.Bayes + bay + "/" + self.PalletPosition.format(n=pos_num) + "/" + self.palletNum
@@ -152,13 +152,12 @@ reactor Cell_Conveyor extends FrostMachine{
     
     method convert_destination(destination){=
         if destination is None:
-            return None
+            raise ValueError("Destination cannot be None")
         temp = destination
         position = ""
-        if temp != int(self.Bay.format(n=5)[-1]):
-            temp = int(destination) / 10
-            position = str(destination % 10)
-        letter = self.dict_bay_conveyor[int(temp)]
+        temp = int(destination / 8)
+        position = str(destination % 8)
+        letter = self.dict_bay_conveyor[temp]
         return str(letter + position)
     =}
 
