@@ -1,11 +1,12 @@
 target Python{
-    fast: True,
-    timeout: 3600s,
+    #fast: True,
+    #timeout: 3600s,
     files: [
         "../frost/src/python_lib/frost.py",
         "../frost/src/python_lib/l_formatter.py",
         "../frost/src/python_lib/time_utils.py",
         "python_utils/ice_proxy.py",
+        "python_utils/handle_recipe.py",
     ],
     logging: error,
     single-threaded: false,
@@ -70,7 +71,7 @@ main reactor{
     warehouse = new Warehouse(_data_model_path = "../resources/data_model/Warehouse.yml")
     kairos_aa = new Kairos(_data_model_path = "../resources/data_model/RBKairos.yml")*/
     conveyor = new Cell_Conveyor(name="conveyor")
-    scheduler = new Scheduler(name = "scheduler", recipe_path = "src/recipes/recipes/conveyor.yaml", condition_path = "src/recipes/conditions/conveyor.yaml")
+    scheduler = new Scheduler(name = "scheduler")
     bus = new FrostBus(name="frost_bus", width = 2)
     //ice_proxy = new ICEProxy(name="iceproxy")
 
