@@ -1,5 +1,3 @@
-import enum
-from utils import Pallet_Action
 
 class Pallet:
     def __init__(self, id:str, position:str):
@@ -8,7 +6,7 @@ class Pallet:
         self.id:int = id
         self.destination:str = None
         self.position:str = position
-        self.action:Pallet_Action = None
+        self.action:str = None
         self.bay:bool = None
         self.object1 = None
         self.object2 = None

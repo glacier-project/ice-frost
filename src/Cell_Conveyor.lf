@@ -59,7 +59,7 @@ reactor Cell_Conveyor extends FrostMachine{
     state bayes    
     state dict_bay_conveyor
                     
-    conveyor = new Conveyor()
+    conveyor = new Conveyor(name = "conveyor")
 
     reaction (startup){=
         """Initialize the Conveyor reactor."""

@@ -13,7 +13,10 @@ reactors:
     logging_level: WARNING
     parameters:
       data_model_path: "resources/data_model/frost_bus.yml"
-  conveyor:
+    reactors:
+      message_filter:
+        logging_level: WARNING
+  cell_conveyor:
     logging_level: WARNING
     parameters:
       data_model_path: "resources/data_model/conveyor.yml"
@@ -22,6 +25,15 @@ reactors:
         logging_level: WARNING
       conveyor:
         logging_level: WARNING
+        reactors:
+          controller:
+            logging_level: WARNING
+          EM:
+            logging_level: WARNING
+            mutex_time: 2500msec
+          HB: 
+            logging_level: WARNING
+            mutex_time: 4800msec          
   scheduler:
     logging_level: WARNING
     parameters:

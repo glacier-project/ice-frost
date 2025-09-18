@@ -9,7 +9,9 @@ import Segment from "segment.lf"
 import Bay_Z from "bay_z.lf"
 import bay_G from "bay_g.lf"
 
-reactor Conveyor{
+import FrostBase from "../../frost/src/lib/FrostBase.lf"
+
+reactor Conveyor extends FrostBase{
     // 
     //   M ------- L
     //   |         |
@@ -21,8 +23,8 @@ reactor Conveyor{
     L = new Switch(param = "L")
     D = new Switch(param = "D")
     E = new Switch(param = "E")
-    EM = new Mutex(param = "EM")
-    LD = new Interchange(param = "LD")
+    EM = new Mutex(name = "EM")
+    LD = new Interchange(name = "LD")
     
     //Links among segments
     ML = new Segment(param = "ML")
@@ -33,10 +35,10 @@ reactor Conveyor{
     D.OUT -> DE.IN after 12700 msec
     
     //Links among interchanges
-    L.CROSS, D.CROSS -> LD.IN_UP, LD.IN_DOWN after 3500msec  
-    LD.OUT_UP, LD.OUT_DOWN -> L.CROSS_IN, D.CROSS_IN  
+    L.CROSS, D.CROSS -> LD.from_upper_belt, LD.from_lower_belt after 3500msec  
+    LD.to_upper_belt, LD.to_lower_belt -> L.CROSS_IN, D.CROSS_IN  
     //Links among mutexes
-    E.OUT, EM.OUT  -> EM.IN, M.IN after 1250msec
+    E.OUT, EM.to_switch  -> EM.from_switch, M.IN
     
     // 
     //   M ------- L ------- I
@@ -47,7 +49,7 @@ reactor Conveyor{
     //Second ring instantiation
     I = new Switch(param = "I")
     C = new Switch(param = "C")
-    IC = new Interchange(param = "IC")
+    IC = new Interchange(name = "IC")
 
     //Links among segments
     LI = new Segment(param = "LI")
@@ -58,8 +60,8 @@ reactor Conveyor{
     C.OUT -> CD.IN after 20200 msec
 
     //Links among interchange
-    I.CROSS, C.CROSS -> IC.IN_UP, IC.IN_DOWN after 3500msec
-    IC.OUT_UP, IC.OUT_DOWN -> I.CROSS_IN, C.CROSS_IN
+    I.CROSS, C.CROSS -> IC.from_upper_belt, IC.from_lower_belt after 3500msec
+    IC.to_upper_belt, IC.to_lower_belt -> I.CROSS_IN, C.CROSS_IN
 
     // 
     //   M ------- L ------- I ------- H
@@ -70,7 +72,7 @@ reactor Conveyor{
     //Third ring instantiation
     H = new Switch(param = "H")
     B = new Switch(param = "B")
-    HB = new Interchange(param = "HB")
+    HB = new Interchange(name = "HB")
 
     //Links among segments
     IH = new Segment(param = "IH")
@@ -81,8 +83,8 @@ reactor Conveyor{
     B.OUT -> BC.IN after 14500 msec
 
     //Links among interchange
-    H.CROSS, B.CROSS -> HB.IN_UP, HB.IN_DOWN after 2400msec
-    HB.OUT_UP, HB.OUT_DOWN -> H.CROSS_IN, B.CROSS_IN
+    H.CROSS, B.CROSS -> HB.from_upper_belt, HB.from_lower_belt after 2400msec
+    HB.to_upper_belt, HB.to_lower_belt -> H.CROSS_IN, B.CROSS_IN
     
     // 
     //   M ------- L ------- I ------- H ------- G
@@ -104,11 +106,11 @@ reactor Conveyor{
     //Fourth ring instantiation
     F = new Switch(param = "F")   
     A = new Switch(param = "A")    
-    FA = new Mutex(param = "FA")
+    FA = new Mutex(name = "FA")
 
     //Links among bays
-    F.OUT -> FA.IN after 7000 msec
-    FA.OUT -> A.IN
+    F.OUT -> FA.from_switch
+    FA.to_switch -> A.IN
     
     //Segment
     GF = new Segment(param = "GF")
@@ -134,25 +136,25 @@ reactor Conveyor{
     N = new Bay(param = "N")
     Z = new Bay_Z(param = "Z1")
     
-    PL = new Interchange(param = "PL")
-    OE = new Interchange(param = "OI")
-    NH = new Interchange(param = "NH")
-    MZ = new Interchange(param = "MZ")
+    PL = new Interchange(name = "PL")
+    OE = new Interchange(name = "OI")
+    NH = new Interchange(name = "NH")
+    MZ = new Interchange(name = "MZ")
 
     //Links to bays
-    L.BAY_OUT, I.BAY_OUT, H.BAY_OUT -> PL.IN_DOWN, OE.IN_DOWN, NH.IN_DOWN after 2sec
-    PL.OUT_UP, OE.OUT_UP, NH.OUT_UP-> P.IN, O.IN, N.IN
-    P.OUT, O.OUT, N.OUT-> PL.IN_UP, OE.IN_UP, NH.IN_UP after 2sec
-    PL.OUT_DOWN, OE.OUT_DOWN, NH.OUT_DOWN -> L.BAY_IN, I.BAY_IN, H.BAY_IN
+    L.BAY_OUT, I.BAY_OUT, H.BAY_OUT -> PL.from_lower_belt, OE.from_lower_belt, NH.from_lower_belt after 2sec
+    PL.to_upper_belt, OE.to_upper_belt, NH.to_upper_belt-> P.IN, O.IN, N.IN
+    P.OUT, O.OUT, N.OUT-> PL.from_upper_belt, OE.from_upper_belt, NH.from_upper_belt after 2sec
+    PL.to_lower_belt, OE.to_lower_belt, NH.to_lower_belt -> L.BAY_IN, I.BAY_IN, H.BAY_IN
 
     //Links between MZ and Z
-    M.BAY_OUT -> MZ.IN_DOWN after 5000msec
-    MZ.OUT_UP -> Z.IN
-    Z.OUT -> MZ.IN_UP after 5000msec
-    MZ.OUT_DOWN -> M.BAY_IN
+    M.BAY_OUT -> MZ.from_lower_belt after 5000msec
+    MZ.to_upper_belt -> Z.IN
+    Z.OUT -> MZ.from_upper_belt after 5000msec
+    MZ.to_lower_belt -> M.BAY_IN
 
     //Controller instantiation
-    Controller = new Controller()
+    Controller = new Controller(name = "controller")
     //SWITCHES CONNECTIONS
     A.ask, B.ask, C.ask, D.ask, E.ask, F.ask, H.ask, I.ask, L.ask, M.ask -> Controller.A_IN, Controller.B_IN , Controller.C_IN, Controller.D_IN, Controller.E_IN, Controller.F_IN, Controller.H_IN, Controller.I_IN, Controller.L_IN, Controller.M_IN after 1msec
     Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT, Controller.OUT -> A.command, B.command, C.command, D.command, E.command, F.command, H.command, I.command, L.command, M.command after 1msec

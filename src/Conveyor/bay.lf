@@ -24,20 +24,20 @@ reactor Bay(param = "default"){
     Plat2 = new Bay_Switch(param = "2")
     Plat3 = new Bay_Switch(param = "3")
 
-    INTER_1 = new Interchange(param = "1-2")
-    INTER_2 = new Interchange(param = "2-3")
+    INTER_1 = new Interchange(name = "1-2")
+    INTER_2 = new Interchange(name = "2-3")
 
     //First Block
-    Plat1.OUT -> INTER_1.IN_DOWN after 1 sec
-    INTER_1.OUT_DOWN -> Plat1.IN after 1 sec  
+    Plat1.OUT -> INTER_1.from_lower_belt after 1 sec
+    INTER_1.to_lower_belt -> Plat1.IN after 1 sec  
     Plat1.FROST_OUT -> FROST_OUT_1 after 1msec
     //Second Block
-    INTER_1.OUT_UP, INTER_2.OUT_DOWN -> Plat2.IN, Plat2.CROSS_IN after 1 sec
-    Plat2.OUT, Plat2.CROSS -> INTER_2.IN_DOWN, INTER_1.IN_UP after 1 sec
+    INTER_1.to_upper_belt, INTER_2.to_lower_belt -> Plat2.IN, Plat2.CROSS_IN after 1 sec
+    Plat2.OUT, Plat2.CROSS -> INTER_2.from_lower_belt, INTER_1.from_upper_belt after 1 sec
     Plat2.FROST_OUT -> FROST_OUT_2 after 1msec
     //Third Block
-    INTER_2.OUT_UP -> Plat3.IN after 1 sec
-    Plat3.OUT -> INTER_2.IN_UP after 1 sec
+    INTER_2.to_upper_belt -> Plat3.IN after 1 sec
+    Plat3.OUT -> INTER_2.from_upper_belt after 1 sec
     Plat3.FROST_OUT -> FROST_OUT_3 after 1msec
 
     //Controller Links
@@ -89,9 +89,7 @@ reactor Bay(param = "default"){
                 elif temp[1][1] == "2":
                     Plat2.command.set(temp)
                 elif temp[1][1] == "3":
-                    Plat3.command.set(temp)
-
-                   
+                    Plat3.command.set(temp)                   
     =}
 
     '''When a pallet wants to go back to the conveyor, the first bay platform sends it out through

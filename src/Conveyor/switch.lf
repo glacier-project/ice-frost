@@ -22,13 +22,9 @@ reactor Switch(param = "default"){
     output ask
 
     //Current Pallet
-    state pallet
+    state pallet = {=None=}
     
     logical action handle_pallet
-
-    reaction(startup){=
-        self.pallet = None
-    =}
 
     logical action go_to_bay
 

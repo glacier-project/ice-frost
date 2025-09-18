@@ -1,11 +1,28 @@
 target Python
 
-reactor Mutex(param = "default"){
-    //Internal variables  
-    state name = param
-    
+import FrostBase from "../../../frost/src/lib/FrostBase.lf"
+
+reactor Mutex extends FrostBase{
+    state mutex_time = 2500msec
+    state pallet_present = False
     //Physical links
-    input IN 
-    output OUT
-    IN -> OUT after 0msec
+    input from_switch 
+    output to_switch
+
+    //delay for the mutex
+    logical action delay
+
+    reaction(from_switch)->delay{=
+        self.logger.debug(f"Mutex {self.name} received from switch: {from_switch.value}")
+        if self.pallet_present:
+            raise Exception(f"Mutex {self.name} error: trying to send a pallet when another is still in the mutex")
+        self.pallet_present = True
+        delay.schedule(self.mutex_time, from_switch.value)
+    =}
+
+    reaction(delay)-> to_switch{=
+        self.pallet_present = False
+        self.logger.debug(f"Mutex {self.name} sent to switch: {delay.value}")
+        to_switch.set(delay.value)
+    =}    
 }

@@ -7,16 +7,12 @@ preamble{=
 reactor Bay_Z(param = "default"){
     //Internal variables
     state name = param   
-    state pallet
+    state pallet = {=None=}
     input IN
     output OUT
     output FROST_OUT
     input command
     output ask
-
-    reaction(startup){=
-        self.pallet = None
-    =}
 
     reaction(IN) -> ask, FROST_OUT{=
         self.pallet = IN.value

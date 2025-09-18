@@ -8,6 +8,8 @@ target Python{
     ]
 };
 
+import FrostBase from "../../../frost/src/lib/FrostBase.lf"
+
 preamble{=
     from pallet import Pallet
     from controller_utils import new_destination, schedule_with_priority
@@ -16,7 +18,7 @@ preamble{=
     from utils import Events
 =}
 
-reactor Controller{
+reactor Controller extends FrostBase{
     state pallets
     state pallet_names
     state conveyor 
@@ -85,7 +87,7 @@ reactor Controller{
     =}
 
     reaction(shutdown){=
-        logging.info(f"Conveyor state: {self.conveyor}")
+        self.logger.debug(f"Conveyor state: {self.conveyor}")
     =}
 
     reaction (startup)-> OUT, BAY_OUT, create_pallet, Pallets{=
@@ -673,7 +675,7 @@ reactor Controller{
     =}
     ############################## FROST ##############################
     reaction(FROST_IN)-> OUT, BAY_OUT, BAY_Z_OUT, to_G{=
-        command = FROST_IN.value[0]
+        '''command = FROST_IN.value[0]
         args = FROST_IN.value[1]
         if FROST_IN.value[0] == 1:
             temp = self.pallets[FROST_IN.value[1][0]]
@@ -719,7 +721,7 @@ reactor Controller{
                         i = 3
                     elif pos[0] == "P":
                         BAY_OUT.set(["Move_in_bay", pos])
-                        i = 2
+                        i = 2'''
     =}
 
     reaction(from_G){=

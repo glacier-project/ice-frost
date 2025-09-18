@@ -2,14 +2,20 @@ from enum import Enum
 
 class Events(Enum):
     pallet_arrived = 1
+    pallet_released = -1
 
-class Pallet_Action(Enum):
-    OUT = "OUT"
-    CROSS = "CROSS"
-    BAY = "BAY"
-    BOTH = "BOTH"
+class ControllerCommand(Enum):
+    move = "move"
+    create = "create"
+    update = "update"
 
-class Switch_Name(Enum):
+class SwitchAction(Enum):
+    advance = "advance"
+    cross = "cross"
+    go_to_bay = "go_to_bay"
+    double_advance = "double_advance"
+
+class SwitchName(Enum):
     A = "A"
     B = "B"
     C = "C"
@@ -21,28 +27,22 @@ class Switch_Name(Enum):
     L = "L"
     M = "M"
 
-class Segment_Name(Enum):
-    AB = "AB"
-    BC = "BC"
-    CD = "CD"
-    DE = "DE"
-    ML = "ML"
-    LI = "LI"
-    IH = "IH"
-    HG = "HG"
-    GF = "GF"
+class InterchangeName(Enum):
+    LD = "LD"
+    IC = "IC"
+    HB = "HB"
 
-class Bay_Name(Enum):
-    P1 = "P1"
-    P2 = "P2"
-    P3 = "P3"
-    O1 = "O1"
-    O2 = "O2"
-    O3 = "O3"
-    N1 = "N1"
-    N2 = "N2"
-    N3 = "N3"
+class SegmentName(Enum):
+    Segment1 = "Segment1"
+    Segment2 = "Segment2"
+    Segment3 = "Segment3"
+    Segment4_0 = "Segment4_0"
+    Segment4_1 = "Segment4_1"
+    Segment5 = "Segment5"
+    Segment6 = "Segment6"
+    Segment7 = "Segment7"
+    Segment8 = "Segment8"
 
-class Bay_Action(Enum):
-    Move_in_bay = "Move_in_bay"
-    Move = "Move"
+class Mutex(Enum):
+    EM = "EM"
+    FA = "FA"
