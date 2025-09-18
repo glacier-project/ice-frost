@@ -22,6 +22,12 @@ reactors:
         logging_level: WARNING
       conveyor:
         logging_level: WARNING
+  scheduler:
+    logging_level: WARNING
+    parameters:
+      recipe_path: "resources/recipes/recipes/conveyor.yaml"
+      condition_path: "resources/recipes/conditions/conveyor.yaml"
+    
 
 
 

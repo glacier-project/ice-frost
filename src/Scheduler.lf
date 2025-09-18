@@ -1,6 +1,6 @@
 target Python
 {
-    files: [recipes/handle_recipe.py]
+    files: [resources/recipes/handle_recipe.py]
 }
 
 import FrostReactor from "../frost/src/lib/FrostReactor.lf"
@@ -9,11 +9,9 @@ preamble{=
     from handle_recipe import *
 =}
 
-reactor Scheduler(recipe_path = "recipes/recipes/conveyor.yaml",
-                condition_path = "recipes/conditions/conveyor.yaml"
-) extends FrostReactor{
-    state recipe = {=get_messages(self.recipe_path)=}  
-    state conditions = {=get_conditions(self.condition_path)=}  
+reactor Scheduler extends FrostReactor{
+    state recipe_path
+    state condition_path
 
     logical action routine
 
@@ -23,6 +21,8 @@ reactor Scheduler(recipe_path = "recipes/recipes/conveyor.yaml",
         It also sends a registration message to the communication channel.
         """
         routine.schedule(SEC(1))
+        self.recipe = get_messages(self.recipe_path)
+        self.conditions = get_conditions(self.condition_path)
     =}
     state i = 0
     // @label send_next_message
