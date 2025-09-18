@@ -1,7 +1,4 @@
 target Python
-{
-    files: [resources/recipes/handle_recipe.py]
-}
 
 import FrostReactor from "../frost/src/lib/FrostReactor.lf"
 

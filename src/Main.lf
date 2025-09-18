@@ -1,11 +1,12 @@
 target Python{
-    fast: True,
-    timeout: 3600s,
+    #fast: True,
+    #timeout: 3600s,
     files: [
         "../frost/src/python_lib/frost.py",
         "../frost/src/python_lib/l_formatter.py",
         "../frost/src/python_lib/time_utils.py",
         "python_utils/ice_proxy.py",
+        "python_utils/handle_recipe.py",
     ],
     logging: error,
     single-threaded: false,
@@ -70,11 +71,11 @@ main reactor{
     kairos_aa = new Kairos(_data_model_path = "../resources/data_model/RBKairos.yml")*/
     conveyor = new Cell_Conveyor(name="conveyor")
     scheduler = new Scheduler(name = "scheduler")
-    bus = new FrostBus(name="frost_bus", width = 2)
-    //ice_proxy = new ICEProxy(name="iceproxy")
+    bus = new FrostBus(name="frost_bus", width = 3)
+    ice_proxy = new ICEProxy(name="iceproxy")
 
-    conveyor.channel_out, scheduler.channel_out -> bus.channel_in after 0
-    bus.channel_out -> conveyor.channel_in, scheduler.channel_in after 0
+    conveyor.channel_out, scheduler.channel_out, ice_proxy.channel_out -> bus.channel_in after 0
+    bus.channel_out -> conveyor.channel_in, scheduler.channel_in, ice_proxy.channel_in after 0
 
     #Full demo
     //cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.channel_in after 0
