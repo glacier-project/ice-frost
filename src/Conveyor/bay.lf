@@ -1,113 +1,66 @@
 target Python
 
-import Bay_Switch from "bay_switch.lf"
-import Interchange from "interchange.lf"
+import FrostBase from "../../../frost/src/lib/FrostBase.lf"
+import BaySwitch from "bay_switch.lf"
 
 preamble{=
     from pallet import Pallet 
+    from utils import Events, ControllerCommand
 =}
-'''That reactor instiates 3 bay_switches and 2 interchanges to simulate a 3 bay system.
-In particular, it is responsible for the exchanges from and to the conveyor belt.'''
-reactor Bay(param = "default"){
-    //Internal variables
-    state name = param   
+
+reactor Bay extends FrostBase{
     state crossing_pallet
-    input IN
-    output OUT
-    output FROST_OUT_1
-    output FROST_OUT_2
-    output FROST_OUT_3
+    input from_belt
+    output to_belt
+    output to_frost_pos_1
+    output to_frost_pos_2
+    output to_frost_pos_3
     state plat1 = 1
     state plat2 = 2
     state plat3 = 3
-    Plat1 = new Bay_Switch(param = "1")
-    Plat2 = new Bay_Switch(param = "2")
-    Plat3 = new Bay_Switch(param = "3")
+    state plat1_name = {= name + str(plat1) =}
+    state plat2_name = {= name + str(plat2) =}
+    state plat3_name = {= name + str(plat3) =}
+    Plat1 = new BaySwitch(name = {= self.plat1_name =})
+    Plat2 = new BaySwitch(name = {= self.plat2_name =})
+    Plat3 = new BaySwitch(name = {= self.plat3_name =})
 
-    INTER_1 = new Interchange(name = "1-2")
-    INTER_2 = new Interchange(name = "2-3")
+    Plat1.to_forward -> Plat2.from_back after 2 sec
+    Plat2.to_forward -> Plat3.from_back after 2 sec
+    Plat3.to_back -> Plat2.from_forward after 2 sec
+    Plat2.to_back -> Plat1.from_forward after 2 sec
+    Plat1.to_back -> to_belt after 2 sec
 
-    //First Block
-    Plat1.OUT -> INTER_1.from_lower_belt after 1 sec
-    INTER_1.to_lower_belt -> Plat1.IN after 1 sec  
-    Plat1.FROST_OUT -> FROST_OUT_1 after 1msec
-    //Second Block
-    INTER_1.to_upper_belt, INTER_2.to_lower_belt -> Plat2.IN, Plat2.CROSS_IN after 1 sec
-    Plat2.OUT, Plat2.CROSS -> INTER_2.from_lower_belt, INTER_1.from_upper_belt after 1 sec
-    Plat2.FROST_OUT -> FROST_OUT_2 after 1msec
-    //Third Block
-    INTER_2.to_upper_belt -> Plat3.IN after 1 sec
-    Plat3.OUT -> INTER_2.from_upper_belt after 1 sec
-    Plat3.FROST_OUT -> FROST_OUT_3 after 1msec
+    input controller_command
+    output ask_to_controller
 
-    //Controller Links
-    input command
-    output ask
-
-    logical action free_switch
-
-    #that reaction answers to the controller that it has received the pallet
-    reaction(free_switch) -> ask{=
-        y = "Free"
-        ask.set(y)
+    reaction(from_belt) -> Plat1.from_back{=
+        Plat1.from_back.set(from_belt.value)
     =}
+    reaction(controller_command) -> Plat1.controller_command, Plat2.controller_command, Plat3.controller_command{=
+        temp = controller_command.value[0]
+        if temp[0] != self.name:
+            return 0
 
-    '''when a pallet arrives, the bay switch receives it and sends it to the first switch
-    then it schedules the free_switch event'''
-    reaction(IN) -> Plat1.CROSS_IN, free_switch{=
-        temp = IN.value
-        temp.position = self.name + "0"
-        Plat1.CROSS_IN.set(temp)
-        free_switch.schedule(0)
+        if temp == self.plat1_name:
+            Plat1.controller_command.set(controller_command.value[1:])
+            return 0
+        elif temp == self.plat2_name:
+            Plat2.controller_command.set(controller_command.value[1:])
+            return 0
+        elif temp == self.plat3_name:
+            Plat3.controller_command.set(controller_command.value[1:])
+            return 0
+
+        raise Exception(f"Bay {self.name} error: unknown platform {temp}")
     =}
-
-    '''this reaction handles any command that the controller sends to the bay
-    Furthermore, it sends the command to the corresponding bay switch
-    Create is used for creating a new pallet on the bay
-    Move is used for moving a pallet from the current position to the next one
-    Release is used for releasing a pallet from the bay to the conveyor belt'''
-    reaction(command) -> Plat1.command, Plat2.command, Plat3.command, OUT, ask{=
-        temp = command.value
-        if temp[0] == "Create":
-            if temp[2][0] == self.name:
-                if temp[2][1] == "1":
-                    Plat1.command.set(temp)
-                elif temp[2][1] == "2":
-                    Plat2.command.set(temp)
-                elif temp[2][1] == "3":
-                    Plat3.command.set(temp)
-        
-        elif temp[0] == "Release" and self.crossing_pallet != None:
-            OUT.set(self.crossing_pallet)
-            self.crossing_pallet = None
-            ask.set("Pallet_outgoing")             
-
-        else:
-            if temp[1][0] == self.name:
-                if temp[1][1] == "1":
-                    Plat1.command.set(temp)
-                elif temp[1][1] == "2":
-                    Plat2.command.set(temp)
-                elif temp[1][1] == "3":
-                    Plat3.command.set(temp)                   
+    reaction(Plat1.ask_to_controller)-> ask_to_controller{=
+        ask_to_controller.set(Plat1.ask.value)
     =}
-
-    '''When a pallet wants to go back to the conveyor, the first bay platform sends it out through
-    the CROSS port. The bay sees that behaviour and asks the controller what to do'''
-    reaction(Plat1.CROSS) -> ask{=
-        self.crossing_pallet = Plat1.CROSS.value
-        ask.set(["Pallet_incoming", Plat1.CROSS.value])
+    reaction(Plat2.ask_to_controller) -> ask_to_controller{=
+        ask_to_controller.set(Plat2.ask.value)
     =}
-    #the following reactions just redirect the messages from the bay switches to the controller
-    reaction(Plat1.ask)-> ask{=
-        ask.set(Plat1.ask.value)
-    =}
-
-    reaction(Plat2.ask) -> ask{=
-        ask.set(Plat2.ask.value)
-    =}
-
-    reaction(Plat3.ask) -> ask{=
-        ask.set(Plat3.ask.value)
+    reaction(Plat3.ask_to_controller) -> ask_to_controller{=
+        ask_to_controller.set(Plat3.ask.value)
     =}    
 }

@@ -1,138 +1,113 @@
 target Python
 
+import FrostBase from "../../../frost/src/lib/FrostBase.lf"
+
 preamble{=
     from pallet import Pallet 
+    from utils import ControllerCommand, SwitchAction
 =}
 
-reactor Switch(param = "default"){
-    //Internal variables
-    state name = param   
+reactor Switch extends FrostBase{
 
-    //Physical links
-    input IN
-    output OUT
-    input CROSS_IN
-    output CROSS  
-    input BAY_IN
-    output BAY_OUT
+    input from_segment
+    output to_segment
+    input from_interchange
+    output to_interchange  
+    input from_bay
+    output to_bay
     
+    input controller_command
+    output ask_to_controller
 
-    //Controller Links
-    input command
-    output ask
-
-    //Current Pallet
     state pallet = {=None=}
     
-    logical action handle_pallet
-
+    logical action unhandled_pallet
     logical action go_to_bay
 
-    reaction(go_to_bay) -> BAY_OUT{=
-        BAY_OUT.set(self.pallet)
+    reaction(go_to_bay) -> to_bay{=
+        to_bay.set(self.pallet)
         self.pallet = None
     =}
 
-    '''
-    The following reaction is called for handling the pallets in the switch.
-    It checks if the pallet destination is the switch itself, if so,
-    it sends a message to the warehouse that the pallet has arrived.
-    Ohterwise, it sends the pallet to the next destination by reading the pallet action.
-    '''
-    reaction(handle_pallet)-> ask, OUT, CROSS, go_to_bay{=
+    reaction(unhandled_pallet)-> ask_to_controller, to_segment, to_interchange, go_to_bay{=
         if self.pallet is not None:
             self.pallet.position = self.name
 
             if self.pallet.destination == self.name:
-                y = "_pallet_arrived", self.pallet.id
-                ask.set(y)
+                y = Events.pallet_arrived, self.pallet.id
+                ask_to_controller.set(y)
                 
-            elif self.pallet.action == "OUT": 
-                OUT.set(self.pallet)
+            elif self.pallet.action == SwitchAction.advance: 
+                to_segment.set(self.pallet)
                 self.pallet = None
 
-            elif self.pallet.action == "CROSS":
-                CROSS.set(self.pallet)
+            elif self.pallet.action == SwitchAction.cross:
+                to_interchange.set(self.pallet)
                 self.pallet = None       
 
-            elif self.pallet.action == "BAY":
+            elif self.pallet.action == SwitchAction.go_to_bay:
                 go_to_bay.schedule(0)
-    =}
-
-    '''
-    When a pallet arrives at the switch, it is stored in the pallet variable and 
-    it schedules the handle_pallet action to handle the pallet.''' 
-    reaction(IN)-> handle_pallet, ask{=        
-        if IN.value is not None:
-            self.pallet = IN.value
-            if self.name == "M":
-                self.pallet.position = self.name
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
 
             else:
-                handle_pallet.schedule(0)
+                ask_to_controller.set([ControllerCommand.move, self.name, self.pallet.destination, self.pallet.id])
     =}
 
-    '''
-    The following reaction is called when a pallet arrives at the switch from the cross.
-    For all the other switches, it stores the pallet in the pallet variable and asks for 
-    where to send the pallet.
-    '''
-    reaction(CROSS_IN)-> ask, handle_pallet{=
-        if CROSS_IN.value is not None:
-            self.pallet = CROSS_IN.value
+    reaction(from_segment)-> unhandled_pallet, ask_to_controller{=        
+        if from_segment.value is not None:
+            if self.pallet is not None:
+                raise Exception(f"Error: Switch {self.name} already has a pallet.")
+            
+            self.pallet = from_segment.value
+            if self.name == "M":
+                self.pallet.position = self.name
+                ask_to_controller.set([ControllerCommand.move, self.name, self.pallet.destination, self.pallet.id])
+
+            else:
+                unhandled_pallet.schedule(0)
+    =}
+
+    reaction(from_interchange)-> ask_to_controller, unhandled_pallet{=
+        if from_interchange.value is not None:
+            self.pallet = from_interchange.value
             self.pallet.position = self.name
             if self.pallet.looping:
-                self.pallet.action = "OUT"
-                handle_pallet.schedule(0)
+                self.pallet.action = SwitchAction.advance
+                unhandled_pallet.schedule(0)
 
             elif self.pallet.destination != None:
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
+                ask_to_controller.set([ControllerCommand.move, self.name, self.pallet.destination, self.pallet.id])
     =}
 
-    '''
-    When a pallet arrives, it is stored in the pallet variable and
-    Then it checks if the looping keyword is True, if so, it sends the pallet to OUT port.
-    Otherwise, it asks to the controller where to send the pallet.
-    '''
-    reaction(BAY_IN)-> handle_pallet, BAY_OUT, ask{=
-        if BAY_IN.value is not None:
-            self.pallet = BAY_IN.value
+    reaction(from_bay)-> unhandled_pallet, to_bay, ask_to_controller{=
+        if from_bay.value is not None:
+            self.pallet = from_bay.value
             self.pallet.position = self.name
 
             if self.pallet.looping == True:
-                self.pallet.action = "OUT"
-                handle_pallet.schedule(0)
+                self.pallet.action = SwitchAction.advance
+                unhandled_pallet.schedule(0)
 
             elif self.pallet.destination is not None:                
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
+                ask_to_controller.set([ControllerCommand.move, self.name, self.pallet.destination, self.pallet.id])
     =}
 
-    '''
-    The following reaction is called when the controller sends a command to the switch.
-    If the command is to create a pallet, it stores the pallet in the pallet variable and asks the controller
-    where to send the pallet.
-    If the command is to move the pallet, it sends the pallet to appropriate port.
-    If the command is BAY, it sends the pallet to the BAY_OUT port.
-    If the command is Give, it sends the pallet object to the CROSS port.
-    '''
-    reaction(command) -> handle_pallet{=
-        if command.value[1] == self.name and command.value[0] == "Create":
-            self.pallet = command.value[2]
-            if self.pallet.looping == True:
-                self.pallet.action = "OUT"
-        
-        elif command.value[1] == self.name and command.value[0] == "Move" and self.pallet is not None:
-            if command.value[2] == "CROSS":                
-                self.pallet.action = command.value[2]   
+    reaction(controller_command) -> unhandled_pallet{=
+        if controller_command.value[1] == self.name and controller_command.value[0] == ControllerCommand.move and self.pallet is not None:
+            if controller_command.value[2] == SwitchAction.cross:                
+                self.pallet.action = controller_command.value[2]   
 
-            elif command.value[2] == "OUT":
-                self.pallet.action = command.value[2]
+            elif controller_command.value[2] == SwitchAction.advance:
+                self.pallet.action = controller_command.value[2]
                 
-            elif command.value[1] == self.name and command.value[2] == "BAY":
+            elif controller_command.value[1] == self.name and controller_command.value[2] == SwitchAction.go_to_bay:
                 self.pallet.bay = True
-                self.pallet.action = command.value[2]
+                self.pallet.action = controller_command.value[2]
+        
+        elif controller_command.value[1] == self.name and controller_command.value[0] == ControllerCommand.create:
+            self.pallet = controller_command.value[2]
+            if self.pallet.looping == True:
+                self.pallet.action = SwitchAction.advance
 
-        handle_pallet.schedule(0)        
+        unhandled_pallet.schedule(0)        
     =}
 }

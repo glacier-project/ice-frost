@@ -1,0 +1,58 @@
+target Python
+
+import FrostBase from "../../../frost/src/lib/FrostBase.lf"
+
+preamble{=
+    from pallet import Pallet
+    from utils import Events, ControllerCommand, SwitchAction
+=}
+
+reactor SingleSwitchBay extends FrostBase{
+    input from_belt
+    output to_belt 
+
+    output to_frost
+
+    input controller_command
+    output ask_to_controller
+
+    state pallet = {=None=}
+    
+    logical action handle_pallet
+
+    reaction(handle_pallet)-> ask_to_controller, to_belt, to_frost{=
+        if self.pallet is not None:
+            self.pallet.position = self.name
+
+            if self.pallet.destination == self.name:
+                y = Events.pallet_arrived, self.pallet.id
+                ask_to_controller.set(y)
+                
+            else: 
+                self.pallet.action = SwitchAction.advance
+                to_frost.set([self.pallet.id, Events.pallet_released.value])
+                to_belt.set(self.pallet)
+                self.pallet = None
+    =}
+
+    reaction(from_belt)-> handle_pallet, ask_to_controller, to_frost{=
+        if isinstance(from_belt.value, Pallet):
+            self.pallet = from_belt.value            
+            handle_pallet.schedule(0)
+            to_frost.set([self.pallet.id, Events.pallet_arrived.value])
+    =}
+
+    reaction(controller_command) -> handle_pallet, ask_to_controller{=
+        if controller_command.value[0] == ControllerCommand.create:
+            self.pallet = controller_command.value[2]
+            if self.pallet.looping == True:
+                self.pallet.action = SwitchAction.advance
+
+            handle_pallet.schedule(0)
+        
+        elif controller_command.value[0] == ControllerCommand.move and self.pallet is not None:
+            self.pallet.action = controller_command.value[1]
+
+            handle_pallet.schedule(0)        
+    =}
+}

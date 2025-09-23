@@ -1,110 +1,92 @@
 target Python
 
+import FrostBase from "../../../frost/src/lib/FrostBase.lf"
+
 preamble{=
     from pallet import Pallet 
+    from utils import SwitchAction, Events, ControllerCommand
 =}
 
-reactor Bay_Switch(param = "default"){
-    //Internal variables
-    state name = param   
+reactor BaySwitch extends FrostBase{
 
-    //Physical links
-    input IN
-    output OUT
-    input CROSS_IN
-    output CROSS   
-    output FROST_OUT
-    //Controller Links
-    input command
-    output ask
+    input from_back
+    output to_back
+    input from_forward
+    output to_forward
 
-    //Current Pallet
-    state pallet
-    
-    reaction(startup){=
-        self.pallet = None
-    =}
+    output to_frost
 
-    logical action pallet_to_be_moved
+    input controller_command
+    output ask_to_controller
 
-    reaction(pallet_to_be_moved) ->ask, pallet_to_be_moved, CROSS, FROST_OUT{=
+    state pallet = {=None=}
+
+    logical action unhandled_pallet
+
+    reaction(unhandled_pallet) ->ask_to_controller, unhandled_pallet, to_back, to_frost{=
         if not self.pallet:
             return
         if self.pallet.destination == None or self.pallet.destination[0] != self.pallet.position[0]:
             if self.name == "1":
-                FROST_OUT.set([self.pallet.id, self.name, 0])
-                CROSS.set(self.pallet)
+                to_frost.set([self.pallet.id, self.name, 0])
+                to_back.set(self.pallet)
                 self.pallet = None
             else:
-                ask.set(["Move_in_bay", self.name, self.pallet.destination, self.pallet.id])
+                ask_to_controller.set(["Move_in_bay", self.name, self.pallet.destination, self.pallet.id])
         else:
             if self.pallet.destination[1] != self.name:
-                ask.set(["Move_in_bay", self.name, self.pallet.destination, self.pallet.id])
-        pallet_to_be_moved.schedule(SEC(2))
+                ask_to_controller.set(["Move_in_bay", self.name, self.pallet.destination, self.pallet.id])
+        unhandled_pallet.schedule(SEC(2))
     =}
 
-    '''This reaction is triggered when a pallet arrives at the bay switch.
-    Similarly to the switch it checks the pallet has reached its destination.
-    If so, it sends a message to the main reactor to inform the pallet has arrived.
-    Otherwise, it asks the controller for the pallet route.
-    '''
-    reaction(IN)-> ask, FROST_OUT, pallet_to_be_moved{=
-        if IN.value is not None:
-            self.pallet = IN.value
+    reaction(from_back)-> ask_to_controller, to_frost, unhandled_pallet{=
+        if from_back.value is not None:
+            self.pallet = from_back.value
             position_list = list(self.pallet.position)
             position_list[1] = self.name
             self.pallet.position = "".join(position_list)
-            FROST_OUT.set([self.pallet.id, self.name, self.pallet.id])
+            to_frost.set([self.pallet.id, self.name, self.pallet.id])
             if self.pallet.looping:
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
+                ask_to_controller.set([ControllerCommand.move, self.name, self.pallet.destination, self.pallet.id])
             elif self.pallet.destination[0] == self.pallet.position[0] and self.pallet.destination[1] == self.name:
-                ask.set(["_pallet_arrived", self.pallet.id, self.name])
+                ask_to_controller.set([Events.pallet_arrived, self.pallet.id, self.name])
             else:
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
+                ask_to_controller.set([ControllerCommand.move, self.name, self.pallet.destination, self.pallet.id])
     =}
 
-    '''This reaction is triggered when the controller sends a command to the bay switch.
-    If the command is to create a pallet, the bay switch stores the pallet 
-    and asks the controller for the pallet route.
-    If the command is to move a pallet, the bay switch sends the pallet to appropriate port.
-    '''
-    reaction(command) -> ask, OUT, CROSS, FROST_OUT, pallet_to_be_moved{=
-        if command.value[0] == "Create":
-            self.pallet = command.value[1]
-            ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
+    reaction(controller_command) -> ask_to_controller, to_forward, to_back, to_frost, unhandled_pallet{=
+        if controller_command.value[0] == ControllerCommand.create:
+            self.pallet = controller_command.value[1]
+            ask_to_controller.set([ControllerCommand.move, self.name, self.pallet.destination, self.pallet.id])
         
-        elif command.value[0] == "Move" and self.pallet is not None:
-            if command.value[2] == "CROSS":
-                FROST_OUT.set([self.pallet.id, self.name, 0])
+        elif controller_command.value[0] == ControllerCommand.move and self.pallet is not None:
+            if controller_command.value[2] == SwitchAction.cross:
+                to_frost.set([self.pallet.id, self.name, 0])
                 CROSS.set(self.pallet)      
                 
-            elif command.value[2] == "OUT":
-                FROST_OUT.set([self.pallet.id, self.name, 0])
+            elif controller_command.value[2] == SwitchAction.advance:
+                to_frost.set([self.pallet.id, self.name, 0])
                 OUT.set(self.pallet)
 
             self.pallet = None
-        elif command.value[0] == "Move_in_bay":
-            pallet_to_be_moved.schedule(SEC(0))
+        elif controller_command.value[0] == "Move_in_bay":
+            unhandled_pallet.schedule(SEC(0))
     =}
 
-    '''This reaction is triggered when a pallet arrives at the cross switch.
-    As before, it checks if the pallet has reached its destination, and if not,
-    it asks the controller for the pallet route.
-    '''
-    reaction(CROSS_IN)-> ask, FROST_OUT, pallet_to_be_moved{=
-        if CROSS_IN.value is not None:
-            self.pallet = CROSS_IN.value
+    reaction(from_forward)-> ask_to_controller, to_frost, unhandled_pallet{=
+        if from_forward.value is not None:
+            self.pallet = from_forward.value
 
             position_list = list(self.pallet.position)
             position_list[1] = self.name
             self.pallet.position = "".join(position_list)
             
-            FROST_OUT.set([self.pallet.id, self.name, self.pallet.id])
+            to_frost.set([self.pallet.id, self.name, self.pallet.id])
             if self.pallet.looping:
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
+                ask_to_controller.set([ControllerCommand.move, self.name, self.pallet.destination, self.pallet.id])
             elif self.pallet.destination[0] == self.pallet.position[0] and self.pallet.destination[1] == self.name:
-                ask.set(["_pallet_arrived", self.pallet.id, self.name])
+                ask_to_controller.set([Events.pallet_arrived, self.pallet.id, self.name])
             else:
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.id])
+                ask_to_controller.set([ControllerCommand.move, self.name, self.pallet.destination, self.pallet.id])
     =}
 }

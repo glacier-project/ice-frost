@@ -16,24 +16,24 @@ reactors:
     reactors:
       message_filter:
         logging_level: WARNING
-  cell_conveyor:
+  conveyor:
     logging_level: WARNING
     parameters:
       data_model_path: "resources/data_model/conveyor.yml"
     reactors:
       message_filter:
         logging_level: WARNING
-      conveyor:
+      conveyor_belt:
         logging_level: WARNING
         reactors:
           controller:
             logging_level: WARNING
           EM:
             logging_level: WARNING
-            mutex_time: 2500msec
+            mutex_time: 2500
           HB: 
             logging_level: WARNING
-            mutex_time: 4800msec          
+            interchange_time: 4800       
   scheduler:
     logging_level: WARNING
     parameters:

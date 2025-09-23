@@ -3,7 +3,7 @@ target Python
 import FrostBase from "../../../frost/src/lib/FrostBase.lf"
 
 reactor Mutex extends FrostBase{
-    state mutex_time = 2500msec
+    state mutex_time = 2500
     state pallet_present = False
     //Physical links
     input from_switch 
@@ -17,7 +17,7 @@ reactor Mutex extends FrostBase{
         if self.pallet_present:
             raise Exception(f"Mutex {self.name} error: trying to send a pallet when another is still in the mutex")
         self.pallet_present = True
-        delay.schedule(self.mutex_time, from_switch.value)
+        delay.schedule(MSEC(self.mutex_time), from_switch.value)
     =}
 
     reaction(delay)-> to_switch{=

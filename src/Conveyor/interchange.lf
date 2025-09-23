@@ -3,7 +3,7 @@ target Python
 import FrostBase from "../../frost/src/lib/FrostBase.lf"
 
 reactor Interchange extends FrostBase{
-    state interchange_time = 7000msec
+    state interchange_time = 7000
     state pallet_present = False
     //Physical links
     input from_upper_belt
@@ -18,7 +18,7 @@ reactor Interchange extends FrostBase{
         if self.pallet_present:
             raise Exception(f"Interchange {self.name} error: trying to send a pallet when another is still in the interchange")
         self.pallet_present = True    
-        delay.schedule(self.interchange_time, [True, from_upper_belt.value])
+        delay.schedule(MSEC(self.interchange_time), [True, from_upper_belt.value])
     =}
 
     reaction(from_lower_belt) -> delay{=
@@ -26,7 +26,7 @@ reactor Interchange extends FrostBase{
         if self.pallet_present:
             raise Exception(f"Interchange {self.name} error: trying to send a pallet when another is still in the interchange")
         self.pallet_present = True
-        delay.schedule(self.interchange_time, [False, from_lower_belt.value])
+        delay.schedule(MSEC(self.interchange_time), [False, from_lower_belt.value])
     =}
 
     reaction(delay) -> to_upper_belt, to_lower_belt{=

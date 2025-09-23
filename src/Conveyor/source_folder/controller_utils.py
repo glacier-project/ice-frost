@@ -1,58 +1,93 @@
+from utils import SwitchAction, BayName
+
 def new_destination(dest, length_pos):
-    """Determines the next conveyor action based on destination.
+    """
+    Determines the next conveyor action based on destination and queue length.
+
     Args:
         dest (str or None): The target destination ('Z', 'G', or None).
         length_pos (int): The number of items in the position queue.
+
     Returns:
-        list: A list containing `[add_new, move_current, new_dest]`.
-            - `looping` (bool): True to add a new item.
-            - `bay` (bool): True to move the current item.
-            - `new_dest` (str or None): The updated destination.
+        list: [add_new (bool), move_current (bool), new_dest (str or None)]
+            - add_new: Whether to enqueue a new item.
+            - move_current: Whether to move the current item.
+            - new_dest: Updated destination (unchanged).
     """
-    if dest == "Z":
+    # Immediate move to bay if destination is 'Z'
+    if dest == BayName.Bay1_1.value:
         return [False, True, dest]
-    if length_pos == 1: 
-        if dest == "G":
-            return [False, False, dest]
-        elif dest == None:
-            return [True, False, None]
-        else:
-            return [False, True, dest]
-    elif length_pos == 2:
-        if dest == "G":
-            return [False, False, dest]           
-        elif dest == None:
-            return [True, False, None]
-        else:            
-            return [False, True, dest]
 
-def schedule_with_priority(buffer:dict):
-    temp = buffer["BAY"]
-    str = "BAY"
-    if temp is None:
-        temp = buffer["IN_UP"]
-        temp2 = buffer["IN_DOWN"]
-        if not temp and not temp2:
-            return None
-        elif not temp:
-            return "IN_DOWN"
-        elif not temp2:
-            return "IN_UP"
+    # If position has only one item
+    if length_pos == 1:
+        if dest == BayName.LU.value:
+            return [False, False, dest]  # Hold
+        elif dest is None:
+            return [True, False, None]   # Add new
         else:
-            if temp[0].action == "OUT" and temp2[0].action == "OUT":
-                return "BOTH"
-            elif temp[0].action == "OUT":
-                return "IN_UP"
-            elif temp2[0].action == "OUT":
-                return "IN_DOWN"
-            elif temp[0].action == "BAY":
-                return "IN_UP"
-            elif temp2[0].action == "CROSS" and temp2[0].bay == False:
-                return "IN_DOWN"
-            elif temp[0].action == "CROSS" and temp[0].bay == False:
-                return "IN_UP"
-            else:
-                return "IN_DOWN"
-    else:
-        return str
+            return [False, True, dest]   # Move current
 
+    # If two items in queue
+    if length_pos == 2:
+        if dest == BayName.LU.value:
+            return [False, False, dest]  # Hold
+        elif dest is None:
+            return [True, False, None]   # Add new
+        else:
+            return [False, True, dest]   # Move current
+
+
+def schedule_with_priority(buffer: dict):
+    """
+    Selects the next active buffer ('BAY', 'IN_UP', 'IN_DOWN') based on scheduling priority.
+
+    Args:
+        buffer (dict): A dictionary with keys 'BAY', 'IN_UP', and 'IN_DOWN',
+                       each holding a list (queue) of items or None.
+
+    Returns:
+        str or None: The selected buffer name to process ('BAY', 'IN_UP', 'IN_DOWN', 'BOTH'), or None if all are empty.
+    """
+    bay_buffer = buffer.get(SwitchAction.go_to_bay)
+    if bay_buffer is not None:
+        return SwitchAction.go_to_bay
+
+    in_up = buffer.get("IN_UP")
+    in_down = buffer.get("IN_DOWN")
+
+    # If both inputs are empty
+    if not in_up and not in_down:
+        return None
+
+    # Only one has items
+    if not in_up:
+        return "IN_DOWN"
+    if not in_down:
+        return "IN_UP"
+
+    # Both have items: determine priority based on actions
+    up_action = in_up[0].action
+    down_action = in_down[0].action
+
+    # Both want to go OUT → allow BOTH
+    if up_action == SwitchAction.advance and down_action == SwitchAction.advance:
+        return SwitchAction.double_advance
+
+    # Prioritize OUT actions
+    if up_action == SwitchAction.advance:
+        return "IN_UP"
+    if down_action == SwitchAction.advance:
+        return "IN_DOWN"
+
+    # Prioritize BAY over CROSS
+    if up_action == SwitchAction.go_to_bay:
+        return "IN_UP"
+    
+    if down_action == SwitchAction.cross and not in_down[0].bay:
+        return "IN_DOWN"
+
+    if up_action == SwitchAction.cross and not in_up[0].bay:
+        return "IN_UP"
+
+    # Fallback
+    return "IN_DOWN"

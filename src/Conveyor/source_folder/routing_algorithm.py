@@ -1,85 +1,84 @@
+from utils import SwitchAction, BayName, SwitchName
+# Constants: Define the main matrix and bay mapping
+MAIN_MATRIX = [
+    ['M', 'L', 'I', 'H', 'LoadUnloadZone', 'F'],
+    ['E', 'D', 'C', 'B', 'Z', 'A']
+]
+
+BAY_MATRIX = [
+    ['Bay2_1', 'Bay2_2', 'Bay2_3'],
+    ['Bay3_1', 'Bay3_2', 'Bay3_3'],
+    ['Bay4_1', 'Bay4_2', 'Bay4_3']
+]
+
+BAY_MAPPING = {
+    0: 'L',
+    1: 'I',
+    2: 'H'
+}
+
+# Helper function to get matrix coordinates for a given value
 def get_coordinates(value):
-    matrix = [
-        ['M', 'L', 'I', 'H', 'G','F'],
-        ['E', 'D', 'C', 'B', 'Z','A']
-    ]
-    for i, row in enumerate(matrix):
-        for j, element in enumerate(row):
+    for row_index, row in enumerate(MAIN_MATRIX):
+        for col_index, element in enumerate(row):
             if element == value:
-                return (i, j)
+                return (row_index, col_index)
     return None
 
+# Get corresponding MAIN_MATRIX letter for a bay code
 def get_bay_coordinates(value):
-    if value == "Z1":
-        return "M"
-        
-    matrix = [
-        ['P1', 'P2', 'P3'],
-        ['O1', 'O2', 'O3'],
-        ['N1', 'N2', 'N3']
-    ]
-    
-    for i, row in enumerate(matrix):
-        for j, element in enumerate(row):
-            if element == value:
-                if i == 0:
-                    return "L"
-                if i == 1:
-                    return "I"
-                if i == 2:
-                    return "H"
+    if value == BayName.Bay1_1.value:
+        return SwitchName.M.value  # Special case
+
+    for row_index, row in enumerate(BAY_MATRIX):
+        if value in row:
+            return BAY_MAPPING[row_index]
     return None
 
+# Core movement logic: determines next direction or action
 def calculate_next_position(current_position, destination):
-    
-    pos = get_coordinates(current_position)
-    dest = get_coordinates(destination)
-    
-    if pos is None:
-        pos = get_coordinates(get_bay_coordinates(current_position))
-        
-    if dest is None:
-        dest = get_coordinates(get_bay_coordinates(destination))
+    # Get coordinates in MAIN_MATRIX, handling bay positions
+    current_coords = get_coordinates(current_position) or get_coordinates(get_bay_coordinates(current_position))
+    destination_coords = get_coordinates(destination) or get_coordinates(get_bay_coordinates(destination))
 
-    if pos == dest:
-        return "BAY"
-    
-    if pos[0] == 0 and dest[0] == 0:
-        if pos[1] < dest[1]:
-            return "OUT"        
-        else :
-            return "CROSS"
-            
-    elif pos[0] == 1 and dest[0] == 1:
-        if pos[1] < dest[1]:
-            return "CROSS"
-        else :
-            return "OUT"
-        
-    elif pos[0] == 0 and dest[0] == 1:
-        if current_position == "M":
-            return "OUT"
-        elif pos[1] < dest[1]:
-            return "OUT"
+    # Safety check
+    if not current_coords or not destination_coords:
+        return None
+
+    # Same position => already at bay
+    if current_coords == destination_coords:
+        return SwitchAction.go_to_bay
+
+    curr_row, curr_col = current_coords
+    dest_row, dest_col = destination_coords
+
+    # Movement within same row
+    if curr_row == dest_row:
+        return SwitchAction.advance if curr_col < dest_col else SwitchAction.cross
+
+    # Movement from top to bottom row
+    if curr_row == 0 and dest_row == 1:
+        if current_position == SwitchName.M.value or curr_col < dest_col:
+            return SwitchAction.advance
         else:
-            return "CROSS"
-                
-    elif pos[0] == 1 and dest[0] == 0:
-        if current_position == "A" or current_position == "E":
-            return "OUT"
-        elif pos[1] <= dest[1]:
-            return "CROSS"
-        else :
-            return "OUT"
+            return SwitchAction.cross
 
+    # Movement from bottom to top row
+    if curr_row == 1 and dest_row == 0:
+        if current_position in [SwitchName.A.value, SwitchName.E.value] or curr_col > dest_col:
+            return SwitchAction.advance
+        else:
+            return SwitchAction.cross
+
+    return None  # Fallback
+
+# High-level routing function
 def Routing(position, destination):
-    if position == "L" and destination[0] == "P":
-        return "BAY"
-    elif position == "I" and destination[0] == "O":
-        return "BAY"
-    elif position == "H" and destination[0] == "N":
-        return "BAY" 
-    elif position == "M" and destination[0] == "Z":
-        return "BAY"
-    else:
-        return calculate_next_position(position, destination)
+    # Fast-path: Direct mapping of matrix position to bay row
+    if (position == "L" and destination.startswith("Bay2")) or \
+       (position == "I" and destination.startswith("Bay3")) or \
+       (position == "H" and destination.startswith("Bay4")) or \
+       (position == "M" and destination == BayName.Bay1_1.value):
+        return SwitchAction.go_to_bay
+
+    return calculate_next_position(position, destination)

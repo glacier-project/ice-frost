@@ -15,169 +15,132 @@ preamble{=
     from controller_utils import new_destination, schedule_with_priority
     from bay_routing_algorithm import compute_bay_route, check_bay_available, leave_bay, update_bay_positions
     from routing_algorithm import Routing
-    from utils import Events
+    from utils import Events, ControllerCommand, SwitchAction, SwitchName, InterchangeName, SegmentName, Mutex
 =}
 
 reactor Controller extends FrostBase{
-    state pallets
+    state pallet_destinations
     state pallet_names
     state conveyor 
-    state set
 
-    input SEG_AB
-    input SEG_BC
-    input SEG_CD
-    input SEG_DE
-    input SEG_ML
-    input SEG_LI
-    input SEG_IH
-    input SEG_HG
-    input SEG_GF
+    state n_bay_status = {=[True, True, True]=}
+    state o_bay_status = {=[True, True, True]=}
+    state p_bay_status = {=[True, True, True]=}
+    state z_bay_status = True
+    state lu_bay_status = True
 
-    //BAYS BUFFERS
-    state N_
-    state O_
-    state P_
-    state Z = True
-    //DIRECT COMMUNICATION PORT
-    output OUT
-    output BAY_OUT
-    output SEG_OUT
-    output BAY_Z_OUT
-    output to_G
-    input from_G
-    //INDIRECT COMMUNICATION PORT
-    input FROST_IN
-    output FROST_OUT
-    output Release
-    output Pallets
-    //ACTIONS
-    logical action control_AF
-    logical action control_BH
-    logical action control_CI
-    logical action control_DL
-    logical action control_EM
-    logical action control_G
+    output to_switches
+    output to_bayes
+    output to_segments
+
+    input from_frost
+    output to_frost
+    output pallet_realeased 
+
+    logical action control_af
+    logical action control_bh
+    logical action control_ci
+    logical action control_dl
+    logical action control_em
+    logical action control_lu
     logical action create_pallet
 
-    //Pallets
-    state pallets_to_be_created
+    state pallets_to_be_created = []
 
-    //SEGMENTS
-    state BH_buffers
-    state CI_buffers
-    state DL_buffers
-    state GF_buffers
-    state HG_buffers
-    state DE_buffers
-    state P_buffers
-    state O_buffers
-    state N_buffers
-    state M_buffers
-    state pallet_on_G
+    logical action create_pallet_event
+    reaction (create_pallet_event) -> to_switches, to_bayes, to_segments{=
+        message = ControllerCommand.create, self.pallets_to_be_created.pop(0)
 
-    ############################## ACTION REACTIONS ##############################
-    reaction (create_pallet) -> OUT{=
-        temp = self.pallets[self.pallets_to_be_created.pop(0)]        
-        temp.looping = True
-        self.pallet_names.append(temp.id)         
-        self.conveyor[temp.position] = False
-        y = "Create", temp.position, self.pallets[temp.id]
-        OUT.set(y)
+        if isistance(message[1][1], SwitchName):
+            to_switches.set(message)
+        elif isinstance(message[1][1], SegmentName):
+            to_segments.set(message)
+        elif isinstance(message[1][1], BayName):
+            to_bayes.set(message)
+
     =}
 
+    state bh_status = {={ControllerCommand.double_advance: None, ControllerCommand.up_advance: [], ControllerCommand.down_advance: []}=}
+    state ci_status = {={ControllerCommand.double_advance: None, ControllerCommand.up_advance: [], ControllerCommand.down_advance: []}=}
+    state dl_status = {={ControllerCommand.double_advance: None, ControllerCommand.up_advance: [], ControllerCommand.down_advance: []}=}
+    state gf_status = []
+    state hg_status = []
+    state de_status = []
+    state p_buffers = []
+    state o_buffers = []
+    state n_buffers = []
+    state m_buffers = []
+
+    ############################## ACTION REACTIONS ##############################
     reaction(shutdown){=
         self.logger.debug(f"Conveyor state: {self.conveyor}")
     =}
 
-    reaction (startup)-> OUT, BAY_OUT, create_pallet, Pallets{=
-        self.pallet_on_G = False
-        self.pallets_to_be_created = [2, 3, 4, 5, 6, 7, 8, 9, 10]
-        self.BH_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
-        self.CI_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
-        self.DL_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
-        self.GF_buffers = []
-        self.HG_buffers = []
-        self.DE_buffers = []
-        self.P_buffers = []
-        self.O_buffers = []
-        self.N_buffers = []
-        self.M_buffers = []
-        self.pallets = {}
-        self.pallet_names = []
-        self.N_ = [True, True, True]
-        self.O_ = [True, True, True]
-        self.P_ = [True, True, True]
+    reaction (startup)-> to_switches, to_bayes, create_pallet{=
         self.conveyor = {"A" : True, "B" : True, "C" : True, "D" : True, "E" : True, "F" : True, "G" : True, "H" : True, "I" : True, "L" : True, "M" : True}
-        temp = Pallet(id = 1, position = "I")
-        temp.looping = True
-        self.pallets[temp.id] = temp
-        self.pallet_names.append(temp.id)         
-        y = "Create", temp.position, self.pallets[temp.id]
-        OUT.set(y)
-        self.pallets[2] = Pallet(id = 2, position = "M")
-        self.pallets[3] = Pallet(id = 3, position = "L")
-        self.pallets[4] = Pallet(id = 4, position = "C")
-        self.pallets[5] = Pallet(id = 5, position = "D")
-        self.pallets[6] = Pallet(id = 6, position = "E")
-        self.pallets[7] = Pallet(id = 7, position = "H")
-        self.pallets[8] = Pallet(id = 8, position = "A")
-        self.pallets[9] = Pallet(id = 9, position = "B")
-        self.pallets[10] = Pallet(id = 10, position = "I")
+        self.pallets_to_be_created[0] = [1, SwitchName.I]
+        self.pallets_to_be_created[1] = [2, SwitchName.C]
+        self.pallets_to_be_created[2] = [3, SwitchName.L]
+        self.pallets_to_be_created[3] = [4, SwitchName.C]
+        self.pallets_to_be_created[4] = [5, SwitchName.D]
+        self.pallets_to_be_created[5] = [6, SwitchName.E]
+        self.pallets_to_be_created[6] = [7, SwitchName.H]
+        self.pallets_to_be_created[7] = [8, SwitchName.A]
+        self.pallets_to_be_created[8] = [9, SwitchName.B]
+        self.pallets_to_be_created[9] = [10, SwitchName.I]
         for z in range(1, len(self.pallets)):
-            create_pallet.schedule(z-1)
-        Pallets.set(self.pallets)
+            create_pallet_event.schedule(z-1)
     =}
 
-    reaction(control_AF) -> SEG_OUT{=
+    reaction(control_af) -> to_segments{=
         if self.conveyor["A"] == True and self.conveyor["F"] == True and not(not self.GF_buffers):
             self.conveyor["A"] = False
             self.conveyor["F"] = False
             self.GF_buffers.pop(0)
             y = ["GF"]
-            SEG_OUT.set(y)        
+            to_segments.set(y)        
     =}
-    reaction(control_BH)-> SEG_OUT, BAY_OUT, Release{=
+    reaction(control_bh)-> to_segments, to_bayes, pallet_realeased {=
         if self.conveyor["B"] == True or self.conveyor["H"] == True:
             y = schedule_with_priority(self.BH_buffers)
             if y != None:
                 temp = None
-                if y != "BOTH":
-                    if y == "BAY":
+                if y != ControllerCommand.double_advance:
+                    if y == SwitchAction.go_to_bay:
                         temp = self.BH_buffers[y]
                     else:
                         temp = self.BH_buffers[y][0]
-                if temp != None and temp.action == "OUT":
-                    if y == "IN_UP" and self.conveyor["H"] == True:
-                        self.BH_buffers["IN_UP"].pop(0)
+                if temp != None and temp.action == SwitchAction.advance:
+                    if y == ControllerCommand.up_advance and self.conveyor["H"] == True:
+                        self.BH_buffers[ControllerCommand.up_advance].pop(0)
                         self.conveyor["H"] = False  
                         y = ["IH"]
-                        SEG_OUT.set(y)
-                    elif y == "IN_DOWN" and self.conveyor["B"] == True:
-                        self.BH_buffers["IN_DOWN"].pop(0)
+                        to_segments.set(y)
+                    elif y == ControllerCommand.up_advance and self.conveyor["B"] == True:
+                        self.BH_buffers[ControllerCommand.up_advance].pop(0)
                         self.conveyor["B"] = False
                         y = ["AB"]
-                        SEG_OUT.set(y)
+                        to_segments.set(y)
                 elif self.conveyor["B"] == True and self.conveyor["H"] == True:
-                    if y == "BAY":
-                        Release.set(self.BH_buffers["BAY"].id)
-                        self.BH_buffers["BAY"] = None
-                        BAY_OUT.set(["Release", "N"])  
+                    if y == SwitchAction.go_to_bay:
+                        pallet_realeased .set(self.BH_buffers[SwitchAction.go_to_bay].id)
+                        self.BH_buffers[SwitchAction.go_to_bay] = None
+                        to_bayes.set(["pallet_realeased ", "N"])  
                         
                         self.N_[0] = True          
-                    elif y == "IN_UP":
-                        self.BH_buffers["IN_UP"].pop(0)
+                    elif y == ControllerCommand.up_advance:
+                        self.BH_buffers[ControllerCommand.up_advance].pop(0)
                         y = ["IH"]
-                        SEG_OUT.set(y)
-                    elif y == "IN_DOWN":
-                        self.BH_buffers["IN_DOWN"].pop(0)
+                        to_segments.set(y)
+                    elif y == ControllerCommand.up_advance:
+                        self.BH_buffers[ControllerCommand.up_advance].pop(0)
                         y = ["AB"]
-                        SEG_OUT.set(y)
-                    elif y == "BOTH":
-                        self.BH_buffers["IN_DOWN"].pop(0)
-                        self.BH_buffers["IN_UP"].pop(0)
-                        y = ["BOTH", "AB", "IH"]
-                        SEG_OUT.set(y)
+                        to_segments.set(y)
+                    elif y == ControllerCommand.double_advance:
+                        self.BH_buffers[ControllerCommand.up_advance].pop(0)
+                        self.BH_buffers[ControllerCommand.up_advance].pop(0)
+                        y = [ControllerCommand.double_advance, "AB", "IH"]
+                        to_segments.set(y)
                     
                     self.conveyor["B"] = False
                     self.conveyor["H"] = False  
@@ -185,46 +148,46 @@ reactor Controller extends FrostBase{
                 self.conveyor["B"] = True
                 self.conveyor["H"] = True                          
     =}
-    reaction(control_CI)-> SEG_OUT, BAY_OUT, Release{=
+    reaction(control_ci)-> to_segments, to_bayes, pallet_realeased {=
         if self.conveyor["C"] == True or self.conveyor["I"] == True:
             y = schedule_with_priority(self.CI_buffers)
             if y != None:
                 temp = None
-                if y != "BOTH":
-                    if y == "BAY":
+                if y != ControllerCommand.double_advance:
+                    if y == SwitchAction.go_to_bay:
                         temp = self.CI_buffers[y]   
                     else:
                         temp = self.CI_buffers[y][0]
-                if temp != None and temp.action == "OUT":
-                    if y == "IN_UP" and self.conveyor["I"] == True:
-                        self.CI_buffers["IN_UP"].pop(0)
+                if temp != None and temp.action == SwitchAction.advance:
+                    if y == ControllerCommand.up_advance and self.conveyor["I"] == True:
+                        self.CI_buffers[ControllerCommand.up_advance].pop(0)
                         self.conveyor["I"] = False
                         y = ["LI"]
-                        SEG_OUT.set(y)
-                    elif y == "IN_DOWN" and self.conveyor["C"] == True:
-                        self.CI_buffers["IN_DOWN"].pop(0)
+                        to_segments.set(y)
+                    elif y == ControllerCommand.up_advance and self.conveyor["C"] == True:
+                        self.CI_buffers[ControllerCommand.up_advance].pop(0)
                         self.conveyor["C"] = False
                         y = ["BC"]
-                        SEG_OUT.set(y)
+                        to_segments.set(y)
                 elif self.conveyor["C"] == True and self.conveyor["I"] == True:
-                    if y == "BAY":
-                        Release.set(self.CI_buffers["BAY"].id)
-                        self.CI_buffers["BAY"] = None
-                        BAY_OUT.set(["Release", "O"]) 
+                    if y == SwitchAction.go_to_bay:
+                        pallet_realeased .set(self.CI_buffers[SwitchAction.go_to_bay].id)
+                        self.CI_buffers[SwitchAction.go_to_bay] = None
+                        to_bayes.set(["pallet_realeased ", "O"]) 
                         self.O_[0] = True
-                    elif y == "IN_UP":
-                        self.CI_buffers["IN_UP"].pop(0)
+                    elif y == ControllerCommand.up_advance:
+                        self.CI_buffers[ControllerCommand.up_advance].pop(0)
                         y = ["LI"]
-                        SEG_OUT.set(y)
-                    elif y == "IN_DOWN":
-                        self.CI_buffers["IN_DOWN"].pop(0)
+                        to_segments.set(y)
+                    elif y == ControllerCommand.up_advance:
+                        self.CI_buffers[ControllerCommand.up_advance].pop(0)
                         y = ["BC"]
-                        SEG_OUT.set(y)
-                    elif y == "BOTH":
-                        self.CI_buffers["IN_DOWN"].pop(0)
-                        self.CI_buffers["IN_UP"].pop(0)
-                        y = ["BOTH", "BC", "LI"]
-                        SEG_OUT.set(y)
+                        to_segments.set(y)
+                    elif y == ControllerCommand.double_advance:
+                        self.CI_buffers[ControllerCommand.up_advance].pop(0)
+                        self.CI_buffers[ControllerCommand.up_advance].pop(0)
+                        y = [ControllerCommand.double_advance, "BC", "LI"]
+                        to_segments.set(y)
                     
                     self.conveyor["C"] = False
                     self.conveyor["I"] = False  
@@ -232,47 +195,47 @@ reactor Controller extends FrostBase{
                 self.conveyor["C"] = True
                 self.conveyor["I"] = True                          
     =}
-    reaction(control_DL)-> SEG_OUT, BAY_OUT, Release{=
+    reaction(control_dl)-> to_segments, to_bayes, pallet_realeased {=
         if self.conveyor["D"] == True or self.conveyor["L"] == True:
             y = schedule_with_priority(self.DL_buffers)
             if y != None:
                 temp = None
-                if y != "BOTH":
-                    if y == "BAY":
+                if y != ControllerCommand.double_advance:
+                    if y == SwitchAction.go_to_bay:
                         temp = self.DL_buffers[y]
                     else:
                         temp = self.DL_buffers[y][0]
                     
-                if temp != None and temp.action == "OUT":
-                    if y == "IN_UP" and self.conveyor["L"] == True:
-                        self.DL_buffers["IN_UP"].pop(0)
+                if temp != None and temp.action == SwitchAction.advance:
+                    if y == ControllerCommand.up_advance and self.conveyor["L"] == True:
+                        self.DL_buffers[ControllerCommand.up_advance].pop(0)
                         self.conveyor["L"] = False
                         y = ["ML"]
-                        SEG_OUT.set(y)
-                    elif y == "IN_DOWN" and self.conveyor["D"] == True:
-                        self.DL_buffers["IN_DOWN"].pop(0)
+                        to_segments.set(y)
+                    elif y == ControllerCommand.up_advance and self.conveyor["D"] == True:
+                        self.DL_buffers[ControllerCommand.up_advance].pop(0)
                         self.conveyor["D"] = False
                         y = ["CD"]
-                        SEG_OUT.set(y)
+                        to_segments.set(y)
                 elif self.conveyor["D"] == True and self.conveyor["L"] == True:
-                    if y == "BAY":
-                        Release.set(self.DL_buffers["BAY"].id)
-                        self.DL_buffers["BAY"] = None
-                        BAY_OUT.set(["Release", "P"])   
+                    if y == SwitchAction.go_to_bay:
+                        pallet_realeased .set(self.DL_buffers[SwitchAction.go_to_bay].id)
+                        self.DL_buffers[SwitchAction.go_to_bay] = None
+                        to_bayes.set(["pallet_realeased ", "P"])   
                         self.P_[0] = True
-                    elif y == "IN_UP":
-                        self.DL_buffers["IN_UP"].pop(0)
+                    elif y == ControllerCommand.up_advance:
+                        self.DL_buffers[ControllerCommand.up_advance].pop(0)
                         y = ["ML"]
-                        SEG_OUT.set(y)
-                    elif y == "IN_DOWN":
-                        self.DL_buffers["IN_DOWN"].pop(0)
+                        to_segments.set(y)
+                    elif y == ControllerCommand.up_advance:
+                        self.DL_buffers[ControllerCommand.up_advance].pop(0)
                         y = ["CD"]
-                        SEG_OUT.set(y)
-                    elif y == "BOTH":
-                        self.DL_buffers["IN_DOWN"].pop(0)
-                        self.DL_buffers["IN_UP"].pop(0)
-                        y = ["BOTH", "CD", "ML"]
-                        SEG_OUT.set(y)
+                        to_segments.set(y)
+                    elif y == ControllerCommand.double_advance:
+                        self.DL_buffers[ControllerCommand.up_advance].pop(0)
+                        self.DL_buffers[ControllerCommand.up_advance].pop(0)
+                        y = [ControllerCommand.double_advance, "CD", "ML"]
+                        to_segments.set(y)
                     
                     self.conveyor["D"] = False
                     self.conveyor["L"] = False  
@@ -280,150 +243,159 @@ reactor Controller extends FrostBase{
                 self.conveyor["D"] = True
                 self.conveyor["L"] = True                          
     =}
-    reaction(control_EM)-> SEG_OUT, BAY_Z_OUT{=
+    reaction(control_em)-> to_segments, to_bayes{=
         if self.conveyor["E"] == True and self.conveyor["M"] == True and (self.DE_buffers or self.M_buffers):
             self.conveyor["E"] = False
             self.conveyor["M"] = False
             if self.M_buffers:
-                y = ["MOVE", "OUT"]
-                BAY_Z_OUT.set(y)
+                y = [ControllerCommand.move, SwitchAction.advance]
+                BAY_Z_to_switches.set(y)
                 self.M_buffers.pop(0)
                 self.Z = True
             else:             
                 self.DE_buffers.pop(0)
                 y = ["DE"]
-                SEG_OUT.set(y)
+                to_segments.set(y)
     =}
-    reaction(control_G) -> SEG_OUT{=
+    reaction(control_lu) -> to_segments{=
         if self.conveyor["G"] == True and (self.HG_buffers):
             self.conveyor["G"] = False
             self.HG_buffers.pop(0)
             y = ["HG"]
-            SEG_OUT.set(y)
+            to_segments.set(y)
     =}
 
     ############################## SEGMENT REACTIONS ##################################
-    reaction (SEG_AB) -> control_AF, control_BH{=
+    input ab_request
+    reaction (ab_request) -> control_af, control_bh{=
         self.conveyor["A"] = True
         self.conveyor["F"] = True
         temp = SEG_AB.value
         if temp.looping == True:
-            temp.action = "OUT"             
+            temp.action = SwitchAction.advance             
         else:
             temp.action = Routing("B", temp.destination)
-            if temp.action == "BAY" and check_bay_available(self.N_, int(temp.destination[1])):
-                temp.action = "OUT"
-        self.BH_buffers["IN_DOWN"].append(temp)
+            if temp.action == SwitchAction.go_to_bay and check_bay_available(self.N_, int(temp.destination[1])):
+                temp.action = SwitchAction.advance
+        self.BH_buffers[ControllerCommand.up_advance].append(temp)
         out = "SEGMENT_AB", temp.id, temp.position, temp.destination, temp.action, temp.object1
         control_BH.schedule(0)
         control_AF.schedule(1)        
     =}
-    reaction(SEG_BC)->control_BH, control_CI{=
+    input bc_request
+    reaction(bc_request)->control_bh, control_ci{=
         self.conveyor["B"] = True
         self.conveyor["H"] = True
         temp = SEG_BC.value
         if temp.looping == True:
-            temp.action = "OUT"             
+            temp.action = SwitchAction.advance             
         else:
             temp.action = Routing("C", temp.destination)
-            if temp.action == "BAY" and check_bay_available(self.O_, int(temp.destination[1])):
-                temp.action = "OUT"
-        self.CI_buffers["IN_DOWN"].append(temp)
+            if temp.action == SwitchAction.go_to_bay and check_bay_available(self.O_, int(temp.destination[1])):
+                temp.action = SwitchAction.advance
+        self.CI_buffers[ControllerCommand.up_advance].append(temp)
         out = "SEGMENT_BC", temp.id, temp.position, temp.destination, temp.action, temp.object1
         control_CI.schedule(0)
         control_BH.schedule(1)
     =}
-    reaction(SEG_CD) -> control_CI, control_DL{=
+    input cd_request
+    reaction(cd_request) -> control_ci, control_dl{=
         self.conveyor["C"] = True
         self.conveyor["I"] = True
         temp = SEG_CD.value
         if temp.looping == True:
-            temp.action = "OUT"             
+            temp.action = SwitchAction.advance             
         else:
             temp.action = Routing("D", temp.destination)
-            if temp.action == "BAY" and check_bay_available(self.P_, int(temp.destination[1])):
-                temp.action = "OUT"
+            if temp.action == SwitchAction.go_to_bay and check_bay_available(self.P_, int(temp.destination[1])):
+                temp.action = SwitchAction.advance
                 self.P_buffers.append(temp)
-        self.DL_buffers["IN_DOWN"].append(temp)
+        self.DL_buffers[ControllerCommand.up_advance].append(temp)
         out = "SEGMENT_CD", temp.id, temp.position, temp.destination, temp.action, temp.object1
         control_DL.schedule(0)
         control_CI.schedule(1)
     =}
-    reaction(SEG_DE) -> control_DL, control_EM{=
+    input de_request
+    reaction(de_request) -> control_dl, control_em{=
         self.conveyor["D"] = True
         self.conveyor["L"] = True
         temp = SEG_DE.value
         if temp.looping == True:
-            temp.action = "OUT"             
+            temp.action = SwitchAction.advance             
         else:
             temp.action = Routing("E", temp.destination)
-            if temp.action == "BAY" and self.Z:
-                temp.action = "OUT"
+            if temp.action == SwitchAction.go_to_bay and self.Z:
+                temp.action = SwitchAction.advance
         self.DE_buffers.append(temp)
         control_EM.schedule(0)
         control_DL.schedule(1)
     =}
-    reaction(SEG_ML) -> control_EM, control_DL{=
+    input ml_request
+    reaction(ml_request) -> control_em, control_dl{=
         self.conveyor["M"] = True
         self.conveyor["E"] = True
         temp = SEG_ML.value
         if temp.looping == True:
-            temp.action = "OUT"             
+            temp.action = SwitchAction.advance             
         else:
             temp.action = Routing("L", temp.destination) 
-            if temp.action == "BAY" and not check_bay_available(self.P_, int(temp.destination[1])):
-                temp.action = "OUT"
+            if temp.action == SwitchAction.go_to_bay and not check_bay_available(self.P_, int(temp.destination[1])):
+                temp.action = SwitchAction.advance
                 self.P_buffers.append(temp)
-        self.DL_buffers["IN_UP"].append(temp)
+        self.DL_buffers[ControllerCommand.up_advance].append(temp)
         control_DL.schedule(0)
         control_EM.schedule(1)
     =}
-    reaction(SEG_LI) -> control_DL, control_CI{=
+    input li_request
+    reaction(li_request) -> control_dl, control_ci{=
         self.conveyor["L"] = True
         self.conveyor["D"] = True
         temp = SEG_LI.value
         if temp.looping == True:
-            temp.action = "OUT"             
+            temp.action = SwitchAction.advance             
         else:
             temp.action = Routing("I", temp.destination)
-            if temp.action == "BAY" and not check_bay_available(self.O_, int(temp.destination[1])):
-                temp.action = "OUT"
+            if temp.action == SwitchAction.go_to_bay and not check_bay_available(self.O_, int(temp.destination[1])):
+                temp.action = SwitchAction.advance
                 self.O_buffers.append(temp)
-        self.CI_buffers["IN_UP"].append(temp)   
+        self.CI_buffers[ControllerCommand.up_advance].append(temp)   
         out = "SEGMENT_LI", temp.id, temp.position, temp.destination, temp.action, temp.object1
         control_CI.schedule(0)
         control_DL.schedule(1)
     =}
-    reaction(SEG_IH) -> control_BH, control_CI{=
+    input ih_request
+    reaction(ih_request) -> control_bh, control_ci{=
         self.conveyor["I"] = True
         self.conveyor["C"] = True
         temp = SEG_IH.value
         if temp.looping == True:
-            temp.action = "CROSS"             
+            temp.action = SwitchAction.cross             
         else:
             temp.action = Routing("H", temp.destination)
-            if temp.action =="BAY" and not check_bay_available(self.N_, int(temp.destination[1])):
-                temp.action = "OUT"
+            if temp.action ==SwitchAction.go_to_bay and not check_bay_available(self.N_, int(temp.destination[1])):
+                temp.action = SwitchAction.advance
                 self.N_buffers.append(temp)            
-        self.BH_buffers["IN_UP"].append(temp)
+        self.BH_buffers[ControllerCommand.up_advance].append(temp)
         out = "SEGMENT_IH", temp.id, temp.position, temp.destination, temp.action, temp.object1
         control_CI.schedule(0)
         control_BH.schedule(1)
     =}
-    reaction(SEG_HG) -> control_BH, control_G{=
+    input hg_request
+    reaction(hg_request) -> control_bh, control_lu{=
         self.conveyor["H"] = True
         self.conveyor["B"] = True
         temp = SEG_HG.value
-        temp.action = "OUT"
+        temp.action = SwitchAction.advance
         self.HG_buffers.append(temp)
         out = "SEGMENT_HG", temp.id, temp.position, temp.destination, temp.action, temp.object1
         control_G.schedule(0)
         control_BH.schedule(1)
     =}
-    reaction(SEG_GF) -> control_AF, control_G{=
+    input gf_request
+    reaction(gf_request) -> control_af, control_lu{=
         self.conveyor["G"] = True
         temp = SEG_GF.value
-        temp.action = "OUT"
+        temp.action = SwitchAction.advance
         self.GF_buffers.append(temp)
         out = "SEGMENT_GF", temp.id, temp.position, temp.destination, temp.action, temp.object1
         control_G.schedule(0)
@@ -431,16 +403,31 @@ reactor Controller extends FrostBase{
     =}
 
     ############################## BAY REACTIONS ##############################
-    input BAY_P_IN
-    reaction(BAY_P_IN) -> BAY_OUT, control_DL{=
-        if BAY_P_IN.value[0] == "Move":
+    input bay1_request
+    reaction(bay1_request) -> to_bayes, to_segments, control_em{=
+        temp = BAY_Z_IN.value
+        if temp[0] == ControllerCommand.move:
+            to_segments.set(["DE", "STOP"])
+            self.M_buffers.append(temp[2])
+            BAY_Z_to_switches.set([ControllerCommand.move, SwitchAction.advance])
+        elif temp[0] == Events.pallet_arrived:
+            self.conveyor["E"] = True 
+            self.conveyor["M"] = True
+            to_segments.set(["DE"])
+            self.Z = True
+            
+            control_EM.schedule(0)
+    =}
+    input bay2_request
+    reaction(bay2_request) -> to_bayes, control_dl{=
+        if BAY_P_IN.value[0] == ControllerCommand.move:
             s = "P" + BAY_P_IN.value[1]
             ctrl = int(BAY_P_IN.value[3]) if (BAY_P_IN.value[2]) == None else int(BAY_P_IN.value[2][1])
             route =  compute_bay_route(s, BAY_P_IN.value[2], "P")
             n = int(BAY_P_IN.value[1])
             update_bay_positions(self.P_, n, route[0])
-            y = "Move", s, route[0]
-            BAY_OUT.set(y)
+            y = ControllerCommand.move, s, route[0]
+            to_bayes.set(y)
 
         elif BAY_P_IN.value[0] == "Move_in_bay":
             s = "P" + BAY_P_IN.value[1]
@@ -450,10 +437,10 @@ reactor Controller extends FrostBase{
             route =  compute_bay_route(s, BAY_P_IN.value[2], "P")
             n = int(BAY_P_IN.value[1])
             update_bay_positions(self.P_, n, route[0])
-            y = "Move", s, route[0]
-            BAY_OUT.set(y)
+            y = ControllerCommand.move, s, route[0]
+            to_bayes.set(y)
 
-        elif BAY_P_IN.value[0] == "_pallet_arrived":
+        elif BAY_P_IN.value[0] == Events.pallet_arrived:
             n = int(BAY_P_IN.value[2]) - 1
             self.P_[n] = False            
             if n == 1:
@@ -467,11 +454,11 @@ reactor Controller extends FrostBase{
             self.conveyor["D"] = True
 
         elif BAY_P_IN.value[0] == "Pallet_incoming":
-            self.DL_buffers["BAY"] = BAY_P_IN.value[1]
+            self.DL_buffers[SwitchAction.go_to_bay] = BAY_P_IN.value[1]
             control_DL.schedule(0)
     =}
-    input BAY_O_IN
-    reaction(BAY_O_IN) -> BAY_OUT, control_CI{=
+    input bay3_request
+    reaction(bay3_request) -> to_bayes, control_ci{=
         if BAY_O_IN.value[0] == "Move_in_bay":
             s = "O" + BAY_O_IN.value[1]
             ctrl = int(BAY_O_IN.value[1]) - 1
@@ -480,19 +467,19 @@ reactor Controller extends FrostBase{
             route =  compute_bay_route(s, BAY_O_IN.value[2], "O")
             n = int(BAY_O_IN.value[1])
             update_bay_positions(self.O_, n, route[0])
-            y = "Move", s, route[0]
-            BAY_OUT.set(y)
+            y = ControllerCommand.move, s, route[0]
+            to_bayes.set(y)
     
-        elif BAY_O_IN.value[0] == "Move":
+        elif BAY_O_IN.value[0] == ControllerCommand.move:
             s = "O" + BAY_O_IN.value[1]
             route =  compute_bay_route(s, BAY_O_IN.value[2], "O")
             n = int(BAY_O_IN.value[1])
             update_bay_positions(self.O_, n, route[0])
 
-            y = "Move", s, route[0]
-            BAY_OUT.set(y)
+            y = ControllerCommand.move, s, route[0]
+            to_bayes.set(y)
 
-        elif BAY_O_IN.value[0] == "_pallet_arrived":
+        elif BAY_O_IN.value[0] == Events.pallet_arrived:
             n = int(BAY_O_IN.value[2]) - 1
             self.O_[n] = False            
             if n == 1:
@@ -506,19 +493,19 @@ reactor Controller extends FrostBase{
             self.conveyor["C"] = True
         
         elif BAY_O_IN.value[0] == "Pallet_incoming":
-            self.CI_buffers["BAY"] = BAY_O_IN.value[1]
+            self.CI_buffers[SwitchAction.go_to_bay] = BAY_O_IN.value[1]
             control_CI.schedule(0)        
     =}
-    input BAY_N_IN
-    reaction(BAY_N_IN) -> BAY_OUT, control_BH{=
-        if BAY_N_IN.value[0] == "Move":
+    input bay4_request
+    reaction(bay4_request) -> to_bayes, control_bh{=
+        if BAY_N_IN.value[0] == ControllerCommand.move:
             s = "N" + BAY_N_IN.value[1]
             route =  compute_bay_route(s, BAY_N_IN.value[2], "N")
             n = int(BAY_N_IN.value[1])
             update_bay_positions(self.N_, n, route[0])
 
-            y = "Move", s, route[0]
-            BAY_OUT.set(y)
+            y = ControllerCommand.move, s, route[0]
+            to_bayes.set(y)
 
         elif BAY_N_IN.value[0] == "Move_in_bay":
             s = "N" + BAY_N_IN.value[1]
@@ -528,10 +515,10 @@ reactor Controller extends FrostBase{
             route =  compute_bay_route(s, BAY_N_IN.value[2], "N")
             n = int(BAY_N_IN.value[1])
             update_bay_positions(self.N_, n, route[0])
-            y = "Move", s, route[0]
-            BAY_OUT.set(y)
+            y = ControllerCommand.move, s, route[0]
+            to_bayes.set(y)
 
-        elif BAY_N_IN.value[0] == "_pallet_arrived":
+        elif BAY_N_IN.value[0] == Events.pallet_arrived:
             n = int(BAY_N_IN.value[2]) - 1
             self.N_[n] = False            
             if n == 1:
@@ -545,187 +532,131 @@ reactor Controller extends FrostBase{
             self.conveyor["H"] = True
 
         elif BAY_N_IN.value[0] == "Pallet_incoming":
-            self.BH_buffers["BAY"] = BAY_N_IN.value[1]
+            self.BH_buffers[SwitchAction.go_to_bay] = BAY_N_IN.value[1]
             control_BH.schedule(0)
 
     =}
-    input BAY_Z_IN
-    reaction(BAY_Z_IN) -> BAY_Z_OUT, SEG_OUT, control_EM{=
-        temp = BAY_Z_IN.value
-        if temp[0] == "Move":
-            SEG_OUT.set(["DE", "STOP"])
-            self.M_buffers.append(temp[2])
-            BAY_Z_OUT.set(["Move", "OUT"])
-        elif temp[0] == "_pallet_arrived":
-            self.conveyor["E"] = True 
-            self.conveyor["M"] = True
-            SEG_OUT.set(["DE"])
-            self.Z = True
-            
-            control_EM.schedule(0)
-    =}
-
-    ############################## SWITCH REACTIONS ##############################
-    input A_IN
-    reaction (A_IN)-> OUT{=
-        if A_IN.value is not None and A_IN.value[0] == "Move":
-            route = Routing(A_IN.value[1], A_IN.value[2])  
-            y = "Move", "A", route
-            OUT.set(y)
-    =}
-    input B_IN
-    reaction (B_IN) -> OUT{=
-        if B_IN.value is not None and B_IN.value[0] == "Move":
-            route = Routing(B_IN.value[1], B_IN.value[2])  
-            y = "Move", "B", route
-            OUT.set(y)
-    =}
-    input C_IN
-    reaction (C_IN) -> OUT{=
-        if C_IN.value is not None and C_IN.value[0] == "Move":
-            route = Routing(C_IN.value[1], C_IN.value[2])  
-            y = "Move", "C", route
-            OUT.set(y)
-    =}
-    input D_IN
-    reaction (D_IN) -> OUT{=
-        if D_IN.value is not None and D_IN.value[0] == "Move":
-            route = Routing(D_IN.value[1], D_IN.value[2])  
-            if route == "BAY":
-                if check_bay_available( self.P_, int(D_IN.value[2][1])):
-                    route = "OUT"
-
-            y = "Move", "D", route                       
-            OUT.set(y)
-    =}
-    input E_IN
-    reaction (E_IN) -> OUT{=
-        if E_IN.value is not None and E_IN.value[0] == "Move":
-            y = "Move", "E", "OUT"
-            OUT.set(y)
-    =}
-    input F_IN
-    reaction (F_IN) -> OUT{=
-        if F_IN.value is not None and F_IN.value[0] == "Move":
-            y = "Move", "F", "OUT"
-            OUT.set(y)
-    =}
-    input H_IN
-    reaction (H_IN) -> OUT{=
-        if H_IN.value is not None and H_IN.value[0] == "Move":
-            route = "OUT"
-            route = Routing(H_IN.value[1], H_IN.value[2])
-            y = "Move", "H", route
-
-            if route == "BAY":
-                if check_bay_available(self.N_, int(H_IN.value[2][1])):
-                    leave_bay(self.N_, int(H_IN.value[2][1]))
-                    y = "Move", "H", route,                       
-                else:
-                    y = "Move", "H", "OUT"
-                
-            OUT.set(y)
-    =}
-    input I_IN
-    reaction (I_IN) -> OUT{=
-        if I_IN.value is not None and I_IN.value[0] == "Move":
-            route = Routing(I_IN.value[1], I_IN.value[2])
-            y = "Move", "I", route
-            if route == "BAY":
-                if check_bay_available(self.O_, int(I_IN.value[2][1])):   
-                        leave_bay(self.O_, int(I_IN.value[2][1]))
-                        y = "Move", "I", route,                      
-                else:
-                    y = "Move", "I","OUT"
-            OUT.set(y)
-    =}
-    input L_IN
-    reaction (L_IN) -> OUT{=
-        if L_IN.value is not None and L_IN.value[0] == "Move":
-            route = Routing(L_IN.value[1], L_IN.value[2])
-            y = "Move", "L", route
-            if route == "BAY":
-                if check_bay_available( self.P_, int(L_IN.value[2][1])):
-                    leave_bay(self.P_, int(L_IN.value[2][1]))
-                    y = "Move", "L", "BAY"
-                else:
-                    y = "Move", "L", "OUT"
-
-            OUT.set(y)
-    =}
-    input M_IN
-    reaction (M_IN) -> OUT{=
-        if M_IN.value is not None and M_IN.value[0] == "Move":
-            route = "OUT"
-            temp = self.pallets[M_IN.value[3]]
-            y = None
-            if temp.looping:
-                y = "Move", "M", "OUT"
-            else:
-                route = Routing("M", temp.destination)
-                y = "Move", "M", route
-                
-                if route == "BAY":
-                    if self.Z:
-                        y = "Move", "M", route
-                    else:
-                        y = "Move", "M", "OUT"
-            
-            OUT.set(y)
-    =}
-    ############################## FROST ##############################
-    reaction(FROST_IN)-> OUT, BAY_OUT, BAY_Z_OUT, to_G{=
-        '''command = FROST_IN.value[0]
-        args = FROST_IN.value[1]
-        if FROST_IN.value[0] == 1:
-            temp = self.pallets[FROST_IN.value[1][0]]
-            length_pos = len(temp.position)
-            dest = FROST_IN.value[1][1]
-            route = new_destination(dest, length_pos)
-            temp.looping = route[0]
-            temp.bay = route[1]
-            temp.destination = route[2]
-            if length_pos == 2:
-                if temp.position == "Z1":
-                    y = ["Move", "OUT"]
-                    BAY_Z_OUT.set(y)
-                else:
-                    y = "Move", temp.position, compute_bay_route(temp.position, dest, temp.position[0])[0]
-                    BAY_OUT.set(y)
-            elif temp.position == "G":
-                y = "Move", "OUT"
-                to_G.set(y)
-        elif command == 7:
-            temp = self.pallets[args[0]]
-            temp.looping = True
-            temp.bay = None
-            if temp.destination == None:
-                return 0
-            temp.destination = None
-            pos = temp.position
-            out_data = []
-            if pos == "G":
-                self.pallet_on_G = False
-                y = "Move", "OUT"
-                to_G.set(y)
-            elif len(pos) == 2:
-                i = 2
-                if pos == "Z1":
-                    BAY_Z_OUT.set(["Move", "OUT"])
-                else:
-                    if pos[0] == "N":
-                        BAY_OUT.set(["Move_in_bay", pos])
-                        i = 4
-                    elif pos[0] == "O":
-                        BAY_OUT.set(["Move_in_bay", pos])
-                        i = 3
-                    elif pos[0] == "P":
-                        BAY_OUT.set(["Move_in_bay", pos])
-                        i = 2'''
-    =}
-
-    reaction(from_G){=
+    input bay5_request
+    reaction(bay5_request){=
         if from_G.value[0] == Events.pallet_arrived:
             self.pallet_on_G = True           
     =}
+
+    ############################## SWITCH REACTIONS ##############################
+    input switch_a_request
+    reaction (switch_a_request)-> to_switches{=
+        if A_IN.value is not None and A_IN.value[0] == ControllerCommand.move:
+            route = Routing(A_IN.value[1], A_IN.value[2])  
+            y = ControllerCommand.move, "A", route
+            to_switches.set(y)
+    =}
+    input switch_b_request
+    reaction (switch_b_request) -> to_switches{=
+        if B_IN.value is not None and B_IN.value[0] == ControllerCommand.move:
+            route = Routing(B_IN.value[1], B_IN.value[2])  
+            y = ControllerCommand.move, "B", route
+            to_switches.set(y)
+    =}
+    input switch_c_request
+    reaction (switch_c_request) -> to_switches{=
+        if C_IN.value is not None and C_IN.value[0] == ControllerCommand.move:
+            route = Routing(C_IN.value[1], C_IN.value[2])  
+            y = ControllerCommand.move, "C", route
+            to_switches.set(y)
+    =}
+    input switch_d_request
+    reaction (switch_d_request) -> to_switches{=
+        if D_IN.value is not None and D_IN.value[0] == ControllerCommand.move:
+            route = Routing(D_IN.value[1], D_IN.value[2])  
+            if route == SwitchAction.go_to_bay:
+                if check_bay_available( self.P_, int(D_IN.value[2][1])):
+                    route = SwitchAction.advance
+
+            y = ControllerCommand.move, "D", route                       
+            to_switches.set(y)
+    =}
+    input switch_e_request
+    reaction (switch_e_request) -> to_switches{=
+        if switch_e_request.value is not None and switch_e_request.value[0] == ControllerCommand.move:
+            y = ControllerCommand.move, "E", SwitchAction.advance
+            to_switches.set(y)
+    =}
+    input switch_f_request
+    reaction (switch_f_request) -> to_switches{=
+        if F_IN.value is not None and F_IN.value[0] == ControllerCommand.move:
+            y = ControllerCommand.move, "F", SwitchAction.advance
+            to_switches.set(y)
+    =}
+    input switch_h_request
+    reaction (switch_h_request) -> to_switches{=
+        if H_IN.value is not None and H_IN.value[0] == ControllerCommand.move:
+            route = SwitchAction.advance
+            route = Routing(H_IN.value[1], H_IN.value[2])
+            y = ControllerCommand.move, "H", route
+
+            if route == SwitchAction.go_to_bay:
+                if check_bay_available(self.N_, int(H_IN.value[2][1])):
+                    leave_bay(self.N_, int(H_IN.value[2][1]))
+                    y = ControllerCommand.move, "H", route,                       
+                else:
+                    y = ControllerCommand.move, "H", SwitchAction.advance
+                
+            to_switches.set(y)
+    =}
+    input switch_i_request
+    reaction (switch_i_request) -> to_switches{=
+        if I_IN.value is not None and I_IN.value[0] == ControllerCommand.move:
+            route = Routing(I_IN.value[1], I_IN.value[2])
+            y = ControllerCommand.move, "I", route
+            if route == SwitchAction.go_to_bay:
+                if check_bay_available(self.O_, int(I_IN.value[2][1])):   
+                        leave_bay(self.O_, int(I_IN.value[2][1]))
+                        y = ControllerCommand.move, "I", route,                      
+                else:
+                    y = ControllerCommand.move, "I",SwitchAction.advance
+            to_switches.set(y)
+    =}
+    input switch_l_request
+    reaction (switch_l_request) -> to_switches{=
+        if L_IN.value is not None and L_IN.value[0] == ControllerCommand.move:
+            route = Routing(L_IN.value[1], L_IN.value[2])
+            y = ControllerCommand.move, "L", route
+            if route == SwitchAction.go_to_bay:
+                if check_bay_available( self.P_, int(L_IN.value[2][1])):
+                    leave_bay(self.P_, int(L_IN.value[2][1]))
+                    y = ControllerCommand.move, "L", SwitchAction.go_to_bay
+                else:
+                    y = ControllerCommand.move, "L", SwitchAction.advance
+
+            to_switches.set(y)
+    =}
+    input switch_m_request
+    reaction (switch_m_request) -> to_switches{=
+        if M_IN.value is not None and M_IN.value[0] == ControllerCommand.move:
+            route = SwitchAction.advance
+            temp = self.pallets[M_IN.value[3]]
+            y = None
+            if temp.looping:
+                y = ControllerCommand.move, "M", SwitchAction.advance
+            else:
+                route = Routing("M", temp.destination)
+                y = ControllerCommand.move, "M", route
+                
+                if route == SwitchAction.go_to_bay:
+                    if self.Z:
+                        y = ControllerCommand.move, "M", route
+                    else:
+                        y = ControllerCommand.move, "M", SwitchAction.advance
+            
+            to_switches.set(y)
+    =}
+    ############################## FROST ##############################
+    reaction(from_frost)-> to_switches, to_segments, to_bayes, to_bayes{=
+        palletNum = from_frost.value[0]
+        destination = from_frost.value[1]
+        self.logger.error(f"Complete reaction")
+        ##TODO        
+    =}
+
+    
 }

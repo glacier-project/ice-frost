@@ -6,8 +6,7 @@ import Interchange from "interchange.lf"
 import Controller from "controller.lf"
 import Bay from "bay.lf"
 import Segment from "segment.lf"
-import Bay_Z from "bay_z.lf"
-import bay_G from "bay_g.lf"
+import SingleSwitchBay from "single_switch_bay.lf"
 
 import FrostBase from "../../frost/src/lib/FrostBase.lf"
 
@@ -35,7 +34,7 @@ reactor Conveyor extends FrostBase{
     D.OUT -> DE.IN after 12700 msec
     
     //Links among interchanges
-    L.CROSS, D.CROSS -> LD.from_upper_belt, LD.from_lower_belt after 3500msec  
+    L.CROSS, D.CROSS -> LD.from_upper_belt, LD.from_lower_belt  
     LD.to_upper_belt, LD.to_lower_belt -> L.CROSS_IN, D.CROSS_IN  
     //Links among mutexes
     E.OUT, EM.to_switch  -> EM.from_switch, M.IN
@@ -60,7 +59,7 @@ reactor Conveyor extends FrostBase{
     C.OUT -> CD.IN after 20200 msec
 
     //Links among interchange
-    I.CROSS, C.CROSS -> IC.from_upper_belt, IC.from_lower_belt after 3500msec
+    I.CROSS, C.CROSS -> IC.from_upper_belt, IC.from_lower_belt
     IC.to_upper_belt, IC.to_lower_belt -> I.CROSS_IN, C.CROSS_IN
 
     // 
@@ -83,7 +82,7 @@ reactor Conveyor extends FrostBase{
     B.OUT -> BC.IN after 14500 msec
 
     //Links among interchange
-    H.CROSS, B.CROSS -> HB.from_upper_belt, HB.from_lower_belt after 2400msec
+    H.CROSS, B.CROSS -> HB.from_upper_belt, HB.from_lower_belt
     HB.to_upper_belt, HB.to_lower_belt -> H.CROSS_IN, B.CROSS_IN
     
     // 
@@ -93,7 +92,7 @@ reactor Conveyor extends FrostBase{
     //   E ------- D ------- C ------- B
     //
     //G instantiation
-    G = new bay_G(param = "G")
+    G = new SingleSwitchBay(name = "L")
     HG = new Segment(param = "HG")
     H.OUT, HG.OUT -> HG.IN, G.IN
 
@@ -182,8 +181,6 @@ reactor Conveyor extends FrostBase{
     reaction(Controller.FROST_OUT) -> to_frost{=
         to_frost.set(Controller.FROST_OUT.value)
     =}
-    output Pallets
-    Controller.Pallets -> Pallets after 0msec
 
     output Segment1
     output Segment2

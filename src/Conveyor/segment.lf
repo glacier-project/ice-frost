@@ -1,54 +1,57 @@
 target Python
 
-reactor Segment(param = "default"){  
-    //Internal variables  
-    state name = param
-    state pallets = []
-    //Physical links
-    input IN 
-    output OUT    
-    //Controller Links
-    input command
-    output ask
-    //FROST Link
-    output FROST_OUT
+import FrostBase from "../../../frost/src/lib/FrostBase.lf"
 
-    '''
-    In the following reaction, the upcoming pallet is added to the pallets list 
-    and triggering even the controller which has to handle it
-    '''
-    reaction (IN) -> ask, FROST_OUT{=
-        if isinstance(IN.value, Pallet):            
-            IN.value.action = None
-            #IN.value.position = self.name
-            self.pallets.append(IN.value)
-            ask.set(IN.value)
-            FROST_OUT.set([1, IN.value.id])
+preamble{=
+    from pallet import Pallet 
+    from utils import Events, SwitchAction, ControllerCommand
+=}
+
+reactor Segment extends FrostBase{  
+    state segment_time = 2000 
+    logical action delay
+
+    state pallets = [] 
+
+    input from_switch
+    output to_switch    
+
+    input controller_command
+    output ask_to_controller
+    
+    output to_frost
+
+    reaction (from_switch) -> to_frost, delay{=
+        if isinstance(from_switch.value, Pallet):            
+            from_switch.value.action = None
+            delay.schedule(MSEC(self.segment_time), from_switch.value)
+            to_frost.set([Events.pallet_arrived.value, from_switch.value.id])
     =}
 
-    '''
-    In the following reaction, the pallet first pallet is removed 
-    from the pallets list and sent to the next segment
-    '''
-    reaction (command) -> OUT, FROST_OUT{=
-        temp = command.value
-        if temp[0] == self.name and self.pallets: 
-            FROST_OUT.set([-1, self.pallets[0].id])
-            OUT.set(self.pallets[0])
-            self.pallets.pop(0)
+    reaction(delay){=
+        self.pallets.append(from_switch.value)
+            if len(self.pallets) >= 10:
+                raise Exception(f"Segment {self.name} error: too many pallets in the segment")
+    =}
 
+    reaction (controller_command) -> to_switch, to_frost{=
+        temp = controller_command.value
+        if temp[0] == self.name and self.pallets: 
+            to_frost.set([Events.pallet_released.value, self.pallets[0].id])
+            to_switch.set(self.pallets[0])
+            self.pallets.pop(0)
+        
         elif len(temp) > 1:
-            if temp[0] == "BOTH":
+            if temp[0] == ControllerCommand.double_advance:
                 if (self.name == temp[1] or self.name == temp[2]) and self.pallets:
-                    FROST_OUT.set([-1, self.pallets[0].id])
-                    OUT.set(self.pallets[0])
+                    to_frost.set([Events.pallet_released.value, self.pallets[0].id])
+                    to_switch.set(self.pallets[0])
                     self.pallets.pop(0)
 
             elif self.name == temp[0] and self.pallets:
-                FROST_OUT.set([-1, self.pallets[0].id])
-                OUT.set(self.pallets[0])
+                to_frost.set([Events.pallet_released.value, self.pallets[0].id])
+                to_switch.set(self.pallets[0])
                 self.pallets.pop(0)
-
     =}
 
 }
