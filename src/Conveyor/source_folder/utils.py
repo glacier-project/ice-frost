@@ -2,15 +2,20 @@ from enum import Enum
 
 class Events(Enum):
     pallet_arrived = 1
+    pallet_created = 1
     pallet_released = -1
+
+class InterchangeInputs(Enum):
+    BAY = "BAY"
+    UPPER_SEGMENT = "UPPER_SEGMENT"
+    LOWER_SEGMENT = "LOWER_SEGMENT"
 
 class ControllerCommand(Enum):
     move = 0
     create = 1
-    update = 2
-    double_advance = 3
-    up_advance = 4
-    down_advance = 5
+
+class SegmentAction(Enum):
+    advance = 0
 
 class SwitchAction(Enum):
     advance = 0
@@ -30,17 +35,20 @@ class SwitchName(Enum):
     M = "M"
 
 class SegmentName(Enum):
-    Segment1 = "Segment1"
-    Segment2 = "Segment2"
-    Segment3 = "Segment3"
-    Segment4_1 = "Segment4_1"
-    Segment4_2 = "Segment4_2"
-    Segment5 = "Segment5"
-    Segment6 = "Segment6"
-    Segment7 = "Segment7"
-    Segment8 = "Segment8"
+    Segment_1 = "Segment_1"
+    Segment_2 = "Segment_2"
+    Segment_3 = "Segment_3"
+    Segment_4_1 = "Segment_4_1"
+    Segment_4_2 = "Segment_4_2"
+    Segment_5 = "Segment_5"
+    Segment_6 = "Segment_6"
+    Segment_7 = "Segment_7"
+    Segment_8 = "Segment_8"
 
 class BayName(Enum):
+    Bay2 = "Bay2"
+    Bay3 = "Bay3"
+    Bay4 = "Bay4"
     Bay1_1 = "Bay1_1"
     Bay2_1 = "Bay2_1"
     Bay2_2 = "Bay2_2"

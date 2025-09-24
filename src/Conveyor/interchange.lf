@@ -14,29 +14,47 @@ reactor Interchange extends FrostBase{
     logical action delay
 
     reaction(from_upper_belt) -> delay{=
-        self.logger.debug(f"Interchange {self.name} received from upper belt: {from_upper_belt.value}")
+        value = self._get_input_values(from_upper_belt)
+
+        if not isinstance(value, Pallet):
+            raise Exception(f"Interchange {self.name} error: received non-pallet value from upper belt: {value}")
+        
+        self.logger.debug(f"Interchange {self.name} received from upper belt: {value}")
+
         if self.pallet_present:
             raise Exception(f"Interchange {self.name} error: trying to send a pallet when another is still in the interchange")
+
         self.pallet_present = True    
-        delay.schedule(MSEC(self.interchange_time), [True, from_upper_belt.value])
+        delay.schedule(MSEC(self.interchange_time), [True, value])
     =}
 
     reaction(from_lower_belt) -> delay{=
-        self.logger.debug(f"Interchange {self.name} received from lower belt: {from_lower_belt.value}")
+        value = self._get_input_values(from_lower_belt)
+
+        if not isinstance(value, Pallet):
+            raise Exception(f"Interchange {self.name} error: received non-pallet value from lower belt: {value}")
+
+        self.logger.debug(f"Interchange {self.name} received from lower belt: {value}")
+
         if self.pallet_present:
             raise Exception(f"Interchange {self.name} error: trying to send a pallet when another is still in the interchange")
+
         self.pallet_present = True
-        delay.schedule(MSEC(self.interchange_time), [False, from_lower_belt.value])
+        delay.schedule(MSEC(self.interchange_time), [False, value])
     =}
 
     reaction(delay) -> to_upper_belt, to_lower_belt{=
-        self.pallet_present = False
-        if delay.value[0]:
-            to_lower_belt.set(delay.value[1])
-            self.logger.debug(f"Interchange {self.name} sent to lower belt: {delay.value[1]}")
+        condition = delay.value[0]    
+        value = delay.value[1]            
+
+        if condition:
+            self._set_output_port(value, to_lower_belt)
+            self.logger.debug(f"Interchange {self.name} sent low: {value}")
         else:
-            to_upper_belt.set(delay.value[1])
-            self.logger.debug(f"Interchange {self.name} sent to upper belt: {delay.value[1]}")
+            self._set_output_port(value, to_upper_belt)
+            self.logger.debug(f"Interchange {self.name} sent up: {value}")
+
+        self.pallet_present = False
     =}
 
 }

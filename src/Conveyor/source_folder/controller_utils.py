@@ -1,19 +1,7 @@
 from utils import SwitchAction, BayName
 
 def new_destination(dest, length_pos):
-    """
-    Determines the next conveyor action based on destination and queue length.
-
-    Args:
-        dest (str or None): The target destination ('Z', 'G', or None).
-        length_pos (int): The number of items in the position queue.
-
-    Returns:
-        list: [add_new (bool), move_current (bool), new_dest (str or None)]
-            - add_new: Whether to enqueue a new item.
-            - move_current: Whether to move the current item.
-            - new_dest: Updated destination (unchanged).
-    """
+    
     # Immediate move to bay if destination is 'Z'
     if dest == BayName.Bay1_1.value:
         return [False, True, dest]
@@ -38,16 +26,7 @@ def new_destination(dest, length_pos):
 
 
 def schedule_with_priority(buffer: dict):
-    """
-    Selects the next active buffer ('BAY', 'IN_UP', 'IN_DOWN') based on scheduling priority.
-
-    Args:
-        buffer (dict): A dictionary with keys 'BAY', 'IN_UP', and 'IN_DOWN',
-                       each holding a list (queue) of items or None.
-
-    Returns:
-        str or None: The selected buffer name to process ('BAY', 'IN_UP', 'IN_DOWN', 'BOTH'), or None if all are empty.
-    """
+    
     bay_buffer = buffer.get(SwitchAction.go_to_bay)
     if bay_buffer is not None:
         return SwitchAction.go_to_bay

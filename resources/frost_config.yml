@@ -28,12 +28,39 @@ reactors:
         reactors:
           controller:
             logging_level: WARNING
+          Segment_1:
+            logging_level: WARNING
+            segment_time: 12700
+          Segment_2:
+            logging_level: WARNING
+            segment_time: 20200
+          Segment_3:
+            logging_level: WARNING
+            segment_time: 13250
+          Segment_4_1:
+            logging_level: WARNING
+            segment_time: 4800
+          Segment_4_2:
+            logging_level: WARNING
+            segment_time: 2100
+          Segment_5:
+            logging_level: WARNING
+            segment_time: 6900
+          Segment_6:
+            logging_level: WARNING
+            segment_time: 14500
+          Segment_7:
+            logging_level: WARNING
+            segment_time: 20200
+          Segment_8:
+            logging_level: WARNING
+            segment_time: 12700
           EM:
             logging_level: WARNING
             mutex_time: 2500
           HB: 
             logging_level: WARNING
-            interchange_time: 4800       
+            interchange_time: 4800 
   scheduler:
     logging_level: WARNING
     parameters:

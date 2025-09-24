@@ -4,7 +4,7 @@ import FrostBase from "../../../frost/src/lib/FrostBase.lf"
 
 preamble{=
     from pallet import Pallet 
-    from utils import Events, SwitchAction, ControllerCommand
+    from utils import Events, SegmentAction, ControllerCommand
 =}
 
 reactor Segment extends FrostBase{  
@@ -21,37 +21,64 @@ reactor Segment extends FrostBase{
     
     output to_frost
 
-    reaction (from_switch) -> to_frost, delay{=
-        if isinstance(from_switch.value, Pallet):            
-            from_switch.value.action = None
-            delay.schedule(MSEC(self.segment_time), from_switch.value)
-            to_frost.set([Events.pallet_arrived.value, from_switch.value.id])
+    reaction (from_switch) -> to_frost, ask_to_controller, delay{=
+        value = self._get_input_values(from_switch)
+
+        if len(self.pallets) >= 10:
+            raise Exception(f"Segment {self.name} error: too many pallets in the segment")
+
+        if isinstance(value, Pallet):
+            delay.schedule(MSEC(self.segment_time), value)
+            self._set_output_port([Events.pallet_arrived.value, value.id] ,to_frost)
     =}
 
-    reaction(delay){=
-        self.pallets.append(from_switch.value)
-            if len(self.pallets) >= 10:
-                raise Exception(f"Segment {self.name} error: too many pallets in the segment")
+    reaction(delay) -> ask_to_controller{=
+        value = delay.value
+        self.pallets.append(value)
+        self.logger.info(f"Segment {self.name} received pallet {value.id}")
+        if len(self.pallets) == 1:
+            self._set_output_port([Events.pallet_arrived, value.id], ask_to_controller)
     =}
 
-    reaction (controller_command) -> to_switch, to_frost{=
-        temp = controller_command.value
-        if temp[0] == self.name and self.pallets: 
-            to_frost.set([Events.pallet_released.value, self.pallets[0].id])
-            to_switch.set(self.pallets[0])
-            self.pallets.pop(0)
-        
-        elif len(temp) > 1:
-            if temp[0] == ControllerCommand.double_advance:
-                if (self.name == temp[1] or self.name == temp[2]) and self.pallets:
-                    to_frost.set([Events.pallet_released.value, self.pallets[0].id])
-                    to_switch.set(self.pallets[0])
+    reaction (controller_command) -> to_switch, to_frost, ask_to_controller{=
+        '''
+        controller_command format: [[header], [command], [args]]
+            header = list of str with Segment names involved in the command
+            command = [ControllerCommand, SegmentAction]
+            args = additional arguments (if any)
+        '''
+        value = self._get_input_values(controller_command)
+        header = value[0]
+        if self.name not in header:
+            return 0
+
+        cmd = value[1][0]        
+        if not isinstance(cmd, ControllerCommand):
+            raise Exception(f"Segment {self.name} error: unknown command {cmd}")
+                  
+        if cmd == ControllerCommand.move:
+
+            seg_act = value[1][1]
+            if not isinstance(seg_act, SegmentAction):
+                raise Exception(f"Segment {self.name} error: unknown command {cmd}")
+                
+            if seg_act == SegmentAction.advance:
+                if self.pallets:
+                    self._set_output_port([Events.pallet_released.value, self.pallets[0].id], to_frost)
+                    self._set_output_port(self.pallets[0], to_switch)
+                    self.logger.info(f"Segment {self.name} advanced pallet {self.pallets[0].id}")
                     self.pallets.pop(0)
+                    self._set_output_port([Events.pallet_released, self.pallets[0].id if self.pallets else None], ask_to_controller)
+                    return 0
+                raise Exception(f"Segment {self.name} error: no pallets to advance")
 
-            elif self.name == temp[0] and self.pallets:
-                to_frost.set([Events.pallet_released.value, self.pallets[0].id])
-                to_switch.set(self.pallets[0])
-                self.pallets.pop(0)
+        elif cmd == ControllerCommand.create:
+            pallet_id = value[2]
+            self.pallets.append(Pallet(pallet_id))
+            self.logger.info(f"Segment {self.name} created pallet {pallet_id}")
+            self._set_output_port([Events.pallet_created.value, pallet_id], to_frost)
+            if len(self.pallets) == 1:
+                self._set_output_port([Events.pallet_arrived, pallet_id], ask_to_controller)
     =}
 
 }

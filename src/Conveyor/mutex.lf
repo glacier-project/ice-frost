@@ -13,16 +13,23 @@ reactor Mutex extends FrostBase{
     logical action delay
 
     reaction(from_switch)->delay{=
-        self.logger.debug(f"Mutex {self.name} received from switch: {from_switch.value}")
+        value = self._get_input_values(from_switch)
+
+        if not isinstance(value, Pallet):
+            raise Exception(f"Mutex {self.name} error: received non-pallet value from switch: {value}")
+
+        self.logger.debug(f"Mutex {self.name} received from switch: {value}")
+
         if self.pallet_present:
             raise Exception(f"Mutex {self.name} error: trying to send a pallet when another is still in the mutex")
+            
         self.pallet_present = True
-        delay.schedule(MSEC(self.mutex_time), from_switch.value)
+        delay.schedule(MSEC(self.mutex_time), value)
     =}
 
     reaction(delay)-> to_switch{=
         self.pallet_present = False
         self.logger.debug(f"Mutex {self.name} sent to switch: {delay.value}")
-        to_switch.set(delay.value)
+        self._set_output_port(delay.value, to_switch)
     =}    
 }
