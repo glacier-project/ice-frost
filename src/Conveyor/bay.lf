@@ -3,12 +3,9 @@ target Python
 import FrostBase from "../../../frost/src/lib/FrostBase.lf"
 import BaySwitch from "bay_switch.lf"
 
-preamble{=
-    from pallet import Pallet 
-    from utils import Events, ControllerCommand
-=}
 
 reactor Bay extends FrostBase{
+    state conveyor_name = {=self.name.split(".")[-1]=}
     state crossing_pallet
     input from_belt
     output to_belt
@@ -18,9 +15,9 @@ reactor Bay extends FrostBase{
     state plat1 = 1
     state plat2 = 2
     state plat3 = 3
-    state plat1_name = {= name + str(plat1) =}
-    state plat2_name = {= name + str(plat2) =}
-    state plat3_name = {= name + str(plat3) =}
+    state plat1_name = {= self.name + "." + str(self.plat1) =}
+    state plat2_name = {= self.name + "." + str(self.plat2) =}
+    state plat3_name = {= self.name + "." + str(self.plat3) =}
     Plat1 = new BaySwitch(name = {= self.plat1_name =})
     Plat2 = new BaySwitch(name = {= self.plat2_name =})
     Plat3 = new BaySwitch(name = {= self.plat3_name =})
@@ -38,21 +35,7 @@ reactor Bay extends FrostBase{
         Plat1.from_back.set(from_belt.value)
     =}
     reaction(controller_command) -> Plat1.controller_command, Plat2.controller_command, Plat3.controller_command{=
-        temp = controller_command.value[0]
-        if temp[0] != self.name:
-            return 0
-
-        if temp == self.plat1_name:
-            Plat1.controller_command.set(controller_command.value[1:])
-            return 0
-        elif temp == self.plat2_name:
-            Plat2.controller_command.set(controller_command.value[1:])
-            return 0
-        elif temp == self.plat3_name:
-            Plat3.controller_command.set(controller_command.value[1:])
-            return 0
-
-        raise Exception(f"Bay {self.name} error: unknown platform {temp}")
+         return 0
     =}
     reaction(Plat1.ask_to_controller)-> ask_to_controller{=
         ask_to_controller.set(Plat1.ask.value)

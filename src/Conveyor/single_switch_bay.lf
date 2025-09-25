@@ -2,12 +2,9 @@ target Python
 
 import FrostBase from "../../../frost/src/lib/FrostBase.lf"
 
-preamble{=
-    from pallet import Pallet
-    from utils import Events, ControllerCommand, SwitchAction
-=}
 
 reactor SingleSwitchBay extends FrostBase{
+    state conveyor_name = {=self.name.split(".")[-1]=}
     input from_belt
     output to_belt 
 
@@ -21,14 +18,14 @@ reactor SingleSwitchBay extends FrostBase{
     logical action handle_pallet
 
     reaction(handle_pallet)-> ask_to_controller, to_belt, to_frost{=
-        
+        return 0
     =}
 
     reaction(from_belt)-> handle_pallet, ask_to_controller, to_frost{=
-        
+        return 0
     =}
 
     reaction(controller_command) -> handle_pallet, ask_to_controller{=
-             
+        return 0
     =}
 }

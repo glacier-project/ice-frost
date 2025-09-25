@@ -2,13 +2,9 @@ target Python
 
 import FrostBase from "../../../frost/src/lib/FrostBase.lf"
 
-preamble{=
-    from pallet import Pallet 
-    from utils import SwitchAction, Events, ControllerCommand
-=}
 
 reactor BaySwitch extends FrostBase{
-
+    state conveyor_name = {=self.name.split(".")[-1]=}
     input from_back
     output to_back
     input from_forward
@@ -24,69 +20,14 @@ reactor BaySwitch extends FrostBase{
     logical action unhandled_pallet
 
     reaction(unhandled_pallet) ->ask_to_controller, unhandled_pallet, to_back, to_frost{=
-        if not self.pallet:
-            return
-        if self.pallet.destination == None or self.pallet.destination[0] != self.pallet.position[0]:
-            if self.name == "1":
-                to_frost.set([self.pallet.id, self.name, 0])
-                to_back.set(self.pallet)
-                self.pallet = None
-            else:
-                ask_to_controller.set(["Move_in_bay", self.name, self.pallet.destination, self.pallet.id])
-        else:
-            if self.pallet.destination[1] != self.name:
-                ask_to_controller.set(["Move_in_bay", self.name, self.pallet.destination, self.pallet.id])
-        unhandled_pallet.schedule(SEC(2))
+        return 0
     =}
 
     reaction(from_back)-> ask_to_controller, to_frost, unhandled_pallet{=
-        if from_back.value is not None:
-            self.pallet = from_back.value
-            position_list = list(self.pallet.position)
-            position_list[1] = self.name
-            self.pallet.position = "".join(position_list)
-            to_frost.set([self.pallet.id, self.name, self.pallet.id])
-            if self.pallet.looping:
-                ask_to_controller.set([ControllerCommand.move, self.name, self.pallet.destination, self.pallet.id])
-            elif self.pallet.destination[0] == self.pallet.position[0] and self.pallet.destination[1] == self.name:
-                ask_to_controller.set([Events.pallet_arrived, self.pallet.id, self.name])
-            else:
-                ask_to_controller.set([ControllerCommand.move, self.name, self.pallet.destination, self.pallet.id])
+        return 0
     =}
 
     reaction(controller_command) -> ask_to_controller, to_forward, to_back, to_frost, unhandled_pallet{=
-        if controller_command.value[0] == ControllerCommand.create:
-            self.pallet = controller_command.value[1]
-            ask_to_controller.set([ControllerCommand.move, self.name, self.pallet.destination, self.pallet.id])
-        
-        elif controller_command.value[0] == ControllerCommand.move and self.pallet is not None:
-            if controller_command.value[2] == SwitchAction.cross:
-                to_frost.set([self.pallet.id, self.name, 0])
-                CROSS.set(self.pallet)      
-                
-            elif controller_command.value[2] == SwitchAction.advance:
-                to_frost.set([self.pallet.id, self.name, 0])
-                OUT.set(self.pallet)
-
-            self.pallet = None
-        elif controller_command.value[0] == "Move_in_bay":
-            unhandled_pallet.schedule(SEC(0))
-    =}
-
-    reaction(from_forward)-> ask_to_controller, to_frost, unhandled_pallet{=
-        if from_forward.value is not None:
-            self.pallet = from_forward.value
-
-            position_list = list(self.pallet.position)
-            position_list[1] = self.name
-            self.pallet.position = "".join(position_list)
-            
-            to_frost.set([self.pallet.id, self.name, self.pallet.id])
-            if self.pallet.looping:
-                ask_to_controller.set([ControllerCommand.move, self.name, self.pallet.destination, self.pallet.id])
-            elif self.pallet.destination[0] == self.pallet.position[0] and self.pallet.destination[1] == self.name:
-                ask_to_controller.set([Events.pallet_arrived, self.pallet.id, self.name])
-            else:
-                ask_to_controller.set([ControllerCommand.move, self.name, self.pallet.destination, self.pallet.id])
+        return 0
     =}
 }

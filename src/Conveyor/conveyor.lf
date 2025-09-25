@@ -1,7 +1,6 @@
 target Python
 
 import Switch from "switch.lf"
-import Mutex from "mutex.lf"
 import Interchange from "interchange.lf"
 import Controller from "controller.lf"
 import Bay from "bay.lf"
@@ -10,9 +9,6 @@ import SingleSwitchBay from "single_switch_bay.lf"
 
 import FrostBase from "../../frost/src/lib/FrostBase.lf"
 
-preamble{=
-    from utils import BayName, SegmentName, MutexName, SwitchName, InterchangeName
-=}
 
 reactor Conveyor extends FrostBase{
     // 
@@ -22,18 +18,18 @@ reactor Conveyor extends FrostBase{
     //   E ------- D
     //
     //First ring instantiation
-    M = new Switch(name = {=SwitchName.M.value=})
-    L = new Switch(name = {=SwitchName.L.value=})
-    D = new Switch(name = {=SwitchName.D.value=})
-    E = new Switch(name = {=SwitchName.E.value=})
-    EM = new Mutex(name = {=MutexName.EM.value=})
-    LD = new Interchange(name = {=InterchangeName.LD.value=})
+    M = new Switch(name = {=self.name + "." + SwitchName.M.value=})
+    L = new Switch(name = {=self.name + "." + SwitchName.L.value=})
+    D = new Switch(name = {=self.name + "." + SwitchName.D.value=})
+    E = new Switch(name = {=self.name + "." + SwitchName.E.value=})
+    EM = new Interchange(name = {=self.name + "." + InterchangeName.EM.value=})
+    LD = new Interchange(name = {=self.name + "." + InterchangeName.LD.value=})
     
     //Links among segments
-    Segment_1 = new Segment(name = {=SegmentName.Segment_1.value=})
+    Segment_1 = new Segment(name = {=self.name + "." + SegmentName.Segment_1.value=})
     M.to_segment ->  Segment_1.from_switch after 0
     Segment_1.to_switch ->  L.from_segment after 0
-    Segment_8 = new Segment(name = {=SegmentName.Segment_8.value=})
+    Segment_8 = new Segment(name = {=self.name + "." + SegmentName.Segment_8.value=})
     Segment_8.to_switch -> E.from_segment after 0
     D.to_segment -> Segment_8.from_switch after 0
     
@@ -41,7 +37,7 @@ reactor Conveyor extends FrostBase{
     L.to_interchange, D.to_interchange -> LD.from_upper_belt, LD.from_lower_belt  after 0
     LD.to_upper_belt, LD.to_lower_belt -> L.from_interchange, D.from_interchange after 0  
     //Links among mutexes
-    E.to_segment, EM.to_switch  -> EM.from_switch, M.from_segment after 0
+    E.to_segment, EM.to_upper_belt  -> EM.from_lower_belt, M.from_segment after 0
     
     // 
     //   M ------- L ------- I
@@ -50,15 +46,15 @@ reactor Conveyor extends FrostBase{
     //   E ------- D ------- C 
     //
     //Second ring instantiation
-    I = new Switch(name = {=SwitchName.I.value=})
-    C = new Switch(name = {=SwitchName.C.value=})
-    IC = new Interchange(name = {=InterchangeName.IC.value=})
+    I = new Switch(name = {=self.name + "." + SwitchName.I.value=})
+    C = new Switch(name = {=self.name + "." + SwitchName.C.value=})
+    IC = new Interchange(name = {=self.name + "." + InterchangeName.IC.value=})
 
     //Links among segments
-    Segment_2 = new Segment(name = {=SegmentName.Segment_2.value=})
+    Segment_2 = new Segment(name = {=self.name + "." + SegmentName.Segment_2.value=})
     L.to_segment -> Segment_2.from_switch after 0
     Segment_2.to_switch -> I.from_segment after 0
-    Segment_7 = new Segment(name = {=SegmentName.Segment_7.value=})
+    Segment_7 = new Segment(name = {=self.name + "." + SegmentName.Segment_7.value=})
     Segment_7.to_switch -> D.from_segment after 0
     C.to_segment -> Segment_7.from_switch after 0
     //Links among interchange
@@ -72,15 +68,15 @@ reactor Conveyor extends FrostBase{
     //   E ------- D ------- C ------- B
     //
     //Third ring instantiation
-    H = new Switch(name = {=SwitchName.H.value=})
-    B = new Switch(name = {=SwitchName.B.value=})
-    HB = new Interchange(name = {=InterchangeName.HB.value=})
+    H = new Switch(name = {=self.name + "." + SwitchName.H.value=})
+    B = new Switch(name = {=self.name + "." + SwitchName.B.value=})
+    HB = new Interchange(name = {=self.name + "." + InterchangeName.HB.value=})
 
     //Links among segments
-    Segment_3 = new Segment(name = {=SegmentName.Segment_3.value=})
+    Segment_3 = new Segment(name = {=self.name + "." + SegmentName.Segment_3.value=})
     I.to_segment -> Segment_3.from_switch after 0
     Segment_3.to_switch -> H.from_segment after 0
-    Segment_6 = new Segment(name = {=SegmentName.Segment_6.value=})
+    Segment_6 = new Segment(name = {=self.name + "." + SegmentName.Segment_6.value=})
     Segment_6.to_switch -> C.from_segment after 0
     B.to_segment -> Segment_6.from_switch after 0
 
@@ -95,8 +91,8 @@ reactor Conveyor extends FrostBase{
     //   E ------- D ------- C ------- B
     //
     //LU instantiation
-    LUBay = new SingleSwitchBay(name = {=BayName.LU.value=})
-    Segment_4_1 = new Segment(name = {=SegmentName.Segment_4_1.value=})
+    LUBay = new SingleSwitchBay(name = {=self.name + "." + BayName.LU.value=})
+    Segment_4_1 = new Segment(name = {=self.name + "." + SegmentName.Segment_4_1.value=})
     H.to_segment -> Segment_4_1.from_switch after 0
     Segment_4_1.to_switch -> LUBay.from_belt after 0
 
@@ -107,19 +103,19 @@ reactor Conveyor extends FrostBase{
     //   E ------- D ------- C ------- B ------------ A
     //
     //Fourth ring instantiation
-    F = new Switch(name = {=SwitchName.F.value=})   
-    A = new Switch(name = {=SwitchName.A.value=})    
-    FA = new Mutex(name = {=MutexName.FA.value=})
+    F = new Switch(name = {=self.name + "." + SwitchName.F.value=})   
+    A = new Switch(name = {=self.name + "." + SwitchName.A.value=})    
+    FA = new Interchange(name = {=self.name + "." + InterchangeName.FA.value=})
 
     //Links among bays
-    F.to_segment -> FA.from_switch after 0
-    FA.to_switch -> A.from_segment after 0
+    F.to_segment -> FA.from_upper_belt after 0
+    FA.to_lower_belt -> A.from_segment after 0
     
     //Segment
-    Segment_4_2 = new Segment(name = {=SegmentName.Segment_4_2.value=})
+    Segment_4_2 = new Segment(name = {=self.name + "." + SegmentName.Segment_4_2.value=})
     LUBay.to_belt -> Segment_4_2.from_switch after 0
     Segment_4_2.to_switch -> F.from_segment after 0
-    Segment_5 = new Segment(name = {=SegmentName.Segment_5.value=})
+    Segment_5 = new Segment(name = {=self.name + "." + SegmentName.Segment_5.value=})
     Segment_5.to_switch -> B.from_segment after 0
     A.to_segment -> Segment_5.from_switch after 0
 
@@ -133,25 +129,25 @@ reactor Conveyor extends FrostBase{
     //   E ------- D ------- C ------- B ------------ A
     //
     //Links bays to P O N Z
-    Bay1_1 = new SingleSwitchBay(name = {=BayName.Bay1_1.value=})
-    Bay2 = new Bay(name = {= BayName.Bay2.value=})
-    Bay3 = new Bay(name = {= BayName.Bay3.value=})
-    Bay4 = new Bay(name = {= BayName.Bay4.value=})
+    Bay1_1 = new SingleSwitchBay(name = {=self.name + "." + BayName.Bay1_1.value=})
+    Bay2 = new Bay(name = {=self.name + "." + BayName.Bay2.value=})
+    Bay3 = new Bay(name = {=self.name + "." + BayName.Bay3.value=})
+    Bay4 = new Bay(name = {=self.name + "." + BayName.Bay4.value=})
 
     M.to_bay, L.to_bay, I.to_bay, H.to_bay -> Bay1_1.from_belt, Bay2.from_belt, Bay3.from_belt, Bay4.from_belt after 0
     Bay1_1.to_belt, Bay2.to_belt, Bay3.to_belt, Bay4.to_belt -> M.from_bay, L.from_bay, I.from_bay, H.from_bay after 0
 
     //Controller instantiation
-    Controller = new Controller(name = "controller")
+    Controller = new Controller(name = {=self.name + ".controller"=})
     //SWITCHES CONNECTIONS
-    A.ask_to_controller, B.ask_to_controller, C.ask_to_controller, D.ask_to_controller, E.ask_to_controller, F.ask_to_controller, H.ask_to_controller, I.ask_to_controller, L.ask_to_controller, M.ask_to_controller -> Controller.switch_a_request, Controller.switch_b_request , Controller.switch_c_request, Controller.switch_d_request, Controller.switch_e_request, Controller.switch_f_request, Controller.switch_h_request, Controller.switch_i_request, Controller.switch_l_request, Controller.switch_m_request after 1msec
-    Controller.to_switches, Controller.to_switches, Controller.to_switches, Controller.to_switches, Controller.to_switches, Controller.to_switches, Controller.to_switches, Controller.to_switches, Controller.to_switches, Controller.to_switches -> A.controller_command, B.controller_command, C.controller_command, D.controller_command, E.controller_command, F.controller_command, H.controller_command, I.controller_command, L.controller_command, M.controller_command after 1msec
+    A.ask_to_controller, B.ask_to_controller, C.ask_to_controller, D.ask_to_controller, E.ask_to_controller, F.ask_to_controller, H.ask_to_controller, I.ask_to_controller, L.ask_to_controller, M.ask_to_controller -> Controller.switch_a_request, Controller.switch_b_request , Controller.switch_c_request, Controller.switch_d_request, Controller.switch_e_request, Controller.switch_f_request, Controller.switch_h_request, Controller.switch_i_request, Controller.switch_l_request, Controller.switch_m_request after 0
+    Controller.to_switches, Controller.to_switches, Controller.to_switches, Controller.to_switches, Controller.to_switches, Controller.to_switches, Controller.to_switches, Controller.to_switches, Controller.to_switches, Controller.to_switches -> A.controller_command, B.controller_command, C.controller_command, D.controller_command, E.controller_command, F.controller_command, H.controller_command, I.controller_command, L.controller_command, M.controller_command after 0
     //BAYS CONNECTIONS
-    Bay2.ask_to_controller, Bay3.ask_to_controller, Bay4.ask_to_controller, Bay1_1.ask_to_controller, LUBay.ask_to_controller -> Controller.bay2_request, Controller.bay3_request, Controller.bay4_request, Controller.bay1_request, Controller.bay5_request after 1msec
-    Controller.to_bayes, Controller.to_bayes, Controller.to_bayes, Controller.to_bayes, Controller.to_bayes -> Bay2.controller_command, Bay3.controller_command, Bay4.controller_command, Bay1_1.controller_command, LUBay.controller_command after 1msec
+    Bay2.ask_to_controller, Bay3.ask_to_controller, Bay4.ask_to_controller, Bay1_1.ask_to_controller, LUBay.ask_to_controller -> Controller.bay2_request, Controller.bay3_request, Controller.bay4_request, Controller.bay1_request, Controller.bay5_request after 0
+    Controller.to_bayes, Controller.to_bayes, Controller.to_bayes, Controller.to_bayes, Controller.to_bayes -> Bay2.controller_command, Bay3.controller_command, Bay4.controller_command, Bay1_1.controller_command, LUBay.controller_command after 0
     //SEGMENTS CONNECTIONS
-    Segment_1.ask_to_controller, Segment_2.ask_to_controller, Segment_3.ask_to_controller, Segment_4_1.ask_to_controller, Segment_4_2.ask_to_controller, Segment_5.ask_to_controller, Segment_6.ask_to_controller, Segment_7.ask_to_controller, Segment_8.ask_to_controller -> Controller.ml_request, Controller.li_request, Controller.ih_request, Controller.hg_request, Controller.gf_request, Controller.ab_request, Controller.bc_request, Controller.cd_request, Controller.de_request after 1msec
-    Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments -> Segment_1.controller_command, Segment_2.controller_command, Segment_3.controller_command, Segment_4_1.controller_command, Segment_4_2.controller_command, Segment_5.controller_command, Segment_6.controller_command, Segment_7.controller_command, Segment_8.controller_command after 1msec
+    Segment_1.ask_to_controller, Segment_2.ask_to_controller, Segment_3.ask_to_controller, Segment_4_1.ask_to_controller, Segment_4_2.ask_to_controller, Segment_5.ask_to_controller, Segment_6.ask_to_controller, Segment_7.ask_to_controller, Segment_8.ask_to_controller -> Controller.ml_request, Controller.li_request, Controller.ih_request, Controller.hg_request, Controller.gf_request, Controller.ab_request, Controller.bc_request, Controller.cd_request, Controller.de_request after 0 
+    Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments -> Segment_1.controller_command, Segment_2.controller_command, Segment_3.controller_command, Segment_4_1.controller_command, Segment_4_2.controller_command, Segment_5.controller_command, Segment_6.controller_command, Segment_7.controller_command, Segment_8.controller_command after 0
     
     output to_frost
     input from_frost
@@ -190,10 +186,10 @@ reactor Conveyor extends FrostBase{
     Segment_2.to_frost -> Segment2
     Segment_3.to_frost -> Segment3
     reaction(Segment_4_1.to_frost)-> Segment4{=
-        Segment4.set(HG.to_frost.value)
+        Segment4.set(Segment_4_1.to_frost.value)
     =}
     reaction(Segment_4_2.to_frost)-> Segment4{=
-        Segment4.set(GF.to_frost.value)
+        Segment4.set(Segment_4_2.to_frost.value)
     =}
     Segment_5.to_frost -> Segment5
     Segment_6.to_frost -> Segment6

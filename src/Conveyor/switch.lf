@@ -2,13 +2,9 @@ target Python
 
 import FrostBase from "../../../frost/src/lib/FrostBase.lf"
 
-preamble{=
-    from pallet import Pallet 
-    from utils import ControllerCommand, SwitchAction, Events
-=}
-
 reactor Switch extends FrostBase{
-
+    state conveyor_name = {=self.name.split(".")[-1]=}
+    state switch_time = 2000
     input from_segment
     output to_segment
     input from_interchange
@@ -22,86 +18,81 @@ reactor Switch extends FrostBase{
     state pallet = {=None=}
     
     logical action pallet_arrived
+    logical action delay
+
+    reaction(delay) -> ask_to_controller{=
+        self._set_output_port(delay.value, ask_to_controller)
+    =}
 
     reaction(pallet_arrived)-> ask_to_controller{=
         if self.pallet == None:
-            raise Exception(f"Switch {self.name} error: no pallet to handle")
+            raise Exception(f"Switch {self.conveyor_name} error: no pallet to handle")
 
-        self.logger.info(f"Switch {self.name} waiting for controller to update pallet {self.pallet.id} destination")
-        self._set_output_port([Events.pallet_arrived.value, self.pallet.id], ask_to_controller)
+        self.logger.info(f"Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
+        self._set_output_port([Events.pallet_arrived, self.pallet.id], ask_to_controller)
     =}
 
     method pallet_in(value){=
         if not isinstance(value, Pallet):
-            raise Exception(f"Error: Switch {self.name} received non-pallet value: {value}")
+            raise Exception(f"Error: Switch {self.conveyor_name} received non-pallet value: {value}")
 
         if self.pallet is not None:
-            raise Exception(f"Error: Switch {self.name} already has a pallet.")
+            raise Exception(f"Error: Switch {self.conveyor_name} received {value.id} but already has a pallet.")
 
-        self.logger.info(f"Switch {self.name} received pallet {value.id}")
+        self.logger.info(f"Switch {self.conveyor_name} received pallet {value.id}")
             
         self.pallet = value
     =}
 
     reaction(from_segment)-> pallet_arrived{=       
-        self.pallet_in(self._get_input_values(from_segment))
+        self.pallet_in(from_segment.value[0])
         pallet_arrived.schedule(0)
     =}
     reaction(from_interchange)-> pallet_arrived{=
-        self.pallet_in(self._get_input_values(from_interchange))
+        self.pallet_in(from_interchange.value[0])
         pallet_arrived.schedule(0)
     =}
     reaction(from_bay)-> pallet_arrived{=
-        self.pallet_in(self._get_input_values(from_bay))
+        self.pallet_in(from_bay.value[0])
         pallet_arrived.schedule(0)
     =}
 
-    reaction(controller_command) -> pallet_arrived, to_segment, to_interchange, to_bay{=
+    reaction(controller_command) -> pallet_arrived, to_segment, to_interchange, to_bay, delay{=
         '''
         controller_command format: [[header], [command], [args]]
             header = list of str with Segment names involved in the command
             command = [ControllerCommand, SwitchAction]
             args = additional arguments (if any)
         '''
-        value = self._get_input_values(controller_command)
-
+        value = controller_command.value
         header = value[0]
-
-        if self.name not in header:
+        if self.conveyor_name not in header:
             return 0
         
         cmd = value[1][0]
         if not isinstance(cmd, ControllerCommand):
-            raise Exception(f"Switch {self.name} error: unknown command {cmd}")
+            raise Exception(f"Switch {self.conveyor_name} error: unknown command {cmd}")
 
-        if cmd == ControllerCommand.create:
-            pallet_id = value[2]
-            if self.pallet != None:
-                raise Exception(f"Switch {self.name} error: already has a pallet")
-
-            self.pallet = Pallet(pallet_id)            
-            pallet_arrived.schedule(0)
-        
         sw_act = value[1][1]
         if not isinstance(sw_act, SwitchAction):
-            raise Exception(f"Switch {self.name} error: unknown command {cmd}")
+            raise Exception(f"Switch {self.conveyor_name} error: unknown command {cmd}")
 
         if cmd == ControllerCommand.move:               
             if self.pallet is None:
-                raise Exception(f"Switch {self.name} error: no pallet to move")
+                raise Exception(f"Switch {self.conveyor_name} error: no pallet to move")
             
             if sw_act == SwitchAction.advance:
-                self.logger.info(f"Switch {self.name} moving pallet {self.pallet.id} to segment")
+                self.logger.info(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to segment")
                 self._set_output_port(self.pallet, to_segment)
             elif sw_act == SwitchAction.cross:
-                self.logger.info(f"Switch {self.name} moving pallet {self.pallet.id} to interchange")
+                self.logger.info(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to interchange")
                 self._set_output_port(self.pallet, to_interchange)
             elif sw_act == SwitchAction.go_to_bay:
-                self.logger.info(f"Switch {self.name} moving pallet {self.pallet.id} to bay")
+                self.logger.info(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to bay")
                 self._set_output_port(self.pallet, to_bay)
             else:
-                raise Exception(f"Switch {self.name} error: unknown switch action {sw_act}")
-            self._set_output_port([Events.pallet_released.value, self.pallet.id], ask_to_controller)
+                raise Exception(f"Switch {self.conveyor_name} error: unknown switch action {sw_act}")
+            delay.schedule(MSEC(self.switch_time), [Events.pallet_released.value, self.pallet.id])
             self.pallet = None        
     =}
 }

@@ -34,6 +34,9 @@ class SwitchName(Enum):
     L = "L"
     M = "M"
 
+    def values():
+        return [item.value for item in SwitchName]
+
 class SegmentName(Enum):
     Segment_1 = "Segment_1"
     Segment_2 = "Segment_2"
@@ -44,6 +47,9 @@ class SegmentName(Enum):
     Segment_6 = "Segment_6"
     Segment_7 = "Segment_7"
     Segment_8 = "Segment_8"
+
+    def values():
+        return [item.value for item in SegmentName]
 
 class BayName(Enum):
     Bay2 = "Bay2"
@@ -61,11 +67,12 @@ class BayName(Enum):
     Bay4_3 = "Bay4_3"
     LU = "LoadUnloadZone"
 
-class Mutex(Enum):
-    EM = "EM"
-    FA = "FA"
+    def values():
+        return [item.value for item in BayName]
 
 class InterchangeName(Enum):
     LD = "LD"
     IC = "IC"
     HB = "HB"
+    EM = "EM"
+    FA = "FA"

@@ -1,5 +1,5 @@
-time_precision: NSECS
-logging_level: WARNING
+time_precision: MSECS
+logging_level: INFO
 reactors:
   iceproxy:
     logging_level: DEBUG
@@ -17,57 +17,53 @@ reactors:
       message_filter:
         logging_level: WARNING
   conveyor:
-    logging_level: WARNING
+    logging_level: INFO
     parameters:
       data_model_path: "resources/data_model/conveyor.yml"
     reactors:
       message_filter:
-        logging_level: WARNING
+        logging_level: INFO
       conveyor_belt:
-        logging_level: WARNING
+        logging_level: INFO
         reactors:
           controller:
-            logging_level: WARNING
+            logging_level: INFO
           Segment_1:
-            logging_level: WARNING
+            logging_level: INFO
             segment_time: 12700
           Segment_2:
-            logging_level: WARNING
+            logging_level: INFO
             segment_time: 20200
           Segment_3:
-            logging_level: WARNING
+            logging_level: INFO
             segment_time: 13250
           Segment_4_1:
-            logging_level: WARNING
+            logging_level: INFO
             segment_time: 4800
           Segment_4_2:
-            logging_level: WARNING
+            logging_level: INFO
             segment_time: 2100
           Segment_5:
-            logging_level: WARNING
+            logging_level: INFO
             segment_time: 6900
           Segment_6:
-            logging_level: WARNING
+            logging_level: INFO
             segment_time: 14500
           Segment_7:
-            logging_level: WARNING
+            logging_level: INFO
             segment_time: 20200
           Segment_8:
-            logging_level: WARNING
+            logging_level: INFO
             segment_time: 12700
           EM:
-            logging_level: WARNING
+            logging_level: INFO
             mutex_time: 2500
           HB: 
-            logging_level: WARNING
+            logging_level: INFO
             interchange_time: 4800 
   scheduler:
     logging_level: WARNING
     parameters:
       recipe_path: "resources/recipes/recipes/conveyor.yaml"
       condition_path: "resources/recipes/conditions/conveyor.yaml"
-    
-
-
-
-              
+                  

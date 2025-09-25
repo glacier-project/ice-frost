@@ -1,4 +1,3 @@
-
 class Pallet:
     def __init__(self, id:str):
         self.x_dimension:int = 24
