@@ -58,13 +58,12 @@ reactor Controller extends FrostBase{
     reaction (create_pallet_event) -> to_switches, to_bayes, to_segments{=
         dest, pallet_id = self.pallets_to_be_created.pop(0)
         
-        self.belt_status[dest.value] = False
         self.pallet_names.append(pallet_id)
-        self.pallet_destinations[pallet_id] = None
+        self.pallet_destinations[pallet_id] = "0"
         self.actions[pallet_id] = None
 
         message = [[dest.value], [ControllerCommand.create, None], [pallet_id]]
-        self.logger.warning(f"Message created: {message}")
+        self.logger.debug(f"Message created: {message}")
         if isinstance(dest, SwitchName):
             self._set_output_port(message, to_switches)
 
@@ -80,7 +79,7 @@ reactor Controller extends FrostBase{
     =}
 
     method new_pallet_created(pallet_id){=
-        self.pallet_destinations[pallet_id] = None
+        self.pallet_destinations[pallet_id] = "0"
         self.actions[pallet_id] = SwitchAction.advance
         self.pallet_names.append(pallet_id)
     =}
@@ -98,43 +97,41 @@ reactor Controller extends FrostBase{
     
     ############################## Start and End REACTIONS ##############################
     reaction(shutdown){=
-        self.logger.warning(f"Conveyor state: {self.belt_status}")
+        self.logger.warning(f"Conveyor state: {self.belt_status}, \n {self.bh_status}, \n {self.ci_status}, \n {self.dl_status}, \n {self.em_status}, \n {self.af_status}")
     =}
-
     reaction (startup)-> to_switches, to_bayes, create_pallet, create_pallet_event{=
         self.belt_status = {SwitchName.A.value: True, SwitchName.B.value: True, SwitchName.C.value: True, SwitchName.D.value: True, SwitchName.E.value: True, SwitchName.F.value: True, BayName.LU.value: True, SwitchName.H.value: True, SwitchName.I.value: True, SwitchName.L.value: True, SwitchName.M.value: True}
         self.pallets_to_be_created.append([SegmentName.Segment_1, 1])
         self.pallets_to_be_created.append([SegmentName.Segment_2, 2])
         self.pallets_to_be_created.append([SegmentName.Segment_3, 3])
-        self.pallets_to_be_created.append([SegmentName.Segment_4_1, 4])
-        self.pallets_to_be_created.append([SegmentName.Segment_4_2, 5])
-        self.pallets_to_be_created.append([SegmentName.Segment_5, 6])
+        self.pallets_to_be_created.append([SegmentName.Segment_1, 4])
+        self.pallets_to_be_created.append([SegmentName.Segment_8, 5])
+        self.pallets_to_be_created.append([SegmentName.Segment_2, 6])
         self.pallets_to_be_created.append([SegmentName.Segment_6, 7])
         self.pallets_to_be_created.append([SegmentName.Segment_7, 8])
         self.pallets_to_be_created.append([SegmentName.Segment_8, 9])
         self.pallets_to_be_created.append([SegmentName.Segment_1, 10])
         create_pallet_event.schedule(0)
     =}
-    
     reaction(message_to_send) -> to_switches, to_bayes, to_segments, message_to_send{=
         if self.messages == []:
             return 0
         message = self.messages.pop(0)
         if isinstance(message[1][1], SegmentAction):
-            self.logger.info(f"Controller sending message to segments: {message}")
+            self.logger.debug(f"Controller sending message to segments: {message}")
             self._set_output_port(message, to_segments)
         elif isinstance(message[1][1], SwitchAction):            
             if message[0] in BayName.values():
-                self.logger.info(f"Controller sending message to bay: {message}")
+                self.logger.debug(f"Controller sending message to bay: {message}")
                 self._set_output_port(message, to_bayes)
             else:
-                self.logger.info(f"Controller sending message to switches: {message}")
+                self.logger.debug(f"Controller sending message to switches: {message}")
                 self._set_output_port(message, to_switches)
         else:
             raise Exception(f"Controller error: no action to be performed {message}")
 
         if self.messages:
-            self.logger.info(f"Messages still in queue: {self.messages}, {self.dl_status}, {self.belt_status["L"]}")
+            self.logger.debug(f"Messages still in queue: {self.messages}, {self.dl_status}, {self.belt_status["L"]}")
             message_to_send.schedule(int(len(self.messages) + 1))
     =}
 
@@ -145,10 +142,7 @@ reactor Controller extends FrostBase{
             switches: list of switches involved in the interchange
             return: True if all the switches are free, False otherwise
         '''
-        result = True
-        for switch in switches:
-                result = result * self.belt_status[switch]
-        return result
+        return all(self.belt_status[switch] == True for switch in switches)
     =}
     method lock_positions(pos, act, switches, stop){=
         '''
@@ -157,6 +151,7 @@ reactor Controller extends FrostBase{
             act: action to be performed by the pallet (SwitchAction)
             switches: list of switches involved in the interchange       
         '''
+
         if act == SwitchAction.advance:
             if pos == InterchangeInputs.UPPER_SEGMENT:
                 self.belt_status[switches[0]] = False
@@ -164,17 +159,18 @@ reactor Controller extends FrostBase{
                 self.belt_status[switches[1]] = False
             elif pos == InterchangeInputs.BAY:
                 self.belt_status[switches[0]] = False
-            return 0
         elif act == SwitchAction.go_to_bay:
             if pos == InterchangeInputs.UPPER_SEGMENT:
                 self.belt_status[switches[0]] = False
-                return 0
-            
-        stop = True
-        for switch in switches:
-            self.belt_status[switch] = False
+        else:
+            stop = True
+            for switch in switches:
+                self.belt_status[switch] = False
     =}
     method take_decision_over_interchange(switch_list, stop, status, bay, upper_segment, lower_segment){=
+        for switch in switch_list:
+            if switch not in SwitchName.values():
+                raise Exception(f"Controller error: invalid switch name {switch}")
         #Update lock on the interchange
         if self._check_interchange_status(switch_list):
             stop = False
@@ -190,12 +186,24 @@ reactor Controller extends FrostBase{
         #Check if the action can be performed
         if stop == True:
             return None
-        else:
-            if self.belt_status[switch_list[0]] == False:
-                if pos == InterchangeInputs.UPPER_SEGMENT or pos == InterchangeInputs.BAY:
-                    return None
-            elif self.belt_status[switch_list[1]] == False and pos == InterchangeInputs.LOWER_SEGMENT:
+        
+        elif action == SwitchAction.cross:
+            if not self._check_interchange_status(switch_list):
                 return None
+        elif action == SwitchAction.advance:
+            if pos == InterchangeInputs.UPPER_SEGMENT or pos == InterchangeInputs.BAY:
+                if self.belt_status[switch_list[0]] == False:
+                    return None
+            elif pos == InterchangeInputs.LOWER_SEGMENT:
+                if self.belt_status[switch_list[1]] == False:
+                    return None
+        elif action == SwitchAction.go_to_bay:
+            if pos == InterchangeInputs.UPPER_SEGMENT:
+                if self.belt_status[switch_list[0]] == False:
+                    return None
+            else: # From lower segment or bay, needs both free
+                if not self._check_interchange_status(switch_list):
+                    return None
 
         #Prepare the header of the message
         message = [[], [], []]
@@ -237,7 +245,7 @@ reactor Controller extends FrostBase{
         switch_list = [SwitchName.F.value, SwitchName.A.value]
         message = self.take_decision_over_interchange(switch_list, self.af_stop, self.af_status, None, SegmentName.Segment_4_2.value, None)
         if message == None:
-            self.logger.error("No message generated in control_af")
+            self.logger.debug("No message generated in control_af")
             return 0
         self.messages.append(message)
         message_to_send.schedule(int(len(self.messages) + 1))
@@ -247,7 +255,7 @@ reactor Controller extends FrostBase{
         switch_list = [SwitchName.H.value, SwitchName.B.value]
         message = self.take_decision_over_interchange(switch_list, self.bh_stop, self.bh_status, BayName.Bay4_1, SegmentName.Segment_3.value, SegmentName.Segment_5.value)
         if message == None:
-            self.logger.error("No message generated in control_bh")
+            self.logger.debug("No message generated in control_bh")
             return 0
 
         self.messages.append(message)
@@ -258,7 +266,7 @@ reactor Controller extends FrostBase{
         switch_list = [SwitchName.I.value, SwitchName.C.value]
         message = self.take_decision_over_interchange(switch_list, self.ci_stop, self.ci_status, BayName.Bay3_1.value, SegmentName.Segment_2.value, SegmentName.Segment_6.value)
         if message == None:
-            self.logger.error("No message generated in control_ci")
+            self.logger.debug("No message generated in control_ci")
             return 0
 
         self.messages.append(message)
@@ -269,7 +277,7 @@ reactor Controller extends FrostBase{
         switch_list = [SwitchName.L.value, SwitchName.D.value]
         message = self.take_decision_over_interchange(switch_list, self.dl_stop, self.dl_status, BayName.Bay2_1.value, SegmentName.Segment_1.value, SegmentName.Segment_7.value)
         if message == None:
-            self.logger.error("No message generated in control_dl")
+            self.logger.debug("No message generated in control_dl")
             return 0
 
         self.messages.append(message)
@@ -280,7 +288,7 @@ reactor Controller extends FrostBase{
         switch_list = [SwitchName.M.value, SwitchName.E.value]
         message = self.take_decision_over_interchange(switch_list, self.em_stop, self.em_status, BayName.Bay1_1.value, None, SegmentName.Segment_8.value)
         if message == None:
-            self.logger.error("No message generated in control_em")
+            self.logger.debug("No message generated in control_em")
             return 0
 
         self.messages.append(message)
@@ -308,7 +316,7 @@ reactor Controller extends FrostBase{
         if not isinstance(value, (list, tuple)) or len(value) != 2:
             raise Exception(f"Controller error: invalid request format {value}")
 
-        self.logger.info(f"Controller received segment event {value}")
+        self.logger.debug(f"Controller received segment event {value}")
         event = value[0]
         pallet_id = value[1]
         if not isinstance(event, Events):
@@ -321,16 +329,15 @@ reactor Controller extends FrostBase{
             if pallet_id == None:                
                 return 0
 
-            self.actions[pallet_id] = calculate_next_action(switch_name, self.pallet_destinations[pallet_id])
+            self.actions[pallet_id] = calculate_next_action(switch_name.value, self.pallet_destinations[pallet_id])
                     
         elif event == Events.pallet_arrived:
             if pallet_id == None:
                 raise Exception(f"Controller error: invalid pallet id {pallet_id} for event {event}")
 
             status[position] = pallet_id
-            self.actions[pallet_id] = calculate_next_action(switch_name, self.pallet_destinations[pallet_id])        
+            self.actions[pallet_id] = calculate_next_action(switch_name.value, self.pallet_destinations[pallet_id])        
     =}
-
     input ab_request
     // @label segment_ab
     reaction(ab_request) -> control_bh{=
@@ -418,26 +425,28 @@ reactor Controller extends FrostBase{
     input bay5_request
     // @label message_from_bay_5
     reaction(bay5_request){=
-        return 0         
+        
     =}
 
     ############################## SWITCH REACTIONS ##############################
     method _prepare_message_for_switch(value, switch, control){=
         event = value[0]
-        if not isinstance(event, Events):
+        if event not in Events:
             raise Exception(f"Controller error: invalid event {event} from switch {switch}")
         pallet_id = value[1]
         message = None
-        if event == Events.pallet_arrived.value:
+        self.logger.debug(f"Controller handling switch {switch} event {value}, current belt status: {control}")
+        if event == Events.pallet_arrived:
             if pallet_id not in self.pallet_names:
                 self.new_pallet_created(pallet_id)
 
-            self.logger.info(f"Controller received switch event {value} from switch {switch}")
+            self.logger.debug(f"Controller received switch event {value} from switch {switch}")
             self.belt_status[switch] = False
+            self.actions[pallet_id] = calculate_next_action(switch, self.pallet_destinations[pallet_id])
             message = [[switch], [ControllerCommand.move, self.actions[pallet_id]], [None]]
 
-        elif event == Events.pallet_released.value:
-            self.logger.info(f"Controller received switch event {value} from switch {switch}")
+        elif event == Events.pallet_released:
+            self.logger.debug(f"Controller received switch event {value} from switch {switch}")
             self.belt_status[switch] = True
             control.schedule(0)
 

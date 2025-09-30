@@ -37,7 +37,7 @@ reactor Conveyor extends FrostBase{
     L.to_interchange, D.to_interchange -> LD.from_upper_belt, LD.from_lower_belt  after 0
     LD.to_upper_belt, LD.to_lower_belt -> L.from_interchange, D.from_interchange after 0  
     //Links among mutexes
-    E.to_segment, EM.to_upper_belt  -> EM.from_lower_belt, M.from_segment after 0
+    E.to_interchange, EM.to_upper_belt  -> EM.from_lower_belt, M.from_interchange after 0
     
     // 
     //   M ------- L ------- I

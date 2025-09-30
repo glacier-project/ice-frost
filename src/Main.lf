@@ -71,12 +71,12 @@ main reactor{
     warehouse = new Warehouse(_data_model_path = "../resources/data_model/Warehouse.yml")
     kairos_aa = new Kairos(_data_model_path = "../resources/data_model/RBKairos.yml")*/
     conveyor = new Cell_Conveyor(name="conveyor")
-    #scheduler = new Scheduler(name = "scheduler")
-    bus = new FrostBus(name="frost_bus", width = 1)
+    scheduler = new Scheduler(name = "scheduler")
+    bus = new FrostBus(name="frost_bus", width = 2)
     //ice_proxy = new ICEProxy(name="iceproxy")
 
-    conveyor.channel_out-> bus.channel_in after 0
-    bus.channel_out -> conveyor.channel_in after 0
+    #conveyor.channel_out-> bus.channel_in after 0
+    #bus.channel_out -> conveyor.channel_in after 0
 
     #Full demo
     //cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.channel_in after 0
@@ -91,6 +91,6 @@ main reactor{
     //bus.channel_out -> cell5.channel_in, warehouse.channel_in, kairos_aa.channel_in, scheduler.channel_in, conveyor.channel_in after 1 msec
 
     #Demo with just Conveyor
-    // conveyor.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
-    // bus.channel_out -> conveyor.channel_in, scheduler.channel_in after 1 msec
+    conveyor.channel_out, scheduler.channel_out -> bus.channel_in after 1 msec
+    bus.channel_out -> conveyor.channel_in, scheduler.channel_in after 1 msec
 }

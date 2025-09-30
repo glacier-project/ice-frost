@@ -28,7 +28,7 @@ reactor Switch extends FrostBase{
         if self.pallet == None:
             raise Exception(f"Switch {self.conveyor_name} error: no pallet to handle")
 
-        self.logger.info(f"Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
+        self.logger.debug(f"Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
         self._set_output_port([Events.pallet_arrived, self.pallet.id], ask_to_controller)
     =}
 
@@ -39,7 +39,7 @@ reactor Switch extends FrostBase{
         if self.pallet is not None:
             raise Exception(f"Error: Switch {self.conveyor_name} received {value.id} but already has a pallet.")
 
-        self.logger.info(f"Switch {self.conveyor_name} received pallet {value.id}")
+        self.logger.debug(f"Switch {self.conveyor_name} received pallet {value.id}")
             
         self.pallet = value
     =}
@@ -68,7 +68,7 @@ reactor Switch extends FrostBase{
         header = value[0]
         if self.conveyor_name not in header:
             return 0
-        
+    
         cmd = value[1][0]
         if not isinstance(cmd, ControllerCommand):
             raise Exception(f"Switch {self.conveyor_name} error: unknown command {cmd}")
@@ -82,17 +82,17 @@ reactor Switch extends FrostBase{
                 raise Exception(f"Switch {self.conveyor_name} error: no pallet to move")
             
             if sw_act == SwitchAction.advance:
-                self.logger.info(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to segment")
+                self.logger.debug(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to segment")
                 self._set_output_port(self.pallet, to_segment)
             elif sw_act == SwitchAction.cross:
-                self.logger.info(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to interchange")
+                self.logger.debug(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to interchange")
                 self._set_output_port(self.pallet, to_interchange)
             elif sw_act == SwitchAction.go_to_bay:
-                self.logger.info(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to bay")
+                self.logger.debug(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to bay")
                 self._set_output_port(self.pallet, to_bay)
             else:
                 raise Exception(f"Switch {self.conveyor_name} error: unknown switch action {sw_act}")
-            delay.schedule(MSEC(self.switch_time), [Events.pallet_released.value, self.pallet.id])
+            delay.schedule(MSEC(self.switch_time), [Events.pallet_released, self.pallet.id])
             self.pallet = None        
     =}
 }

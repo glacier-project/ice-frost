@@ -19,8 +19,8 @@ reactor Segment extends FrostBase{
     output to_frost
 
     reaction (from_switch) -> to_frost, ask_to_controller, delay{=
-        value = from_switch.value
-
+        value = from_switch.value[0]
+        self.logger.debug(f"Segment {self.conveyor_name} received from switch: {value}")
         if len(self.pallets) >= 10:
             raise Exception(f"Segment {self.conveyor_name} error: too many pallets in the segment")
 
@@ -32,7 +32,6 @@ reactor Segment extends FrostBase{
     reaction(delay) -> ask_to_controller{=
         value = delay.value
         self.pallets.append(value)
-        self.logger.info(f"Segment {self.conveyor_name} received pallet {value.id}")
         if len(self.pallets) == 1:
             self._set_output_port([Events.pallet_arrived, value.id], ask_to_controller)
     =}
@@ -52,7 +51,7 @@ reactor Segment extends FrostBase{
         else:
             return 0  # not for me
 
-        self.logger.warning(f"Segment {self.conveyor_name} received command {value}")
+        self.logger.debug(f"Segment {self.conveyor_name} received command {value}")
         cmd = value[1][0]        
         if cmd not in ControllerCommand:
             raise Exception(f"{self.conveyor_name} error: unknown command {cmd}")
@@ -67,7 +66,7 @@ reactor Segment extends FrostBase{
                 if self.pallets:
                     self._set_output_port([Events.pallet_released.value, self.pallets[0].id], to_frost)
                     self._set_output_port(self.pallets[0], to_switch)
-                    self.logger.info(f"Segment {self.conveyor_name} advanced pallet {self.pallets[0].id}")
+                    self.logger.debug(f"Segment {self.conveyor_name} advanced pallet {self.pallets[0].id}")
                     self.pallets.pop(0)
                     self._set_output_port([Events.pallet_released, self.pallets[0].id if self.pallets else None], ask_to_controller)
                     return 0
@@ -79,7 +78,7 @@ reactor Segment extends FrostBase{
         elif cmd == ControllerCommand.create:
             pallet_id = value[2][0]
             pallet = (Pallet(pallet_id))
-            self.logger.info(f"Segment {self.conveyor_name} created pallet {pallet_id}")
+            self.logger.debug(f"Segment {self.conveyor_name} created pallet {pallet_id}")
             self._set_output_port([Events.pallet_created.value, pallet_id], to_frost)
             delay.schedule(MSEC(int(self.segment_time/2)), pallet)
         else:

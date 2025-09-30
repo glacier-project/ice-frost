@@ -15,12 +15,12 @@ reactor Interchange extends FrostBase{
     logical action delay
 
     reaction(from_upper_belt) -> delay{=
-        value = from_upper_belt.value
+        value = from_upper_belt.value[0]
 
         if not isinstance(value, Pallet):
             raise Exception(f"Interchange {self.conveyor_name.split(".")[-1]} error: received non-pallet value from upper belt: {value}")
         
-        self.logger.info(f"Interchange {self.conveyor_name.split(".")[-1]} received from upper belt: {value}")
+        self.logger.debug(f"Interchange {self.conveyor_name.split(".")[-1]} received from upper belt: {value}")
 
         if self.pallet_present:
             raise Exception(f"Interchange {self.conveyor_name.split(".")[-1]} error: trying to send a pallet when another is still in the interchange")
@@ -30,12 +30,12 @@ reactor Interchange extends FrostBase{
     =}
 
     reaction(from_lower_belt) -> delay{=
-        value = from_lower_belt.value
+        value = from_lower_belt.value[0]
 
         if not isinstance(value, Pallet):
             raise Exception(f"Interchange {self.conveyor_name.split(".")[-1]} error: received non-pallet value from lower belt: {value}")
 
-        self.logger.info(f"Interchange {self.conveyor_name.split(".")[-1]} received from lower belt: {value}")
+        self.logger.debug(f"Interchange {self.conveyor_name.split(".")[-1]} received from lower belt: {value}")
 
         if self.pallet_present:
             raise Exception(f"Interchange {self.conveyor_name.split(".")[-1]} error: trying to send a pallet when another is still in the interchange")
@@ -50,10 +50,10 @@ reactor Interchange extends FrostBase{
 
         if condition:
             self._set_output_port(value, to_lower_belt)
-            self.logger.info(f"Interchange {self.conveyor_name.split(".")[-1]} sent low: {value}")
+            self.logger.debug(f"Interchange {self.conveyor_name.split(".")[-1]} sent low: {value}")
         else:
             self._set_output_port(value, to_upper_belt)
-            self.logger.info(f"Interchange {self.conveyor_name.split(".")[-1]} sent up: {value}")
+            self.logger.debug(f"Interchange {self.conveyor_name.split(".")[-1]} sent up: {value}")
 
         self.pallet_present = False
     =}

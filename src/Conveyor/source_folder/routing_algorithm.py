@@ -65,7 +65,7 @@ def get_action(current_position, destination):
 
     # Movement from bottom to top row
     if curr_row == 1 and dest_row == 0:
-        if current_position in [SwitchName.A.value, SwitchName.E.value] or curr_col > dest_col:
+        if curr_col > dest_col:
             return SwitchAction.advance
         else:
             return SwitchAction.cross
@@ -76,7 +76,9 @@ def get_action(current_position, destination):
 def calculate_next_action(position, destination):
     if position == None:
         raise Exception("Error in calculate_next_action: position is None")
-    if destination == None:
+    if destination == "0":
+        if position == SwitchName.E.value or position == SwitchName.H.value:
+            return SwitchAction.cross
         return SwitchAction.advance
 
     # Fast-path: Direct mapping of matrix position to bay row
