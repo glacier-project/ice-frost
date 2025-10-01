@@ -23,7 +23,7 @@ def get_coordinates(value):
         for col_index, element in enumerate(row):
             if element == value:
                 return (row_index, col_index)
-    raise Exception(f"Error in get_coordinates: value={value}")
+    return None
 
 # Get corresponding MAIN_MATRIX letter for a bay code
 def get_bay_coordinates(value):
@@ -33,7 +33,7 @@ def get_bay_coordinates(value):
     for row_index, row in enumerate(BAY_MATRIX):
         if value in row:
             return BAY_MAPPING[row_index]
-    raise Exception(f"Error in get_bay_coordinates: value={value}")
+    return None
 
 # Core movement logic: determines next direction or action
 def get_action(current_position, destination):

@@ -35,7 +35,20 @@ reactor Bay extends FrostBase{
         Plat1.from_back.set(from_belt.value)
     =}
     reaction(controller_command) -> Plat1.controller_command, Plat2.controller_command, Plat3.controller_command{=
-         return 0
+        '''
+        controller_command format: [[header], [command], [args]]
+            header = list of str with Segment names involved in the command
+            command = [ControllerCommand, SwitchAction]
+            args = additional arguments (if any)
+        '''
+        value = controller_command.value
+        header = value[0][0]
+        if header == self.plat1_name:
+            Plat1.controller_command.set(value)
+        elif header == self.plat2_name:
+            Plat2.controller_command.set(value)
+        elif header == self.plat3_name:
+            Plat3.controller_command.set(value)      
     =}
     reaction(Plat1.ask_to_controller)-> ask_to_controller{=
         ask_to_controller.set(Plat1.ask.value)

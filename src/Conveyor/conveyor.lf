@@ -92,9 +92,9 @@ reactor Conveyor extends FrostBase{
     //
     //LU instantiation
     LUBay = new SingleSwitchBay(name = {=self.name + "." + BayName.LU.value=})
-    Segment_4_1 = new Segment(name = {=self.name + "." + SegmentName.Segment_4_1.value=})
-    H.to_segment -> Segment_4_1.from_switch after 0
-    Segment_4_1.to_switch -> LUBay.from_belt after 0
+    Segment_4 = new Segment(name = {=self.name + "." + SegmentName.Segment_4.value=})
+    H.to_segment -> Segment_4.from_switch after 0
+    Segment_4.to_switch -> LUBay.from_belt after 0
 
     // 
     //   M ------- L ------- I ------- H ------- G--- F
@@ -112,9 +112,7 @@ reactor Conveyor extends FrostBase{
     FA.to_lower_belt -> A.from_segment after 0
     
     //Segment
-    Segment_4_2 = new Segment(name = {=self.name + "." + SegmentName.Segment_4_2.value=})
-    LUBay.to_belt -> Segment_4_2.from_switch after 0
-    Segment_4_2.to_switch -> F.from_segment after 0
+    LUBay.to_belt -> F.from_segment after 1500msec
     Segment_5 = new Segment(name = {=self.name + "." + SegmentName.Segment_5.value=})
     Segment_5.to_switch -> B.from_segment after 0
     A.to_segment -> Segment_5.from_switch after 0
@@ -146,8 +144,8 @@ reactor Conveyor extends FrostBase{
     Bay2.ask_to_controller, Bay3.ask_to_controller, Bay4.ask_to_controller, Bay1_1.ask_to_controller, LUBay.ask_to_controller -> Controller.bay2_request, Controller.bay3_request, Controller.bay4_request, Controller.bay1_request, Controller.bay5_request after 0
     Controller.to_bayes, Controller.to_bayes, Controller.to_bayes, Controller.to_bayes, Controller.to_bayes -> Bay2.controller_command, Bay3.controller_command, Bay4.controller_command, Bay1_1.controller_command, LUBay.controller_command after 0
     //SEGMENTS CONNECTIONS
-    Segment_1.ask_to_controller, Segment_2.ask_to_controller, Segment_3.ask_to_controller, Segment_4_1.ask_to_controller, Segment_4_2.ask_to_controller, Segment_5.ask_to_controller, Segment_6.ask_to_controller, Segment_7.ask_to_controller, Segment_8.ask_to_controller -> Controller.ml_request, Controller.li_request, Controller.ih_request, Controller.hg_request, Controller.gf_request, Controller.ab_request, Controller.bc_request, Controller.cd_request, Controller.de_request after 0 
-    Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments -> Segment_1.controller_command, Segment_2.controller_command, Segment_3.controller_command, Segment_4_1.controller_command, Segment_4_2.controller_command, Segment_5.controller_command, Segment_6.controller_command, Segment_7.controller_command, Segment_8.controller_command after 0
+    Segment_1.ask_to_controller, Segment_2.ask_to_controller, Segment_3.ask_to_controller, Segment_4.ask_to_controller, Segment_5.ask_to_controller, Segment_6.ask_to_controller, Segment_7.ask_to_controller, Segment_8.ask_to_controller -> Controller.ml_request, Controller.li_request, Controller.ih_request, Controller.hg_request, Controller.ab_request, Controller.bc_request, Controller.cd_request, Controller.de_request after 0 
+    Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments, Controller.to_segments -> Segment_1.controller_command, Segment_2.controller_command, Segment_3.controller_command, Segment_4.controller_command, Segment_5.controller_command, Segment_6.controller_command, Segment_7.controller_command, Segment_8.controller_command after 0
     
     output to_frost
     input from_frost
@@ -185,12 +183,7 @@ reactor Conveyor extends FrostBase{
     Segment_1.to_frost -> Segment1
     Segment_2.to_frost -> Segment2
     Segment_3.to_frost -> Segment3
-    reaction(Segment_4_1.to_frost)-> Segment4{=
-        Segment4.set(Segment_4_1.to_frost.value)
-    =}
-    reaction(Segment_4_2.to_frost)-> Segment4{=
-        Segment4.set(Segment_4_2.to_frost.value)
-    =}
+    Segment_4.to_frost -> Segment4
     Segment_5.to_frost -> Segment5
     Segment_6.to_frost -> Segment6
     Segment_7.to_frost -> Segment7

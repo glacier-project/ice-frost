@@ -4,6 +4,7 @@ class Events(Enum):
     pallet_arrived = 1
     pallet_created = 1
     pallet_released = -1
+    pallet_pending = 0
 
 class InterchangeInputs(Enum):
     BAY = "BAY"
@@ -13,14 +14,25 @@ class InterchangeInputs(Enum):
 class ControllerCommand(Enum):
     move = 0
     create = 1
+    release = 2
 
 class SegmentAction(Enum):
     advance = 0
+
+class BayAction(Enum):
+    back = 0
+    forward = 1
+    none = -1
 
 class SwitchAction(Enum):
     advance = 0
     cross = 1
     go_to_bay = 2
+
+class SwitchPort(Enum):
+    Segment = 0
+    Interchange = 1
+    Bay = 2
 
 class SwitchName(Enum):
     A = "A"
@@ -41,8 +53,7 @@ class SegmentName(Enum):
     Segment_1 = "Segment_1"
     Segment_2 = "Segment_2"
     Segment_3 = "Segment_3"
-    Segment_4_1 = "Segment_4_1"
-    Segment_4_2 = "Segment_4_2"
+    Segment_4 = "Segment_4"
     Segment_5 = "Segment_5"
     Segment_6 = "Segment_6"
     Segment_7 = "Segment_7"
@@ -69,6 +80,9 @@ class BayName(Enum):
 
     def values():
         return [item.value for item in BayName]
+    
+    def get_key(val):
+        return BayName(val)
 
 class InterchangeName(Enum):
     LD = "LD"

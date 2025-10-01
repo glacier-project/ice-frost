@@ -66,7 +66,9 @@ reactor Segment extends FrostBase{
                 if self.pallets:
                     self._set_output_port([Events.pallet_released.value, self.pallets[0].id], to_frost)
                     self._set_output_port(self.pallets[0], to_switch)
-                    self.logger.debug(f"Segment {self.conveyor_name} advanced pallet {self.pallets[0].id}")
+                    if self.conveyor_name == "Segment_6":
+                       self.logger.info(f"{self.conveyor_name} advanced pallet {self.pallets[0].id}")
+                   
                     self.pallets.pop(0)
                     self._set_output_port([Events.pallet_released, self.pallets[0].id if self.pallets else None], ask_to_controller)
                     return 0

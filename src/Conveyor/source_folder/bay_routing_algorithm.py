@@ -38,11 +38,11 @@ def compute_bay_route(position, destination, bay):
 
 # Checks if the first `val` bays in the buffer are occupied (True)
 def check_bay_available(buffer, val):
-    return all(buffer[i] for i in range(val))
+    return all(buffer[i] == 0 for i in range(val))
 
 # Marks a bay slot as unoccupied (False)
 def leave_bay(buffer, val):
-    buffer[val - 1] = False
+    buffer[val - 1] = 0
 
 # Updates bay occupancy based on the slot `n` and movement direction (`route`)
 def update_bay_positions(bay_buffer, slot, route):
