@@ -38,7 +38,7 @@ reactor Switch extends FrostBase{
         if self.pallet is not None:
             raise Exception(f"Error: Switch {self.conveyor_name} received {value.id} but already has a pallet {self.pallet.id}.")
 
-        self.logger.info(f"Switch {self.conveyor_name} received pallet {value.id}")
+        self.logger.debug(f"Switch {self.conveyor_name} received pallet {value.id}")
             
         self.pallet = value
     =}
@@ -84,10 +84,10 @@ reactor Switch extends FrostBase{
                 raise Exception(f"Switch {self.conveyor_name} error: no pallet to move")
             
             if action_to_be_performed == SwitchAction.advance:
-                self.logger.info(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to segment")
+                self.logger.debug(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to segment")
                 self._set_output_port(self.pallet, to_segment)
             elif action_to_be_performed == SwitchAction.cross:
-                self.logger.info(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to interchange")
+                self.logger.debug(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to interchange")
                 self._set_output_port(self.pallet, to_interchange)
             elif action_to_be_performed == SwitchAction.go_to_bay:
                 self.logger.info(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to bay")

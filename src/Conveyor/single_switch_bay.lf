@@ -18,12 +18,11 @@ reactor SingleSwitchBay extends FrostBase{
     logical action pallet_arrived
 
     reaction(pallet_arrived)-> ask_to_controller, to_belt, to_frost{=
-        if self.pallet == 0:
+        if self.pallet == None:
             raise Exception(f"Switch {self.conveyor_name} error: no pallet to handle")
         self._set_output_port([Events.pallet_arrived.value, self.pallet.id], to_frost)
         self.logger.debug(f"Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
         self._set_output_port([Events.pallet_arrived, self.pallet.id], ask_to_controller)
-        raise Exception(f"Terminate {self.pallet.id} processing")
     =}
     method pallet_in(value){=
         if not isinstance(value, Pallet):
@@ -38,7 +37,7 @@ reactor SingleSwitchBay extends FrostBase{
     =}
     reaction(from_belt)-> pallet_arrived, ask_to_controller, to_frost{=
         self.pallet_in(from_belt.value[0])
-        handle_pallet.schedule(0)
+        pallet_arrived.schedule(0)
     =}
 
     reaction(controller_command) -> ask_to_controller, to_belt, to_frost{=
@@ -68,8 +67,10 @@ reactor SingleSwitchBay extends FrostBase{
             if action_to_be_performed == BayAction.back:
                 self.logger.debug(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to segment")
                 self._set_output_port(self.pallet, to_belt)
-            else:
-                raise Exception(f"Switch {self.conveyor_name} error: unknown switch action {action_to_be_performed}")
+            elif action_to_be_performed == BayAction.none:
+                self.logger.debug(f"Switch {self.conveyor_name} keeping pallet {self.pallet.id} in the bay")
+                return 0
+
             self._set_output_port([Events.pallet_released.value, self.pallet.id], to_frost)
             self._set_output_port([Events.pallet_released, self.pallet.id], ask_to_controller)
 

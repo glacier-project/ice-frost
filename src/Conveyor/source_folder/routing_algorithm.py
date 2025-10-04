@@ -1,4 +1,5 @@
-from utils import SwitchAction, BayName, SwitchName
+from utils import BayAction, SwitchAction, BayName, SwitchName
+from bay_routing_algorithm import check_bay_available, compute_bay_route
 # Constants: Define the main matrix and bay mapping
 MAIN_MATRIX = [
     [SwitchName.M.value, SwitchName.L.value, SwitchName.I.value, SwitchName.H.value, BayName.LU.value, SwitchName.F.value],
@@ -72,10 +73,17 @@ def get_action(current_position, destination):
 
     raise Exception(f"Error in get_action: current_position={current_position}, destination={destination}")
 
+
 # High-level routing function
-def calculate_next_action(position, destination):
+def calculate_next_action(position: str, destination: str, bay_status: list | None, pallet_id: int):
     if position == None:
         raise Exception("Error in calculate_next_action: position is None")
+    
+    if position == BayName.LU.value:
+        return BayAction.none if destination == BayName.LU.value else BayAction.back
+    
+    if position not in SwitchName.values() and position != BayName.LU.value:
+        return compute_bay_route(position, destination, bay_status, pallet_id)
     if destination == "0":
         if position == SwitchName.E.value or position == SwitchName.H.value:
             return SwitchAction.cross
@@ -84,8 +92,14 @@ def calculate_next_action(position, destination):
     # Fast-path: Direct mapping of matrix position to bay row
     if (position == "L" and destination.startswith("Bay2")) or \
        (position == "I" and destination.startswith("Bay3")) or \
-       (position == "H" and destination.startswith("Bay4")) or \
-       (position == "M" and destination == BayName.Bay1_1.value):
-        return SwitchAction.go_to_bay
+       (position == "H" and destination.startswith("Bay4")):
+        return check_bay_available(bay_status, int(destination[-1]), pallet_id)
+    
+    if (position == "M" or position == "E") and destination == BayName.Bay1_1.value:        
+        if bay_status[0] == 0 and position == "M":
+            bay_status[0] = pallet_id
+            return SwitchAction.go_to_bay
+        else:
+            return SwitchAction.cross if position == "E" else SwitchAction.advance
 
     return get_action(position, destination)

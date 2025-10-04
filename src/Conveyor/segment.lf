@@ -18,7 +18,14 @@ reactor Segment extends FrostBase{
     
     output to_frost
 
-    reaction (from_switch) -> to_frost, ask_to_controller, delay{=
+    logical action to_frost_with_delay
+
+    reaction(to_frost_with_delay) -> to_frost{=
+        value = to_frost_with_delay.value
+        self._set_output_port([Events.pallet_arrived.value, value.id] ,to_frost)
+    =}
+
+    reaction (from_switch) -> to_frost_with_delay, ask_to_controller, delay{=
         value = from_switch.value[0]
         self.logger.debug(f"Segment {self.conveyor_name} received from switch: {value}")
         if len(self.pallets) >= 10:
@@ -26,7 +33,7 @@ reactor Segment extends FrostBase{
 
         if isinstance(value, Pallet):
             delay.schedule(MSEC(self.segment_time), value)
-            self._set_output_port([Events.pallet_arrived.value, value.id] ,to_frost)
+            to_frost_with_delay.schedule(MSEC(2000), value)
     =}
 
     reaction(delay) -> ask_to_controller{=
@@ -67,7 +74,7 @@ reactor Segment extends FrostBase{
                     self._set_output_port([Events.pallet_released.value, self.pallets[0].id], to_frost)
                     self._set_output_port(self.pallets[0], to_switch)
                     if self.conveyor_name == "Segment_6":
-                       self.logger.info(f"{self.conveyor_name} advanced pallet {self.pallets[0].id}")
+                       self.logger.debug(f"{self.conveyor_name} advanced pallet {self.pallets[0].id}")
                    
                     self.pallets.pop(0)
                     self._set_output_port([Events.pallet_released, self.pallets[0].id if self.pallets else None], ask_to_controller)

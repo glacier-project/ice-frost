@@ -10,7 +10,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [1, 19]
+      args: [1, 40]
   - sender: "scheduler"
     target: "conveyor"
     header:

@@ -12,6 +12,10 @@ reactor Scheduler extends FrostReactor{
 
     logical action routine
 
+    reaction(shutdown){=
+        self.logger.warning(f"Step {self.i}: command {self.recipe[self.i]} not completed, shutting down.")
+    =}
+
     reaction(startup)-> channel_out, routine{=
         """        
         Initializes the Scheduler reactor, setting up the initial state and scheduling the first routine.

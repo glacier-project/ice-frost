@@ -73,25 +73,20 @@ root:
                         - !!BooleanVariableNode
                           name: "result"
                           description: ""
+                          default_value: True
                       cfg:
                         - !!CallMethodNode
                           method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setDestination"
                           args: 
-                            - $palletNumber
-                            - $destination
+                            - "${palletNumber}"
+                            - "${destination}"
                         - !!ReadVariableNode
                           variable: "Cell_Conveyor/dynamic_node"
                           store_as: "seekingnode"
                         - !!WaitConditionNode
-                          variable: "$seekingnode"
+                          variable: "${seekingnode}"
                           operator: "=="
-                          rhs: $palletNumber
-                        - !!WriteVariableNode
-                          variable: "Cell_Conveyor/output"
-                          value: True
-                        - !!ReadVariableNode
-                          variable: "Cell_Conveyor/output"
-                          store_as: "result"
+                          rhs: "${palletNumber}"
                     - !!MethodNode
                       name: "setPalletDestinationWithReservation"
                       description: ""
@@ -239,12 +234,12 @@ root:
                         - !!CallMethodNode
                           method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/release"
                           args: 
-                            - $palletNumber
+                            - "${palletNumber}"
                         - !!ReadVariableNode
                           variable: "Cell_Conveyor/dynamic_node"
                           store_as: "seekingnode"
                         - !!WaitConditionNode
-                          variable: $seekingnode
+                          variable: "${seekingnode}"
                           operator: "=="
                           rhs: 0
                         - !!WriteVariableNode

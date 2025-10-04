@@ -32,6 +32,7 @@ reactor Bay extends FrostBase{
     output ask_to_controller
 
     reaction(from_belt) -> Plat1.from_back{=
+        self.logger.error(f"Bay {self.conveyor_name} received from belt: {from_belt.value}")
         Plat1.from_back.set(from_belt.value)
     =}
     reaction(controller_command) -> Plat1.controller_command, Plat2.controller_command, Plat3.controller_command{=
@@ -51,12 +52,12 @@ reactor Bay extends FrostBase{
             Plat3.controller_command.set(value)      
     =}
     reaction(Plat1.ask_to_controller)-> ask_to_controller{=
-        ask_to_controller.set(Plat1.ask.value)
+        ask_to_controller.set(Plat1.ask_to_controller.value)
     =}
     reaction(Plat2.ask_to_controller) -> ask_to_controller{=
-        ask_to_controller.set(Plat2.ask.value)
+        ask_to_controller.set(Plat2.ask_to_controller.value)
     =}
     reaction(Plat3.ask_to_controller) -> ask_to_controller{=
-        ask_to_controller.set(Plat3.ask.value)
+        ask_to_controller.set(Plat3.ask_to_controller.value)
     =}    
 }

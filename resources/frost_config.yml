@@ -30,37 +30,44 @@ reactors:
             logging_level: INFO
           Segment_1:
             logging_level: INFO
-            segment_time: 12700
+            parameters:
+              segment_time: 12700
           Segment_2:
             logging_level: INFO
-            segment_time: 20200
+            parameters:
+              segment_time: 20200            
           Segment_3:
             logging_level: INFO
-            segment_time: 13250
-          Segment_4_1:
+            parameters:
+              segment_time: 13250
+          Segment_4:
             logging_level: INFO
-            segment_time: 4800
-          Segment_4_2:
-            logging_level: INFO
-            segment_time: 2100
+            parameters:
+              segment_time: 4800
           Segment_5:
             logging_level: INFO
-            segment_time: 6900
+            parameters:
+              segment_time: 6900
           Segment_6:
             logging_level: INFO
-            segment_time: 14500
+            parameters:
+              segment_time: 14500
           Segment_7:
             logging_level: INFO
-            segment_time: 20200
+            parameters:
+              segment_time: 20200
           Segment_8:
             logging_level: INFO
-            segment_time: 12700
+            parameters:
+              segment_time: 12700
           EM:
             logging_level: INFO
-            mutex_time: 2500
+            parameters:
+              mutex_time: 2500
           HB: 
             logging_level: INFO
-            interchange_time: 4800 
+            parameters:
+              interchange_time: 4800 
   scheduler:
     logging_level: WARNING
     parameters:
