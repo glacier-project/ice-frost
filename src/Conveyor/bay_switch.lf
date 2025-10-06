@@ -26,9 +26,9 @@ reactor BaySwitch extends FrostBase{
 
     reaction(unhandled_pallet) ->ask_to_controller, to_frost{=
         if self.pallet == None:
-            raise Exception(f"Switch {self.conveyor_name} error: no pallet to handle")
+            raise Exception(f"Bay Switch {self.conveyor_name} error: no pallet to handle")
         self._set_output_port([Events.pallet_arrived.value, self.pallet.id], to_frost)
-        self.logger.debug(f"Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
+        self.logger.debug(f"Bay Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
         ask_to_controller.set([Events.pallet_arrived, self.pallet.id, self.conveyor_name])
     =}
 
@@ -36,19 +36,19 @@ reactor BaySwitch extends FrostBase{
     reaction(pending_pallet) -> pending_pallet, ask_to_controller{=
         if self.pallet == None:
             return 0
-        self.logger.debug(f"Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
+        self.logger.debug(f"Bay Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
         self._set_output_port([Events.pallet_pending, self.pallet.id, self.conveyor_name], ask_to_controller)
         pending_pallet.schedule(SEC(2))
     =}
 
     method pallet_in(value){=
         if not isinstance(value, Pallet):
-            raise Exception(f"Error: Switch {self.conveyor_name} received non-pallet value: {value}")
+            raise Exception(f"Error: Bay Switch {self.conveyor_name} received non-pallet value: {value}")
 
         if self.pallet is not None:
-            raise Exception(f"Error: Switch {self.conveyor_name} received {value.id} but already has a pallet.")
+            raise Exception(f"Error: Bay Switch {self.conveyor_name} received {value.id} but already has a pallet.")
 
-        self.logger.error(f"Switch {self.conveyor_name} received pallet {value.id}")
+        self.logger.info(f"Bay Switch {self.conveyor_name} received pallet {value.id}")
 
         self.pallet = value
     =}
@@ -77,27 +77,27 @@ reactor BaySwitch extends FrostBase{
     
         cmd = value[1][0]
         if not isinstance(cmd, ControllerCommand):
-            raise Exception(f"Switch {self.conveyor_name} error: unknown command {cmd}")
-
+            raise Exception(f"Bay Switch {self.conveyor_name} error: unknown command {cmd}")
+        
         action_to_be_performed = value[1][1]
         if not isinstance(action_to_be_performed, BayAction):
-            raise Exception(f"Switch {self.conveyor_name} error: unknown command {cmd}")
+            raise Exception(f"Bay Switch {self.conveyor_name} error: unknown command {cmd}")
 
         if cmd == ControllerCommand.move:               
             if self.pallet is None:
-                raise Exception(f"Switch {self.conveyor_name} error: no pallet to move")
+                raise Exception(f"Bay Switch {self.conveyor_name} error: no pallet to move")
             
             if action_to_be_performed == BayAction.back:
-                self.logger.debug(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to previous switch")
+                self.logger.debug(f"Bay Switch {self.conveyor_name} moving pallet {self.pallet.id} to previous Bay Switch")
                 self._set_output_port(self.pallet, to_belt)
             elif action_to_be_performed == BayAction.forward:
-                self.logger.debug(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to next switch")
+                self.logger.info(f"Bay Switch {self.conveyor_name} moving pallet {self.pallet.id} to next Bay Switch")
                 self._set_output_port(self.pallet, to_forward)
             elif action_to_be_performed == BayAction.none:
-                self.logger.debug(f"Switch {self.conveyor_name} holding pallet {self.pallet.id}")
+                self.logger.debug(f"Bay Switch {self.conveyor_name} holding pallet {self.pallet.id}")
                 pending_pallet.schedule(SEC(2))
             else:
-                raise Exception(f"Switch {self.conveyor_name} error: unknown switch action {action_to_be_performed}")
+                raise Exception(f"Bay Switch {self.conveyor_name} error: unknown Bay Switch action {action_to_be_performed}")
             self._set_output_port([Events.pallet_released.value, self.pallet.id], to_frost)
             self._set_output_port([Events.pallet_released, self.pallet.id, self.conveyor_name], ask_to_controller)
 
@@ -105,8 +105,8 @@ reactor BaySwitch extends FrostBase{
 
         elif cmd == ControllerCommand.release:
             if self.pallet is None:
-                raise Exception(f"Switch {self.conveyor_name} error: no pallet to release")
-            self.logger.debug(f"Switch {self.conveyor_name} releasing pallet {self.pallet.id}")
+                raise Exception(f"Bay Switch {self.conveyor_name} error: no pallet to release")
+            self.logger.debug(f"Bay Switch {self.conveyor_name} releasing pallet {self.pallet.id}")
             self._set_output_port([Events.pallet_pending, self.pallet.id, self.conveyor_name], ask_to_controller)
     =}
 }

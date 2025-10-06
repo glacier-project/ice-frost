@@ -473,7 +473,7 @@ reactor Controller extends FrostBase{
             #Check if the pallet has the correct destination
             self.logger.debug(f"Controller received bay event {event} from bay {bay_name},")
             if self.pallet_destinations[pallet_id] == bay_name:
-                return 0
+                return None
             self.actions[pallet_id] = calculate_next_action(bay_name, self.pallet_destinations[pallet_id], bay_status, pallet_id)
             return [[bay_name], [ControllerCommand.move, self.actions[pallet_id]], [pallet_id]]
 
@@ -481,6 +481,7 @@ reactor Controller extends FrostBase{
             self.logger.debug(f"Controller received bay event {event} from bay {bay_name}, pallet {pallet_id} released")
             if bay_pos == 1:
                 status[InterchangeInputs.BAY] = None
+        return None
     =}
     input bay2_request
     // @label message_from_bay_2
