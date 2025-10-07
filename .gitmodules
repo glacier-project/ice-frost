@@ -1,4 +1,4 @@
 [submodule "frost"]
 	path = frost
-	url = https://github.com/esd-univr/frost
+	url = https://github.com/glacier-project/frost
 	branch = main
