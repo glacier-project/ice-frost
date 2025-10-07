@@ -52,7 +52,7 @@ main reactor{
     cell5 = new Cell5(_data_model_path = "../resources/data_model/Cell5.yml")
     warehouse = new Warehouse(_data_model_path = "../resources/data_model/Warehouse.yml")
     kairos_aa = new Kairos(_data_model_path = "../resources/data_model/RBKairos.yml")*/
-    conveyor = new Cell_Conveyor(name="conveyor")
+    conveyor = new Cell_Conveyor(name="conveyor", _update_step= 1 msec)
     scheduler = new Scheduler(name = "scheduler")
     bus = new FrostBus(name="frost_bus", width = 3)
     ice_proxy = new ICEProxy(name="iceproxy")
