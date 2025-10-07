@@ -333,7 +333,7 @@ root:
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
                   initial_value: 0
-            - !!FolderNode
+            - !!ObjectVariableNode
               name: "Destinations"
               description: ""
               children:
