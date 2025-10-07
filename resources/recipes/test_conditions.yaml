@@ -1,0 +1,112 @@
+recipe: "Test"
+conditions:
+  # WAREHOUSE + KAIROS
+  - machine: "Warehouse"
+    header: METHOD
+    node: "TrayNumber"
+    value: 8
+  - machine: "RBKairos"
+    header: METHOD
+    node: "Result"
+    value: True
+  - machine: "RBKairos"
+    header: METHOD
+    node: "Result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "RBKairos"
+    header: METHOD
+    node: "Result"
+    value: True
+  # CONVEYOR + KAIROS
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell5"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  # CONVEYOR + CELL1
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell1"
+    header: METHOD
+    node: "accepted"
+    value: True
+  - machine: "Cell1"
+    header: METHOD
+    node: "accepted"
+    value: True
+  - machine: "Cell1"
+    header: METHOD
+    node: "boardOut"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  # CONVEYOR + CELL4
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell4"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  ## CONVEYOR + CELL2
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Cell2"
+    header: METHOD
+    node: "accepted"
+    value: True
+  - machine: "Cell2"
+    header: METHOD
+    node: "Done"
+    value: True
+  - machine: "Cell2"
+    header: METHOD
+    node: "accepted"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  # CONVEYOR + KAIROS
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "RBKairos"
+    header: METHOD
+    node: "Result"
+    value: True
+  - machine: "Cell_Conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "Warehouse"
+    header: METHOD
+    node: "TrayNumber"
+    value: 0

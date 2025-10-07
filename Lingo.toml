@@ -4,7 +4,7 @@ version = "0.1.0"
 
 [[app]]
 name = "Main"
-main = "src/ICE/src/Main.lf"
+main = "src/Main.lf"
 target = "Python"
 platform = "Native"
 
@@ -12,4 +12,3 @@ platform = "Native"
 fast = false
 
 [dependencies]
-frost = {version=">=0.1", git="https://github.com/esd-univr/frost", branch="feature/lingo_fix"}

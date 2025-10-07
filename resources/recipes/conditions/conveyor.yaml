@@ -1,0 +1,86 @@
+recipe: "Test"
+conditions:
+  - machine: "conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "conveyor"
+    header: VARIABLE
+    node: "destination"
+    value: 0
+  - machine: "conveyor"
+    header: VARIABLE
+    node: "destination"
+    value: 0
+  - machine: "conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  #5
+  - machine: "conveyor"
+    header: VARIABLE
+    node: "destination"
+    value: 0
+  - machine: "conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "conveyor"
+    header: VARIABLE
+    node: "destination"
+    value: 0
+  - machine: "conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "conveyor"
+    header: VARIABLE
+    node: "destination"
+    value: 0
+  #10
+  - machine: "conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "conveyor"
+    header: VARIABLE
+    node: "destination"
+    value: 0
+  - machine: "conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "conveyor"
+    header: VARIABLE
+    node: "destination"
+    value: 0
+  - machine: "conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  #15
+  - machine: "conveyor"
+    header: VARIABLE
+    node: "destination"
+    value: 0
+  - machine: "conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "conveyor"
+    header: VARIABLE
+    node: "destination"
+    value: 0
+  - machine: "conveyor"
+    header: METHOD
+    node: "result"
+    value: True
+  - machine: "conveyor"
+    header: VARIABLE
+    node: "destination"
+    value: 0
+  

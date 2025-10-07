@@ -1,0 +1,11 @@
+target Python
+
+reactor Mutex(param = "default"){
+    //Internal variables  
+    state name = param
+    
+    //Physical links
+    input IN 
+    output OUT
+    IN -> OUT after 0msec
+}
