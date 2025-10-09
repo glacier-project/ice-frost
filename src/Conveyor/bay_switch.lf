@@ -27,7 +27,7 @@ reactor BaySwitch extends FrostBase{
     reaction(unhandled_pallet) ->ask_to_controller, to_frost{=
         if self.pallet == None:
             raise Exception(f"Bay Switch {self.conveyor_name} error: no pallet to handle")
-        self._set_output_port([Events.pallet_arrived.value, self.pallet.id], to_frost)
+        to_frost.set([Events.pallet_arrived.value, self.pallet.id, self.conveyor_name])
         self.logger.debug(f"Bay Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
         ask_to_controller.set([Events.pallet_arrived, self.pallet.id, self.conveyor_name])
     =}
@@ -91,7 +91,7 @@ reactor BaySwitch extends FrostBase{
                 self.logger.debug(f"Bay Switch {self.conveyor_name} moving pallet {self.pallet.id} to previous Bay Switch")
                 self._set_output_port(self.pallet, to_belt)
             elif action_to_be_performed == BayAction.forward:
-                self.logger.info(f"Bay Switch {self.conveyor_name} moving pallet {self.pallet.id} to next Bay Switch")
+                self.logger.debug(f"Bay Switch {self.conveyor_name} moving pallet {self.pallet.id} to next Bay Switch")
                 self._set_output_port(self.pallet, to_forward)
             elif action_to_be_performed == BayAction.none:
                 self.logger.debug(f"Bay Switch {self.conveyor_name} holding pallet {self.pallet.id}")
