@@ -15,14 +15,21 @@ def schedule_with_priority(status: dict, actions: dict) -> list[InterchangeInput
         up_action = actions[in_up]
     if in_down != None:
         down_action = actions[in_down]
-    
-    if up_action == None:
-        return [InterchangeInputs.LOWER_SEGMENT] if in_down else None
-    if down_action == None:
-        return [InterchangeInputs.UPPER_SEGMENT] if in_up else None
 
-    if up_action == SwitchAction.go_to_bay:
+    if in_up == None and in_down == None:
+        return None
+    
+    if in_up == None:
+        return [InterchangeInputs.LOWER_SEGMENT]
+    if in_down == None:
         return [InterchangeInputs.UPPER_SEGMENT]
+
+    if up_action == SwitchAction.advance and down_action == SwitchAction.advance:
+        return [InterchangeInputs.UPPER_SEGMENT, InterchangeInputs.LOWER_SEGMENT]
+    
+    if up_action == SwitchAction.go_to_bay and down_action == SwitchAction.advance:
+        return [InterchangeInputs.UPPER_SEGMENT, InterchangeInputs.LOWER_SEGMENT]
+
     if down_action == SwitchAction.go_to_bay:
         return [InterchangeInputs.LOWER_SEGMENT]
 
@@ -31,6 +38,5 @@ def schedule_with_priority(status: dict, actions: dict) -> list[InterchangeInput
     if down_action == SwitchAction.cross:
         return [InterchangeInputs.LOWER_SEGMENT]
 
-    return [InterchangeInputs.UPPER_SEGMENT, InterchangeInputs.LOWER_SEGMENT] if in_up and in_down else None
-
+    raise Exception(f"Error in schedule_with_priority: unable to schedule interchange, status={status}, actions={actions}")
 

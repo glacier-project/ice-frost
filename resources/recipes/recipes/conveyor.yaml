@@ -10,7 +10,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [1, 9]
+      args: [1, 19]
   - sender: "scheduler"
     target: "conveyor"
     header:
@@ -50,7 +50,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [6, 18]
+      args: [6, 9]
 #5
   - sender: "scheduler"
     target: "conveyor"
@@ -71,7 +71,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 26]
+      args: [1, 40]
   - sender: "scheduler"
     target: "conveyor"
     header:
@@ -80,7 +80,7 @@ steps:
       namespace: "VARIABLE"
       msg_name: "WRITE"
     payload:
-      node: "Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet4/destination"
+      node: "Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet1/destination"
       value: 0 
   - sender: "scheduler"
     target: "conveyor"
@@ -91,7 +91,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [7, 25]
+      args: [7, 40]
   - sender: "scheduler"
     target: "conveyor"
     header:
@@ -132,7 +132,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [1, 19]
+      args: [1, 18]
   - sender: "scheduler"
     target: "conveyor"
     header:
@@ -152,7 +152,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [4, 35]
+      args: [4, 33]
   #15
   - sender: "scheduler"
     target: "conveyor"
@@ -173,7 +173,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [6, 25]
+      args: [6, 27]
   - sender: "scheduler"
     target: "conveyor"
     header:
@@ -193,7 +193,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-      args: [7, 40]
+      args: [7, 25]
   - sender: "scheduler"
     target: "conveyor"
     header:

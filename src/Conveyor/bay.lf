@@ -32,13 +32,13 @@ reactor Bay extends FrostBase{
     output ask_to_controller
 
     reaction(from_belt) -> Plat1.from_back{=
-        self.logger.debug(f"Bay {self.conveyor_name} received from belt: {from_belt.value}")
+        self.logger.info(f"Bay {self.conveyor_name} received from belt: {from_belt.value}")
         Plat1.from_back.set(from_belt.value)
     =}
     reaction(controller_command) -> Plat1.controller_command, Plat2.controller_command, Plat3.controller_command{=
         '''
         controller_command format: [[header], [command], [args]]
-            header = list of str with Segment names involved in the command
+            header = bay switch name
             command = [ControllerCommand, SwitchAction]
             args = additional arguments (if any)
         '''

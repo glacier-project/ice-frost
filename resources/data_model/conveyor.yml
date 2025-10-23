@@ -87,6 +87,12 @@ root:
                           variable: "${seekingnode}"
                           operator: "=="
                           rhs: "${palletNumber}"
+                        - !!WriteVariableNode
+                          variable: "Cell_Conveyor/output"
+                          value: True
+                        - !!ReadVariableNode
+                          variable: "Cell_Conveyor/output"
+                          store_as: "result"
                     - !!MethodNode
                       name: "setPalletDestinationWithReservation"
                       description: ""

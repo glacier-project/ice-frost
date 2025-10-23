@@ -23,6 +23,7 @@ class BayAction(Enum):
     back = 0
     forward = 1
     none = -1
+    stay = -2
 
 class SwitchAction(Enum):
     advance = 0

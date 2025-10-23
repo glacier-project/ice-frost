@@ -14,7 +14,7 @@ def compute_intra_bay_route(position, destination, bay_status, pallet_id):
             bay_status[dest_row - 1] = pallet_id  # Mark bay as occupied
             bay_status[bay_row] = 0  # Free the current bay
             return BayAction.forward
-    
+
     return BayAction.none  # Bay is occupied
 
 def check_availability_from_to(buffer:list, from_value:int, to_value:int, pallet_id:int):

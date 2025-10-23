@@ -112,7 +112,7 @@ reactor Conveyor extends FrostBase{
     FA.to_lower_belt -> A.from_segment after 0
     
     //Segment
-    LUBay.to_belt -> F.from_segment after 1500msec
+    LUBay.to_belt -> F.from_bay after 1500msec
     Segment_5 = new Segment(name = {=self.name + "." + SegmentName.Segment_5.value=})
     Segment_5.to_switch -> B.from_segment after 0
     A.to_segment -> Segment_5.from_switch after 0

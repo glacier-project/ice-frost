@@ -38,7 +38,7 @@ reactor Switch extends FrostBase{
         if self.pallet is not None:
             raise Exception(f"Error: Switch {self.conveyor_name} received {value.id} but already has a pallet {self.pallet.id}.")
 
-        self.logger.debug(f"Switch {self.conveyor_name} received pallet {value.id}")
+        self.logger.info(f"Switch {self.conveyor_name} received pallet {value.id}")
             
         self.pallet = value
     =}
@@ -95,6 +95,6 @@ reactor Switch extends FrostBase{
             else:
                 raise Exception(f"Switch {self.conveyor_name} error: unknown switch action {action_to_be_performed}")
             delay.schedule(MSEC(self.switch_time), [Events.pallet_released, self.pallet.id])
-            self.pallet = None        
+            self.pallet = None
     =}
 }

@@ -223,7 +223,7 @@ reactor Cell_Conveyor extends FrostMachine{
                 ls.append(temp.get_property(self.item.format(n=i)).value)                
             temp.get_property(self.item.format(n=9)).value = 0
 
-        self.logger.debug(f"Segment {segment.name} updated with values: {ls}")
+        self.logger.info(f"Segment {segment.name} updated with values: {ls}")
         self.logger.debug(f"FIFO value after update: {temp.value}")
     =}
 
@@ -235,7 +235,7 @@ reactor Cell_Conveyor extends FrostMachine{
                     [0] 0 if pallet released, 1 if pallet arrived
                     [1] pallet id or 0 if pallet released
         """
-        self.logger.info(f"Updating {bay.name} with value: {value}")
+        self.logger.debug(f"Updating {bay.name} with value: {value}")
         ls = []
         if bay == self.bay1:
             bay.get_property(self.PalletPosition.format(n=1)).get_property(self.palletNum).value = value[1]
@@ -264,11 +264,15 @@ reactor Cell_Conveyor extends FrostMachine{
         :param pallet: The pallet number to set.
         :param position: The position in the bay.
         """
+        assert isinstance(pallet, int), "Pallet must be an integer"
+        assert isinstance(position, str), "Position must be a string"
+        self.logger.debug(f"Updating {bay.name} position {position} with pallet: {pallet}")
+        position = int(position[-1])
         # Set the pallet number at the given position in the bay
-        bay.get_property(self.PalletPosition.format(n=int(position))).get_property(self.palletNum).value = value
-        self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_pallet_id_.format(bay=bay.name[-1], pos=position)).value = value
-        self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_ok_.format(s=f"{int(bay.name[-1])}_{position}")).value = True if value > 0 else False
-        self.logger.info(f"{bay.name} position {position} updated with {value}")
+        bay.get_property(self.PalletPosition.format(n=int(position))).get_property(self.palletNum).value = pallet
+        self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_pallet_id_.format(bay=bay.name[-1], pos=position)).value = pallet
+        self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_ok_.format(s=f"{int(bay.name[-1])}_{position}")).value = True if pallet > 0 else False
+        self.logger.info(f"{bay.name} position {position} updated with {pallet}")
     =}
     
     reaction(conveyor.Segment1){=
@@ -376,7 +380,6 @@ reactor Cell_Conveyor extends FrostMachine{
         """
         Updates the bay4 state at position 1 with the value from the conveyor system.
         """
-        self.logger.error(f"Received Bay4_3 update: {conveyor.Bay4_3.value}")
         self.update_bay(self.bay4, conveyor.Bay4_1.value[0], conveyor.Bay4_1.value[1])
     =}
     reaction(conveyor.Bay4_2){=

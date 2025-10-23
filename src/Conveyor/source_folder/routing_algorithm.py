@@ -84,6 +84,7 @@ def calculate_next_action(position: str, destination: str, bay_status: list | No
     
     if position not in SwitchName.values() and position != BayName.LU.value:
         return compute_bay_route(position, destination, bay_status, pallet_id)
+    
     if destination == "0":
         if position == SwitchName.E.value or position == SwitchName.H.value:
             return SwitchAction.cross
