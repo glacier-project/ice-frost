@@ -74,14 +74,14 @@ reactor SingleSwitchBay extends FrostBase{
                 raise Exception(f"Switch {self.conveyor_name} error: no pallet to move")
             
             if action_to_be_performed == BayAction.back:
-                self.logger.warning(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to segment")
+                self.logger.debug(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to segment")
                 self._set_output_port(self.pallet, to_belt)
                 self._set_output_port([Events.pallet_released.value, 0], to_frost)
                 self._set_output_port([Events.pallet_released, self.pallet.id], ask_to_controller)
 
                 self.pallet = None
             elif action_to_be_performed == BayAction.none:
-                self.logger.info(f"Switch {self.conveyor_name} keeping pallet {self.pallet.id} in the bay")
+                self.logger.debug(f"Switch {self.conveyor_name} keeping pallet {self.pallet.id} in the bay")
                 self._set_output_port([Events.pallet_pending, self.pallet.id], ask_to_controller)
                 pending_pallet.schedule(SEC(2))
                 return 0

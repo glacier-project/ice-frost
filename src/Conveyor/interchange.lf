@@ -18,12 +18,12 @@ reactor Interchange extends FrostBase{
         value = from_upper_belt.value[0]
 
         if not isinstance(value, Pallet):
-            raise Exception(f"Interchange {self.conveyor_name.split(".")[-1]} error: received non-pallet value from upper belt: {value}")
+            raise Exception(f"Interchange {self.conveyor_name} error: received non-pallet value from upper belt: {value}")
         
-        self.logger.debug(f"Interchange {self.conveyor_name.split(".")[-1]} received from upper belt: {value}")
+        self.logger.debug(f"Interchange {self.conveyor_name} received from upper belt: {value}")
 
         if self.pallet_present:
-            raise Exception(f"Interchange {self.conveyor_name.split(".")[-1]} error: trying to send a pallet when another is still in the interchange")
+            raise Exception(f"Interchange {self.conveyor_name} error: trying to send a pallet when another is still in the interchange")
 
         self.pallet_present = True    
         delay.schedule(MSEC(self.interchange_time), [True, value])
@@ -33,12 +33,12 @@ reactor Interchange extends FrostBase{
         value = from_lower_belt.value[0]
 
         if not isinstance(value, Pallet):
-            raise Exception(f"Interchange {self.conveyor_name.split(".")[-1]} error: received non-pallet value from lower belt: {value}")
+            raise Exception(f"Interchange {self.conveyor_name} error: received non-pallet value from lower belt: {value}")
 
-        self.logger.debug(f"Interchange {self.conveyor_name.split(".")[-1]} received from lower belt: {value}")
+        self.logger.debug(f"Interchange {self.conveyor_name} received from lower belt: {value}")
 
         if self.pallet_present:
-            raise Exception(f"Interchange {self.conveyor_name.split(".")[-1]} error: trying to send a pallet when another is still in the interchange")
+            raise Exception(f"Interchange {self.conveyor_name} error: trying to send a pallet when another is still in the interchange")
 
         self.pallet_present = True
         delay.schedule(MSEC(self.interchange_time), [False, value])
@@ -50,10 +50,10 @@ reactor Interchange extends FrostBase{
 
         if condition:
             self._set_output_port(value, to_lower_belt)
-            self.logger.debug(f"Interchange {self.conveyor_name.split(".")[-1]} sent low: {value}")
+            self.logger.debug(f"Interchange {self.conveyor_name} sent low: {value}")
         else:
             self._set_output_port(value, to_upper_belt)
-            self.logger.debug(f"Interchange {self.conveyor_name.split(".")[-1]} sent up: {value}")
+            self.logger.debug(f"Interchange {self.conveyor_name} sent up: {value}")
 
         self.pallet_present = False
     =}
