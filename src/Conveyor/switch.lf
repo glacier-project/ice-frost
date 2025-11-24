@@ -1,6 +1,6 @@
 target Python
 
-import FrostBase from "../../../frost/src/lib/FrostBase.lf"
+import FrostBase from "../../frost/src/lib/FrostBase.lf"
 
 reactor Switch extends FrostBase{
     state conveyor_name = {=self.name.split(".")[-1]=}

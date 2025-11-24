@@ -1,6 +1,6 @@
 target Python
 
-import FrostBase from "../../../frost/src/lib/FrostBase.lf"
+import FrostBase from "../../frost/src/lib/FrostBase.lf"
 
 
 reactor SingleSwitchBay extends FrostBase{
