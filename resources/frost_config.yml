@@ -73,4 +73,12 @@ reactors:
     parameters:
       recipe_path: "resources/recipes/recipes/conveyor.yaml"
       condition_path: "resources/recipes/conditions/conveyor.yaml"
-                  
+  cell5:
+    logging_level: INFO
+    parameters:
+      data_model_path: "resources/data_model/cell5.yml"
+      path: "src/fmu/QualityCell.fmu"
+      time_step: 1000
+    reactors:
+      message_filter:
+        logging_level: WARNING

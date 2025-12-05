@@ -4,6 +4,10 @@ conditions:
     header: METHOD
     node: "result"
     value: True
+  - machine: "Cell5"
+    header: METHOD
+    node: "result"
+    value: True
   - machine: "conveyor"
     header: METHOD
     node: "result"

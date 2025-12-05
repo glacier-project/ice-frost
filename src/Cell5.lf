@@ -1,36 +1,39 @@
 target Python 
 
 import FrostMachine from "../frost/src/lib/FrostMachine.lf"
+import FMUWrapper from "../frost/src/lib/simulation/FMUWrapper.lf"
 
-reactor Cell5 extends FrostMachine{
+reactor Cell5 extends FrostMachine, FMUWrapper{
 
-    state check_quality_covers = {= self.data_model.get_node("Cell5/Methods/CheckQualityCovers")=}
-    state check_quality_lego = {= self.data_model.get_node("Cell5/Methods/CheckQualityLego")=}
+    state check_quality_covers
+    state check_quality_lego
+    state check_color_node
+    state num_gadget_checks
+    state num_lego_checks
+    state num_total_checks
+    state num_gadget_failures
+    state num_lego_failures
+    state num_total_failures
+    state last_result
+    state busy
+    state result_ready
+    state result
+    state vrs_input
+    state vrs_output
+    
+    logical action do_step
 
-    state num_gadget_checks = {= self.data_model.get_node("Cell5/Statistics/ChecksGadget")=}
-    state num_lego_checks = {= self.data_model.get_node("Cell5/Statistics/ChecksLego")=}
-    state num_total_checks = {= self.data_model.get_node("Cell5/Statistics/ChecksTotal")=}
-    state num_gadget_failures = {= self.data_model.get_node("Cell5/Statistics/FaultsGadget")=}
-    state num_lego_failures = {= self.data_model.get_node("Cell5/Statistics/FaultsLego")=}
-    state num_total_failures = {= self.data_model.get_node("Cell5/Statistics/FaultsTotal")=}
-    state last_result = {= self.data_model.get_node("Cell5/Status/LastResult")=}
-  
-    method check_covers(color){=
+    method check_color(color){=
         """
         Checks if the color of the covers matches the expected color.
         :param color: The color of the cover to check.
         :return: True if the color is red, False otherwise.
         """
         self.num_total_checks.value = self.num_total_checks.value + 1
-        if color == "red":
-            self.num_gadget_checks.value = self.num_gadget_checks.value + 1
-            self.last_result.value = True
-            return True
-        else:
-            self.num_gadget_failures.value = self.num_gadget_failures.value + 1
-            self.num_total_failures.value = self.num_total_failures.value + 1
-            self.last_result.value = False
-            return False
+        self.fmu.setString([self.vrs_input], [color])
+        self.busy.value = True
+        self.logger.info(f"Checking cover color: {color}")
+        return False
     =}
 
     method check_lego(shape1, shape2, shape3){=
@@ -53,10 +56,51 @@ reactor Cell5 extends FrostMachine{
             return False
     =}
 
-    reaction(startup){=
-        self.check_quality_covers.callback = self.check_covers
+    reaction(do_step) -> do_step{=
+        if self.fmu == None:
+            return 0
+        self.simulate(None)
+        self.logger.info(f"values: input={self.fmu.getString([self.vrs_input])}, output={self.fmu.getString([self.vrs_output])}")
+        if self.busy.value:
+            if do_step.value == "success":
+                self.result_ready.value = True
+                self.result.value = True
+                self.busy.value = False
+            elif do_step.value == "failed":
+                self.result_ready.value = True
+                self.result.value = False
+                self.busy.value = False
+            else:
+                self.result_ready.value = False
+        elif self.result_ready.value:
+            self.result_ready.value = False
+        
+        do_step.schedule(MSEC(self.time_step), self.fmu.getString([self.vrs_output])[0])
+    =}
+
+    reaction(startup) -> do_step{=
+        # Initialize data model nodes
+        self.check_quality_covers = self.data_model.get_node("Cell5/Methods/CheckQualityCovers")
+        self.check_quality_lego = self.data_model.get_node("Cell5/Methods/CheckQualityLego")
+        self.check_color_node = self.data_model.get_node("Cell5/Methods/check_color")
+        self.num_gadget_checks = self.data_model.get_node("Cell5/Statistics/ChecksGadget")
+        self.num_lego_checks = self.data_model.get_node("Cell5/Statistics/ChecksLego")
+        self.num_total_checks = self.data_model.get_node("Cell5/Statistics/ChecksTotal")
+        self.num_gadget_failures = self.data_model.get_node("Cell5/Statistics/FaultsGadget")
+        self.num_lego_failures = self.data_model.get_node("Cell5/Statistics/FaultsLego")
+        self.num_total_failures = self.data_model.get_node("Cell5/Statistics/FaultsTotal")
+        self.last_result = self.data_model.get_node("Cell5/Status/LastResult")
+        self.busy = self.data_model.get_node("Cell5/results/busy")
+        self.result_ready = self.data_model.get_node("Cell5/results/result_ready")
+        self.result = self.data_model.get_node("Cell5/results/result")
+        
+        # Set callbacks
+        self.check_color_node.callback = self.check_color
         self.check_quality_lego.callback = self.check_lego
+        
+        self.vrs_input = [v.valueReference for v in self.model_description.modelVariables if v.name == "quality_input"][0]
+        self.vrs_output = [v.valueReference for v in self.model_description.modelVariables if v.name == "quality_output"][0]
+        do_step.schedule(MSEC(self.time_step), " ")
     =}
 
 }
-

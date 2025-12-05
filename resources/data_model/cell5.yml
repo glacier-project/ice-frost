@@ -8,11 +8,39 @@ root:
   name: "Cell5"
   description: "OPCUA"
   children:
+    - !!ObjectVariableNode
+      name: "results"
+      description: "Results of the checks"
+      properties:
+        - !!BooleanVariableNode
+          name: "busy"
+          description: "Indicates if the machine is busy"
+          initial_value: False
+        - !!BooleanVariableNode
+          name: "result_ready"
+          description: "Quality of the Cover"
+          initial_value: False
+        - !!BooleanVariableNode
+          name: "result"
+          description: "Quality of the Lego"
+          initial_value: False
     - !!FolderNode
       name: "Methods"
       description: "Variables"
-      children:
+      children:   
         - !!AsyncMethodNode
+          name: "check_color"
+          description: "Checks color"
+          parameters:
+            - !!StringVariableNode
+              name: "color"
+              description: "Color to check"
+              default_value: ""
+          returns:
+            - !!BooleanVariableNode
+              name: "is_correct"
+              description: "Indicates if the color is correct"
+        - !!CompositeMethodNode
           name: "CheckQualityCovers"
           description: "Checks quality"
           parameters:
@@ -24,6 +52,18 @@ root:
             - !!BooleanVariableNode
               name: "result"
               description: "QualityCover"
+          cfg: 
+            - !!CallMethodNode
+              method: "Cell5/Methods/check_color"
+              args:
+                - "${color}"
+            - !!WaitConditionNode
+              variable: "Cell5/results/result_ready"
+              operator: "=="
+              rhs: True
+            - !!ReadVariableNode
+              variable: "Cell5/results/result"
+              store_as: "result"
         - !!AsyncMethodNode
           name: "CheckQualityLego"
           description: "Checks quality"
@@ -54,7 +94,6 @@ root:
         - !!BooleanVariableNode
           name: "Busy"
           description: "Lego image"
-          measure_unit: "LengthUnits.Meter"
           initial_value: False
         - !!StringVariableNode
           name: "CurrentMission"
@@ -63,7 +102,6 @@ root:
         - !!BooleanVariableNode
           name: "LastResult"
           description: "Lego image"
-          measure_unit: "LengthUnits.Meter"
           initial_value: False   
     - !!FolderNode
       name: "Statistics"

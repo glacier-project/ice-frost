@@ -12,6 +12,16 @@ steps:
       node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
       args: [1, 19]
   - sender: "scheduler"
+    target: "Cell5"
+    header:
+      type: "REQUEST"
+      version: [1, 0, 0]
+      namespace: "METHOD"
+      msg_name: "INVOKE"
+    payload:
+      node: "Cell5/Methods/CheckQualityCovers"
+      args: ["yellow"]
+  - sender: "scheduler"
     target: "conveyor"
     header:
       type: "REQUEST"
