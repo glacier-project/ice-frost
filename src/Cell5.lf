@@ -62,14 +62,16 @@ reactor Cell5 extends FrostMachine, FMUWrapper{
         self.simulate(None)
         self.logger.info(f"values: input={self.fmu.getString([self.vrs_input])}, output={self.fmu.getString([self.vrs_output])}")
         if self.busy.value:
-            if do_step.value == "success":
-                self.result_ready.value = True
+            if do_step.value == "success":                
                 self.result.value = True
-                self.busy.value = False
-            elif do_step.value == "failed":
                 self.result_ready.value = True
-                self.result.value = False
                 self.busy.value = False
+                self.fmu.setString([self.vrs_input], [""])
+            elif do_step.value == "failed":                
+                self.result.value = False
+                self.result_ready.value = True
+                self.busy.value = False
+                self.fmu.setString([self.vrs_input], [""])
             else:
                 self.result_ready.value = False
         elif self.result_ready.value:

@@ -181,10 +181,10 @@ reactor Controller extends FrostBase{
             self.belt_status[switch] = False
     =}
     method check_action_feasibility(switch_list, stop, action_to_perform, pos){=
-        if stop[0] == True:
-            return None
-        
-        elif action_to_perform == SwitchAction.cross:
+        if action_to_perform == SwitchAction.cross:
+            # Block cross if interchange is busy
+            if stop[0] == True:
+                return None
             if not self._check_interchange_status(switch_list):
                 return None
         elif action_to_perform == SwitchAction.advance:
@@ -198,7 +198,11 @@ reactor Controller extends FrostBase{
             if pos == InterchangeInputs.UPPER_SEGMENT:
                 if self.belt_status[switch_list[0]] == False:
                     return None
-            elif not self._check_interchange_status(switch_list):
+            else:
+                # go_to_bay from LOWER_SEGMENT uses interchange
+                if stop[0] == True:
+                    return None
+                if not self._check_interchange_status(switch_list):
                     return None
 
         return 0
@@ -218,10 +222,11 @@ reactor Controller extends FrostBase{
                 raise Exception(f"Controller error: invalid switch name {switch}")
         #Update lock on the interchange
         self.logger.debug(f"Taking decision over interchange with switches {switch_list}, {self.belt_status}, status {status}, stop {stop}, bay {bay}, upper_segment {upper_segment}, lower_segment {lower_segment}, bay_status {bay_status}")
-        if not self._check_interchange_status(switch_list) and stop[0] == True:
+        # If interchange is busy (stop[0] == True), wait for pallet to arrive from interchange
+        if stop[0] == True:
             return None
-        else:
-            stop[0] = False
+        if not self._check_interchange_status(switch_list):
+            return None
         #Get the position of the pallet to be moved
         self.update_status(status, switch_list, bay_status)
         interchange_pos = schedule_with_priority(status, self.actions)
@@ -235,6 +240,11 @@ reactor Controller extends FrostBase{
         if None == self.check_action_feasibility(switch_list, stop, action, pos):
             return None
         self.logger.debug(f"Action {action} for pallet {pallet_id} at position {pos} is feasible")
+        
+        # If action is cross, mark the interchange as busy (stop[0] = True)
+        if action == SwitchAction.cross:
+            stop[0] = True
+            self.logger.debug(f"Interchange {switch_list} marked as busy")
         #Prepare the header of the message
         message = [[], [], []]
         targets = []
@@ -598,6 +608,10 @@ reactor Controller extends FrostBase{
             if port not in SwitchPort:
                 raise Exception(f"Controller error: invalid port {port} from switch {switch}")
             if port == SwitchPort.Interchange:
+                # Pallet arrived from interchange, mark it as free
+                if stop is not None:
+                    stop[0] = False
+                    self.logger.debug(f"Interchange for switch {switch} marked as free")
                 if switch in [SwitchName.E.value, SwitchName.D.value, SwitchName.C.value, SwitchName.B.value, SwitchName.A.value]:
                     self.actions[pallet_id] = SwitchAction.advance
                 elif switch in [SwitchName.M.value, SwitchName.L.value, SwitchName.I.value, SwitchName.H.value, SwitchName.F.value]:
@@ -609,11 +623,12 @@ reactor Controller extends FrostBase{
                     if self.actions[pallet_id] == SwitchAction.cross:
                         self.actions[pallet_id] = SwitchAction.advance
             elif port == SwitchPort.Bay:                
-                if stop[0] == True:
+                if stop is not None and stop[0] == True:
                     self.actions[pallet_id] = SwitchAction.cross
                 elif switch == SwitchName.M.value:
                     self.actions[pallet_id] = SwitchAction.advance
-                    stop[0] = False
+                    if stop is not None:
+                        stop[0] = False
                 else:
                     self.actions[pallet_id] = SwitchAction.advance
             

@@ -20,7 +20,7 @@ steps:
       msg_name: "INVOKE"
     payload:
       node: "Cell5/Methods/CheckQualityCovers"
-      args: ["yellow"]
+      args: ["red"]
   - sender: "scheduler"
     target: "conveyor"
     header:

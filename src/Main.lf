@@ -1,6 +1,6 @@
 target Python{
     fast: True,
-    timeout: 3600s,
+    timeout: 10000s,
     files: [
         "../frost/src/python_lib/frost.py",
         "../frost/src/python_lib/l_formatter.py",
