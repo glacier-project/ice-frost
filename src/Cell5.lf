@@ -8,6 +8,7 @@ reactor Cell5 extends FrostMachine, FMUWrapper{
     state check_quality_covers
     state check_quality_lego
     state check_color_node
+    state check_shape_node
     state num_gadget_checks
     state num_lego_checks
     state num_total_checks
@@ -19,15 +20,21 @@ reactor Cell5 extends FrostMachine, FMUWrapper{
     state result_ready
     state result
     state vrs_input
-    state vrs_output
-    
+    state vrs_result
+    state vrs_shape1
+    state vrs_shape2
+    state vrs_shape3
+    state vrs_pallet1
+    state vrs_pallet2
+    state vrs_pallet3
+
     logical action do_step
 
     method check_color(color){=
         """
         Checks if the color of the covers matches the expected color.
-        :param color: The color of the cover to check.
-        :return: True if the color is red, False otherwise.
+        Args:
+            color (str): The color of the cover to check.
         """
         self.num_total_checks.value = self.num_total_checks.value + 1
         self.fmu.setString([self.vrs_input], [color])
@@ -36,33 +43,34 @@ reactor Cell5 extends FrostMachine, FMUWrapper{
         return False
     =}
 
-    method check_lego(shape1, shape2, shape3){=
+    method check_shape(shape1, shape2, shape3, pallet_content1, pallet_content2, pallet_content3){=
         """
-        Checks if the shapes of the LEGO pieces match.
-        :param shape1: The shape of the first LEGO piece.
-        :param shape2: The shape of the second LEGO piece.
-        :param shape3: The shape of the third LEGO piece.
-        :return: True if all shapes match, False otherwise.
+        Checks if the shapes of the LEGO pieces match the expected shapes.
+
+        Args: 
+            shape1 (int): The shape of the first LEGO piece.
+            shape2 (int): The shape of the second LEGO piece.
+            shape3 (int): The shape of the third LEGO piece.
+            pallet_content1 (int): The content of the first pallet position.
+            pallet_content2 (int): The content of the second pallet position.
+            pallet_content3 (int): The content of the third pallet position.
         """
         self.num_total_checks.value = self.num_total_checks.value + 1
-        if shape1 == shape2 and shape2 == shape3:
-            self.num_lego_checks.value = self.num_lego_checks.value + 1
-            self.last_result.value = True
-            return True
-        else:
-            self.num_lego_failures.value = self.num_lego_failures.value + 1
-            self.num_total_failures.value = self.num_total_failures.value + 1
-            self.last_result.value = False
-            return False
+        self.fmu.setInt32([self.vrs_shape1, self.vrs_shape2, self.vrs_shape3], [shape1, shape2, shape3])
+        self.fmu.setInt32([self.vrs_pallet1, self.vrs_pallet2, self.vrs_pallet3], [pallet_content1, pallet_content2, pallet_content3])
+        self.busy.value = True
+        self.logger.info(f"Checking LEGO shapes: {shape1}, {shape2}, {shape3} with pallet contents: {pallet_content1}, {pallet_content2}, {pallet_content3}")
+        return True
     =}
 
+    // @label do_step_reaction
     reaction(do_step) -> do_step{=
         if self.fmu == None:
             return 0
         self.simulate(None)
-        self.logger.info(f"values: input={self.fmu.getString([self.vrs_input])}, output={self.fmu.getString([self.vrs_output])}")
+        self.logger.info(f"values: input={self.fmu.getString([self.vrs_input])}, output={self.fmu.getString([self.vrs_result])}")
         if self.busy.value:
-            if do_step.value == "success":                
+            if do_step.value == "success":               
                 self.result.value = True
                 self.result_ready.value = True
                 self.busy.value = False
@@ -77,14 +85,16 @@ reactor Cell5 extends FrostMachine, FMUWrapper{
         elif self.result_ready.value:
             self.result_ready.value = False
         
-        do_step.schedule(MSEC(self.time_step), self.fmu.getString([self.vrs_output])[0])
+        do_step.schedule(MSEC(self.time_step), self.fmu.getString([self.vrs_result])[0])
     =}
 
+    // @label startup_reaction
     reaction(startup) -> do_step{=
         # Initialize data model nodes
         self.check_quality_covers = self.data_model.get_node("Cell5/Methods/CheckQualityCovers")
         self.check_quality_lego = self.data_model.get_node("Cell5/Methods/CheckQualityLego")
-        self.check_color_node = self.data_model.get_node("Cell5/Methods/check_color")
+        self.check_color_node = self.data_model.get_node("Cell5/Utils/check_color")
+        self.check_shape_node = self.data_model.get_node("Cell5/Utils/check_shape")
         self.num_gadget_checks = self.data_model.get_node("Cell5/Statistics/ChecksGadget")
         self.num_lego_checks = self.data_model.get_node("Cell5/Statistics/ChecksLego")
         self.num_total_checks = self.data_model.get_node("Cell5/Statistics/ChecksTotal")
@@ -98,10 +108,17 @@ reactor Cell5 extends FrostMachine, FMUWrapper{
         
         # Set callbacks
         self.check_color_node.callback = self.check_color
-        self.check_quality_lego.callback = self.check_lego
+        self.check_shape_node.callback = self.check_shape
         
+        # Value References
+        self.vrs_result = [v.valueReference for v in self.model_description.modelVariables if v.name == "result"][0]
         self.vrs_input = [v.valueReference for v in self.model_description.modelVariables if v.name == "quality_input"][0]
-        self.vrs_output = [v.valueReference for v in self.model_description.modelVariables if v.name == "quality_output"][0]
+        self.vrs_shape1 = [v.valueReference for v in self.model_description.modelVariables if v.name == "shape1"][0]
+        self.vrs_shape2 = [v.valueReference for v in self.model_description.modelVariables if v.name == "shape2"][0]
+        self.vrs_shape3 = [v.valueReference for v in self.model_description.modelVariables if v.name == "shape3"][0]
+        self.vrs_pallet1 = [v.valueReference for v in self.model_description.modelVariables if v.name == "pallet_position_1"][0]
+        self.vrs_pallet2 = [v.valueReference for v in self.model_description.modelVariables if v.name == "pallet_position_2"][0]
+        self.vrs_pallet3 = [v.valueReference for v in self.model_description.modelVariables if v.name == "pallet_position_3"][0]
         do_step.schedule(MSEC(self.time_step), " ")
     =}
 
