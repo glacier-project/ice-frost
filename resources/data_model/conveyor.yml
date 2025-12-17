@@ -34,7 +34,7 @@ root:
               description: ""
               children:
                 - !!FolderNode
-                  name: "ConveyorCommandsPointer"
+                  name: "UtilityMethods"
                   description: ""
                   children:
                     - !!AsyncMethodNode
@@ -55,6 +55,10 @@ root:
                         - !!StringVariableNode
                           name: "res"
                           description: ""
+                - !!FolderNode
+                  name: "ConveyorCommandsPointer"
+                  description: ""
+                  children:                    
                     - !!CompositeMethodNode
                       name: "setPalletDestination"
                       description: ""
@@ -76,7 +80,7 @@ root:
                           default_value: True
                       cfg:
                         - !!CallMethodNode
-                          method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setDestination"
+                          method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/setDestination"
                           args: 
                             - "${palletNumber}"
                             - "${destination}"
@@ -93,7 +97,7 @@ root:
                         - !!ReadVariableNode
                           variable: "Cell_Conveyor/output"
                           store_as: "result"
-                    - !!MethodNode
+                    - !!CompositeMethodNode
                       name: "setPalletDestinationWithReservation"
                       description: ""
                       parameters:
@@ -117,7 +121,29 @@ root:
                           name: "result"
                           description: ""
                           default_value: True
-                    - !!MethodNode
+                      cfg:
+                        - !!CallMethodNode
+                          method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/setDestination"
+                          args: 
+                            - "${palletNumber}"
+                            - "${destination}"
+                        - !!WriteVariableNode
+                          variable: "Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet${palletNumber}/reserved"
+                          value: "${reservationId}"
+                        - !!ReadVariableNode
+                          variable: "Cell_Conveyor/dynamic_node"
+                          store_as: "seekingnode"
+                        - !!WaitConditionNode
+                          variable: "${seekingnode}"
+                          operator: "=="
+                          rhs: "${palletNumber}"
+                        - !!WriteVariableNode
+                          variable: "Cell_Conveyor/output"
+                          value: True
+                        - !!ReadVariableNode
+                          variable: "Cell_Conveyor/output"
+                          store_as: "result"
+                    - !!AsyncMethodNode
                       name: "callFreePalletTo"
                       description: ""
                       parameters:
@@ -134,7 +160,7 @@ root:
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                    - !!MethodNode
+                    - !!AsyncMethodNode
                       name: "callFreePalletToWithReservation"
                       description: ""
                       parameters:
@@ -156,7 +182,7 @@ root:
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                    - !!MethodNode
+                    - !!AsyncMethodNode
                       name: "callFreePalletOfTypeTo"
                       description: ""
                       parameters:
@@ -178,7 +204,7 @@ root:
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                    - !!MethodNode
+                    - !!AsyncMethodNode
                       name: "callFreePalletOfTypeToWithReservation"
                       description: ""
                       parameters:
@@ -205,7 +231,7 @@ root:
                           name: "palletNumber"
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
-                    - !!MethodNode
+                    - !!AsyncMethodNode
                       name: "reservePallet"
                       description: ""
                       parameters:
@@ -237,23 +263,12 @@ root:
                           name: "result"
                           description: ""
                       cfg:
-                        - !!CallMethodNode
-                          method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/release"
-                          args: 
-                            - "${palletNumber}"
-                        - !!ReadVariableNode
-                          variable: "Cell_Conveyor/dynamic_node"
-                          store_as: "seekingnode"
-                        - !!WaitConditionNode
-                          variable: "${seekingnode}"
-                          operator: "=="
-                          rhs: 0
                         - !!WriteVariableNode
-                          variable: "Cell_Conveyor/output"
-                          value: True
-                        - !!ReadVariableNode
-                          variable: "Cell_Conveyor/output"
-                          store_as: "result"
+                          variable: "Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet${palletNumber}/destination"
+                          value: 0
+                        - !!WriteVariableNode
+                          variable: "Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet${palletNumber}/reserved"
+                          value: 0
                     - !!AsyncMethodNode
                       name: "release"
                       description: ""
@@ -267,7 +282,7 @@ root:
                         - !!BooleanVariableNode
                           name: "result"
                           description: ""
-                    - !!MethodNode
+                    - !!CompositeMethodNode
                       name: "setPartOnPallet"
                       description: ""
                       parameters:
@@ -287,11 +302,15 @@ root:
                           measure_unit: "NoneMeasureUnits.NONE"
                           default_value: 0
                       returns:
-                        - !!NumericalVariableNode
-                          name: "destination"
+                        - !!BooleanVariableNode
+                          name: "result"
                           description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                    - !!MethodNode
+                          default_value: True
+                      cfg:
+                        - !!WriteVariableNode
+                          variable: "Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet${palletNumber}/contentPosition${position}"
+                          value: "${part}"
+                    - !!CompositeMethodNode
                       name: "clearPartOnPallet"
                       description: ""
                       parameters:
@@ -306,10 +325,14 @@ root:
                           measure_unit: "NoneMeasureUnits.NONE"
                           default_value: 0
                       returns:
-                        - !!NumericalVariableNode
-                          name: "destination"
+                        - !!BooleanVariableNode
+                          name: "result"
                           description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: True
+                      cfg:
+                        - !!WriteVariableNode
+                          variable: "Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet${palletNumber}/contentPosition${position}"
+                          value: 0
             - !!FolderNode
               name: "BayLights"
               description: ""
@@ -1789,7 +1812,6 @@ root:
 #              name: "SEGMENT8_STOP_GATE_OPENED"
 #              description: ""
 #              initial_value: True   - !!FolderNode #skip
-
 
 
 

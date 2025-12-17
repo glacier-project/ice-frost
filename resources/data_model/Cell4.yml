@@ -16,10 +16,8 @@ root:
           name: "DataBlocksInstance"
           description: "DataBlocksGlobal"
           children:
-            - !!MethodNode
-              name: "OPC_UA_CLEAR_BUFFER_DB"
-              description: ""
-            - !!MethodNode
+            #LEGO
+            - !!AsyncMethodNode
               name: "OPC_UA_MOVE_AND_PLACE_DB"
               description: ""
               parameters:
@@ -46,67 +44,8 @@ root:
                 - !!NumericalVariableNode
                   name: "errorCode"
                   description: ""
-            - !!MethodNode
-              name: "OPC_UA_MOVE_OVER_PALLET_DB"
-              description: ""
-              parameters:
-                - !!NumericalVariableNode
-                  name: "posPick"
-                  description: ""
                   default_value: 0
-                - !!NumericalVariableNode
-                  name: "posPlace"
-                  description: ""
-                  default_value: 0
-              returns:
-                - !!BooleanVariableNode
-                  name: "result"
-                  description: ""
-                - !!NumericalVariableNode
-                  name: "errorCode"
-                  description: ""
-            - !!MethodNode
-              name: "OPC_UA_PICK_FROM_PALLET_DB"
-              description: ""
-              parameters:
-                - !!NumericalVariableNode
-                  name: "posPick"
-                  description: ""
-                  default_value: 0
-                - !!NumericalVariableNode
-                  name: "itemShape"
-                  description: ""
-                  default_value: 0
-              returns:
-                - !!BooleanVariableNode
-                  name: "result"
-                  description: ""
-                - !!NumericalVariableNode
-                  name: "palletPosition"
-                  description: ""
-                - !!NumericalVariableNode
-                  name: "errorCode"
-                  description: ""
-            - !!MethodNode
-              name: "OPC_UA_PLACE_TO_PALLET_DB"
-              description: ""
-              parameters:
-                - !!NumericalVariableNode
-                  name: "posPickOnBuffer"
-                  description: ""
-                  default_value: 0
-                - !!NumericalVariableNode
-                  name: "posPlaceOnPallet"
-                  description: ""
-                  default_value: 0
-              returns:
-                - !!BooleanVariableNode
-                  name: "result"
-                  description: ""
-                - !!NumericalVariableNode
-                  name: "errorCode"
-                  description: ""
-            - !!MethodNode
+            - !!AsyncMethodNode
               name: "OPC_UA_SUBMIT_ROBOT_OPERATION_DB"
               description: ""
               parameters:
@@ -153,6 +92,70 @@ root:
                 - !!NumericalVariableNode
                   name: "errorCode"
                   description: ""
+            - !!AsyncMethodNode
+              name: "OPC_UA_MOVE_OVER_PALLET_DB"
+              description: ""
+              parameters:
+                - !!NumericalVariableNode
+                  name: "posPick"
+                  description: ""
+                  default_value: 0
+                - !!NumericalVariableNode
+                  name: "posPlace"
+                  description: ""
+                  default_value: 0
+              returns:
+                - !!BooleanVariableNode
+                  name: "result"
+                  description: ""
+                - !!NumericalVariableNode
+                  name: "errorCode"
+                  description: ""
+            - !!AsyncMethodNode
+              name: "OPC_UA_PICK_FROM_PALLET_DB"
+              description: ""
+              parameters:
+                - !!NumericalVariableNode
+                  name: "posPick"
+                  description: ""
+                  default_value: 0
+                - !!NumericalVariableNode
+                  name: "itemShape"
+                  description: ""
+                  default_value: 0
+              returns:
+                - !!BooleanVariableNode
+                  name: "result"
+                  description: ""
+                - !!NumericalVariableNode
+                  name: "palletPosition"
+                  description: ""
+                - !!NumericalVariableNode
+                  name: "errorCode"
+                  description: ""
+            - !!MethodNode
+              name: "OPC_UA_PLACE_TO_PALLET_DB"
+              description: ""
+              parameters:
+                - !!NumericalVariableNode
+                  name: "posPickOnBuffer"
+                  description: ""
+                  default_value: 0
+                - !!NumericalVariableNode
+                  name: "posPlaceOnPallet"
+                  description: ""
+                  default_value: 0
+              returns:
+                - !!BooleanVariableNode
+                  name: "result"
+                  description: ""
+                - !!NumericalVariableNode
+                  name: "errorCode"
+                  description: ""
+
+            - !!MethodNode
+              name: "OPC_UA_CLEAR_BUFFER_DB"
+              description: ""
             - !!MethodNode
               name: "OPC_UA_ABB_PICK_BOARD_FROM_PALLET_DB"
               description: ""
@@ -181,7 +184,7 @@ root:
               returns:
                 - !!BooleanVariableNode
                   name: "result"
-                  description: ""
+                  description: ""       
         - !!FolderNode
           name: "DataBlocksGlobal"
           description: "DataBlocksInstance"

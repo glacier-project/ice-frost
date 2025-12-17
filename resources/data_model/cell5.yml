@@ -25,9 +25,9 @@ root:
           description: "Quality of the Lego"
           initial_value: False
     - !!FolderNode
-      name: "Methods"
+      name: "Utils"
       description: "Variables"
-      children:   
+      children:
         - !!AsyncMethodNode
           name: "check_color"
           description: "Checks color"
@@ -40,6 +40,48 @@ root:
             - !!BooleanVariableNode
               name: "is_correct"
               description: "Indicates if the color is correct"
+        - !!AsyncMethodNode
+          name: "check_shape"
+          description: "Checks shape"
+          parameters:
+            - !!NumericalVariableNode
+              name: "shape1"
+              description: ""
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+            - !!NumericalVariableNode
+              name: "shape2"
+              description: ""
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+            - !!NumericalVariableNode
+              name: "shape3"
+              description: ""
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0     
+            - !!NumericalVariableNode
+              name: "pallet_content1"
+              description: ""
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0       
+            - !!NumericalVariableNode
+              name: "pallet_content2"
+              description: ""
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0       
+            - !!NumericalVariableNode
+              name: "pallet_content3"
+              description: ""
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+          returns:
+            - !!BooleanVariableNode
+              name: "is_correct"
+              description: "Indicates if the shape is correct"
+    - !!FolderNode
+      name: "Methods"
+      description: "Variables"
+      children:        
         - !!CompositeMethodNode
           name: "CheckQualityCovers"
           description: "Checks quality"
@@ -54,7 +96,7 @@ root:
               description: "QualityCover"
           cfg: 
             - !!CallMethodNode
-              method: "Cell5/Methods/check_color"
+              method: "Cell5/Utils/check_color"
               args:
                 - "${color}"
             - !!WaitConditionNode
@@ -64,7 +106,7 @@ root:
             - !!ReadVariableNode
               variable: "Cell5/results/result"
               store_as: "result"
-        - !!AsyncMethodNode
+        - !!CompositeMethodNode
           name: "CheckQualityLego"
           description: "Checks quality"
           parameters:
@@ -87,6 +129,39 @@ root:
             - !!BooleanVariableNode
               name: "result"
               description: "Quality of the Lego"
+          cfg:
+            - !!ReadRemoteVariableNode
+              variable: "/Objects/ConveyorHMI/ConveyorObjects/Bayes/Bay4/PalletPosition2/PalletPosition2"
+              remote_id: "conveyor"
+              store_as: "pallet_id"
+            - !!ReadRemoteVariableNode
+              variable: "/Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet${pallet_id}/contentPosition1"
+              remote_id: "conveyor"
+              store_as: "pallet_content1"
+            - !!ReadRemoteVariableNode
+              variable: "/Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet${pallet_id}/contentPosition2"
+              remote_id: "conveyor"
+              store_as: "pallet_content2"
+            - !!ReadRemoteVariableNode
+              variable: "/Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet${pallet_id}/contentPosition3"
+              remote_id: "conveyor"
+              store_as: "pallet_content3"
+            - !!CallMethodNode
+              method: "Cell5/Utils/check_shape"
+              args:
+                - "${shape1}"
+                - "${shape2}"
+                - "${shape3}"
+                - "${pallet_content1}"
+                - "${pallet_content2}"
+                - "${pallet_content3}"
+            - !!WaitConditionNode
+              variable: "Cell5/results/result_ready"
+              operator: "=="
+              rhs: True
+            - !!ReadVariableNode
+              variable: "Cell5/results/result"
+              store_as: "result"
     - !!FolderNode
       name: "Status"
       description: "Variables"
