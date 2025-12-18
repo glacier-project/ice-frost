@@ -794,11 +794,8 @@ reactor Controller extends FrostBase{
             self.logger.debug(f"Pallet {palletNum} destination updated to {destination}")
             return 0
         else:
-            if destination == "0":  
+            if position != "0":  
                 self.messages.append(self._prepare_message(position))
-                message_to_send.schedule(int(len(self.messages) + 1))
-            else:
-                self.messages.append(self._prepare_message(destination))
                 message_to_send.schedule(int(len(self.messages) + 1))
     =}
 
