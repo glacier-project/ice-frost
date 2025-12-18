@@ -53,20 +53,20 @@ main reactor{
     
     /*cell1 = new Cell1(_data_model_path = "../resources/data_model/Cell1.yml")
     cell2 = new Cell2(_data_model_path = "../resources/data_model/Cell2.yml")
-    
-    cell4 = new Cell4(_data_model_path = "../resources/data_model/Cell4.yml")
     */
+    cell4 = new Cell4(name="cell4")
+    
     cell5 = new Cell5(name="cell5")
     /*
     warehouse = new Warehouse(_data_model_path = "../resources/data_model/Warehouse.yml")
     kairos_aa = new Kairos(_data_model_path = "../resources/data_model/RBKairos.yml")*/
     conveyor = new Cell_Conveyor(name="conveyor", _update_step= 1 msec)
     scheduler = new Scheduler(name = "scheduler")
-    bus = new FrostBus(name="frost_bus", width = 3)
+    bus = new FrostBus(name="frost_bus", width = 4)
     //ice_proxy = new ICEProxy(name="iceproxy")
 
-    conveyor.channel_out, scheduler.channel_out, cell5.channel_out -> bus.channel_in after 0
-    bus.channel_out -> conveyor.channel_in, scheduler.channel_in, cell5.channel_in after 0
+    conveyor.channel_out, scheduler.channel_out, cell5.channel_out, cell4.channel_out -> bus.channel_in after 0
+    bus.channel_out -> conveyor.channel_in, scheduler.channel_in, cell5.channel_in, cell4.channel_in after 0
 
     #Full demo
     //cell1.channel_out, cell2.channel_out, cell5.channel_out, warehouse.channel_out, scheduler.channel_out, kairos_aa.channel_out, conveyor.channel_out, cell4.channel_out -> bus.channel_in after 0
