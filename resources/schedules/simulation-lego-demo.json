@@ -1,0 +1,91 @@
+{
+  "jobs": [
+    {
+      "id": "1360",
+      "name": "Demo Lego",
+      "priority": 1,
+      "due_date": null,
+      "tasks": [
+        {
+          "id": "0001",
+          "name": "LD",
+          "processing_time": 60,
+          "dependencies": [],
+          "requires": ["reserve_pallet"],
+          "priority": 1
+        },
+        {
+          "id": "0002",
+          "name": "RBTC",
+          "processing_time": 45,
+          "dependencies": ["0001"],
+          "requires": ["assemble"],
+          "priority": 1
+        },
+        {
+          "id": "0003",
+          "name": "QC",
+          "processing_time": 30,
+          "dependencies": ["0002"],
+          "requires": ["quality_check"],
+          "priority": 1
+        },
+        {
+          "id": "0004",
+          "name": "DISASSEMBLE",
+          "processing_time": 60,
+          "dependencies": ["0003"],
+          "requires": ["disassemble"],
+          "priority": 1
+        },
+        {
+          "id": "0005",
+          "name": "RESERVE",
+          "processing_time": 60,
+          "dependencies": ["0003"],
+          "requires": ["reserve_pallet"],
+          "priority": 1
+        },
+        {
+          "id": "0006",
+          "name": "PUT_BACK",
+          "processing_time": 30,
+          "dependencies": ["0004", "0005"],
+          "requires": ["disassemble"],
+          "priority": 1
+        }
+      ]
+    }
+  ],
+  "machines": [
+    {
+      "id": "lock",
+      "name": "conveyor",
+      "capabilities": ["reserve_pallet"]
+    },
+    {
+      "id": "RoboticCell",
+      "name": "cell4",
+      "capabilities": ["assemble", "disassemble"]
+    },
+    {
+      "id": "QualityCell",
+      "name": "cell5",
+      "capabilities": ["quality_check"]
+    }
+  ],
+  "travel_times": {
+    "CellConveyor": {
+      "RoboticCell": 0,
+      "QualityCell": 0
+    },
+    "RoboticCell": {
+      "CellConveyor": 0,
+      "QualityCell": 0
+    },
+    "QualityCell": {
+      "CellConveyor": 0,
+      "RoboticCell": 0
+    }
+  }
+}

@@ -68,14 +68,26 @@ reactors:
             logging_level: INFO
             parameters:
               interchange_time: 4800 
+  # scheduler:
+  #   logging_level: WARNING
+  #   parameters:
+  #     recipe_path: "resources/recipes/recipes/conveyor.yaml"
+  #     condition_path: "resources/recipes/conditions/conveyor.yaml"
+  #   reactors:
+  #     message_filter:
+  #       logging_level: WARNING
   scheduler:
-    logging_level: WARNING
+    logging_level: DEBUG
     parameters:
-      recipe_path: "resources/recipes/recipes/conveyor.yaml"
-      condition_path: "resources/recipes/conditions/conveyor.yaml"
-    reactors:
-      message_filter:
-        logging_level: WARNING
+      data_model_path: "resources/scheduler_tasks/demo-lego-scheduler.yml"
+      scheduling_instance: "resources/schedules/simulation-lego-demo.json"
+      task_mapping: 
+        LD: /Scheduler/LD
+        RBTC: /Scheduler/RBTC
+        QC: /Scheduler/QC
+        DISASSEMBLE: /Scheduler/DISASSEMBLE
+        RESERVE: /Scheduler/RESERVE
+        PUT_BACK: /Scheduler/PUT_BACK
   cell5:
     logging_level: INFO
     parameters:
@@ -92,3 +104,4 @@ reactors:
     reactors:
       message_filter:
         logging_level: WARNING
+  

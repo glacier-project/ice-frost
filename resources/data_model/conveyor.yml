@@ -55,10 +55,108 @@ root:
                         - !!StringVariableNode
                           name: "res"
                           description: ""
-                - !!FolderNode
-                  name: "ConveyorCommandsPointer"
-                  description: ""
-                  children:                    
+                    - !!CompositeMethodNode
+                      name: "ReserveFreePalletOfType2"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "numPallets"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "contentPos1"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "contentPos2"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "contentPos3"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "palletType"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!NumericalVariableNode
+                          name: "reservationId"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                      cfg:
+                        - !!CallMethodNode
+                          method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/reservePalletOfType2"
+                          args: 
+                            - "${numPallets}"
+                            - "${contentPos1}"
+                            - "${contentPos2}"
+                            - "${contentPos3}"
+                            - "${palletType}"
+                    - !!AsyncMethodNode
+                      name: "reservePalletOfType2"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "numPallets"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "contentPos1"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "contentPos2"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "contentPos3"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "palletType"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!NumericalVariableNode
+                          name: "reservationId"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                    - !!CompositeMethodNode
+                      name: "callReservedPalletTo"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "reservationId"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "destination"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!NumericalVariableNode
+                          name: "pallet"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                      cfg:
+                        - !!CallMethodNode
+                          method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/callFreePalletToWithReservation"
+                          args: 
+                            - "${destination}"
+                            - "${reservationId}"
                     - !!CompositeMethodNode
                       name: "setPalletDestination"
                       description: ""
@@ -143,6 +241,96 @@ root:
                         - !!ReadVariableNode
                           variable: "Cell_Conveyor/output"
                           store_as: "result"
+                    - !!AsyncMethodNode
+                      name: "getReservedPallet"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "reservationId"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!NumericalVariableNode
+                          name: "pallet"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                    - !!CompositeMethodNode
+                      name: "callReservedPalletTo"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "reservationId"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "destination"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!NumericalVariableNode
+                          name: "pallet"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                      cfg:
+                        - !!CallMethodNode
+                          method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/getReservedPallet"
+                          args: 
+                            - "${reservationId}"
+                        - !!CallMethodNode
+                          method: "Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+                          args: 
+                            - "${pallet}"
+                            - "${destination}"
+                - !!FolderNode
+                  name: "ConveyorCommandsPointer"
+                  description: ""
+                  children:                    
+                    - !!AsyncMethodNode
+                      name: "setPalletDestination"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "palletNumber"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "destination"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!BooleanVariableNode
+                          name: "result"
+                          description: ""
+                          default_value: True
+                    - !!AsyncMethodNode
+                      name: "setPalletDestinationWithReservation"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "palletNumber"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "destination"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "reservationId"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!BooleanVariableNode
+                          name: "result"
+                          description: ""
+                          default_value: True
                     - !!AsyncMethodNode
                       name: "callFreePalletTo"
                       description: ""
@@ -258,30 +446,10 @@ root:
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           default_value: 0
-                      returns:
-                        - !!BooleanVariableNode
-                          name: "result"
-                          description: ""
                       cfg:
-                        - !!WriteVariableNode
-                          variable: "Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet${palletNumber}/destination"
-                          value: 0
                         - !!WriteVariableNode
                           variable: "Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet${palletNumber}/reserved"
                           value: 0
-                    - !!AsyncMethodNode
-                      name: "release"
-                      description: ""
-                      parameters:
-                        - !!NumericalVariableNode
-                          name: "palletNumber"
-                          description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                          default_value: 0
-                      returns:
-                        - !!BooleanVariableNode
-                          name: "result"
-                          description: ""
                     - !!CompositeMethodNode
                       name: "setPartOnPallet"
                       description: ""
@@ -301,11 +469,6 @@ root:
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           default_value: 0
-                      returns:
-                        - !!BooleanVariableNode
-                          name: "result"
-                          description: ""
-                          default_value: True
                       cfg:
                         - !!WriteVariableNode
                           variable: "Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet${palletNumber}/contentPosition${position}"
@@ -324,11 +487,6 @@ root:
                           description: ""
                           measure_unit: "NoneMeasureUnits.NONE"
                           default_value: 0
-                      returns:
-                        - !!BooleanVariableNode
-                          name: "result"
-                          description: ""
-                          default_value: True
                       cfg:
                         - !!WriteVariableNode
                           variable: "Cell_Conveyor/ConveyorHMI/ConveyorObjects/Pallets/Pallet${palletNumber}/contentPosition${position}"
@@ -666,7 +824,7 @@ root:
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
+                      initial_value: 2
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
@@ -700,7 +858,7 @@ root:
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
+                      initial_value: 2
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
@@ -734,7 +892,7 @@ root:
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
+                      initial_value: 2
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
@@ -768,7 +926,7 @@ root:
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
+                      initial_value: 2
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
@@ -802,7 +960,7 @@ root:
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
+                      initial_value: 2
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""
@@ -836,7 +994,7 @@ root:
                       name: "contentPosition2"
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
+                      initial_value: 2
                     - !!NumericalVariableNode
                       name: "contentPosition3"
                       description: ""

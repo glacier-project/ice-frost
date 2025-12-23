@@ -56,6 +56,8 @@ reactor Cell_Conveyor extends FrostMachine{
     state callFreePalletOfTypeTo
     state callFreePalletOfTypeToWithReservation
     state reservePallet
+    state getReservedPallet
+    state reserveFreePalletofType2
     //COMMANDS
     state dynamic_node  
     state zero_node  
@@ -63,10 +65,17 @@ reactor Cell_Conveyor extends FrostMachine{
     state pallets 
     state bayes    
     state dict_bay_conveyor
+    state reservationIds
+
+    reaction(channel_in){=
+        msg = channel_in[0].value
+        self.logger.error(f"Received message from FrostBus: {msg}")
+    =}
 
     conveyor = new Conveyor(name = {=self.name + ".conveyor_belt"=})
 
     reaction (startup){=
+        self.reservationIds = [0]
         """Initialize the Conveyor reactor."""
         self.pallet_1 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet1)
         self.pallet_2 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet2)
@@ -94,7 +103,9 @@ reactor Cell_Conveyor extends FrostMachine{
         self.segment_7 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment7)
         self.segment_8 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment8)
         # Methods
-        self.setPalletDestination = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/setDestination")
+        self.setPalletDestination = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination")
+        self.reserveFreePalletofType2 = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/reservePalletOfType2")
+        self.getReservedPallet = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/getReservedPallet")
         self.dynamic_node = self.data_model.get_node("Objects/dynamic_node")
         self.zero_node = self.data_model.get_node("Objects/zero_node")
         self.pallets = [self.pallet_1, self.pallet_2, self.pallet_3, self.pallet_4, self.pallet_5, self.pallet_6, self.pallet_7, self.pallet_8, self.pallet_9, self.pallet_10] 
@@ -117,11 +128,54 @@ reactor Cell_Conveyor extends FrostMachine{
         self.callFreePalletOfTypeTo.callback = self.free_pallet_of_type_to
         self.callFreePalletOfTypeToWithReservation.callback = self.free_pallet_of_type_to_with_reservation
         self.reservePallet.callback = self.reserve_pallet
-
+        self.getReservedPallet.callback = self.get_reserved_pallet
+        self.reserveFreePalletofType2.callback = self.call_reserveFreePalletOfType2
     =}
 
     state model_pallets
     
+    method call_reserveFreePalletOfType2(numPallets, contentPos1, contentPos2, contentPos3, palletType){=
+        '''
+        Reserves free pallets of a specific type.
+        Args:
+            numPallets (int): Number of pallets to reserve.
+            contentPos1 (int): Content position 1.
+            contentPos2 (int): Content position 2.
+            contentPos3 (int): Content position 3.
+            palletType (int): Type of the pallet.
+        Returns:
+            list: A list containing the reservation status and reservation ID.
+        '''
+        reservationId = self.reservationIds[-1] + 1
+        while reservationId in self.reservationIds:
+            reservationId += 1
+        self.reservationIds.append(reservationId)
+        reserved_count = 0
+        for pallet in self.pallets:
+            if pallet.get_property("type").value != palletType:
+                continue
+            
+            if pallet.get_property("reserved").value != 0:
+                continue
+
+            if pallet.get_property("contentPosition1").value != contentPos1:
+                continue
+            if pallet.get_property("contentPosition2").value != contentPos2:
+                continue
+            if pallet.get_property("contentPosition3").value != contentPos3:
+                continue
+
+            pallet.get_property("reserved").value = reservationId
+            reserved_count += 1
+            if reserved_count >= numPallets:
+                break
+
+        if reserved_count == numPallets:
+            return reservationId
+        else:
+            raise ValueError("Not enough pallets available to reserve")
+    =}
+
     method _update_model_pallet_destination(pallet, value){=
         self.logger.debug(f"Updating model pallet {pallet} destination to {value}")
         if value == 0 or value == None:
@@ -142,6 +196,21 @@ reactor Cell_Conveyor extends FrostMachine{
             check.schedule(MSEC(1))
         else:
             check.schedule(SEC(1))
+    =}
+
+    method get_reserved_pallet(reservationId){=
+        """
+        Returns a reserved pallet based on the reservation ID.
+        Args:
+            reservationId (int): The reservation ID to look for.
+        """
+        assert reservationId in self.reservationIds, "Invalid reservation ID"
+        
+        for pallet in self.pallets:
+            if pallet.get_property("reserved").value == reservationId:
+                return int(pallet.name[-1])
+
+        raise ValueError("No pallet found for the given reservation ID")
     =}
 
     method getTargetNode(destination){=
@@ -178,22 +247,16 @@ reactor Cell_Conveyor extends FrostMachine{
         """
         Sets the destination of a pallet and sends a command to the conveyor system.
         """       
-        res = str(destination)
-
-        self.dynamic_node.value = self.getTargetNode(destination)
         self.logger.info(f"Setting destination for pallet {palletNumber} to {destination}")
         self.pallets[palletNumber-1].get_property("destination").value = destination
-        self.pallets[palletNumber-1].get_property("reserved").value = 1
-        return res
+        return True
     =}
     
     method move_pallet_to_LTU(palletNumber){=
         """
         Releases a pallet by sending a command to the conveyor system.
         """
-        self.dynamic_node.value = "Cell_Conveyor/zero_node"
-        self.zero_node.value = "Cell_Conveyor/zero_node"
-        self.messages_to_conveyor.append([palletNumber, "0"])
+        self.pallets[palletNumber-1].get_property("destination").value = 0
         return True
     =}
     
@@ -205,7 +268,7 @@ reactor Cell_Conveyor extends FrostMachine{
             if pallet.get_property("reserved").value != 0:
                 continue
             else:
-                self.setPalletDest(int(pallet.name[-1]), destination)
+                self.pallets[int(pallet.name[-1])-1].get_property("destination").value = destination
                 return (True, int(pallet.name[-1]))
                 
         return (False, 0)
@@ -219,8 +282,6 @@ reactor Cell_Conveyor extends FrostMachine{
             if pallet.get_property("reserved").value != 0:
                 continue
             else:
-                if pallet.get_property("destination").value != 0:
-                    continue
                 pallet.get_property("reserved").value = reservationId
                 self.setPalletDest(int(pallet.name[-1]), destination)
                 return [True, int(pallet.name[-1])]

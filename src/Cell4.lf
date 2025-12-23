@@ -69,10 +69,12 @@ reactor Cell4 extends FrostMachine{
         self.operation_done.value = False
         self.operation_running.value = True
         pos = 0
-        for position in self.abb_positions.children:
-            if position.value == 0:
-                position.value = 2
-                pos = int(position.name)
+        children = self.abb_positions.children
+        for pos in children:
+            node = children[pos]
+            if node.value == 0:
+                node.value = 2
+                pos = int(node.name)
                 break
         self.invoked = True
         return (True, pos, 0)
@@ -112,7 +114,6 @@ reactor Cell4 extends FrostMachine{
         self.abb_pick_board = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_ABB_PICK_BOARD_FROM_PALLET_DB")  
         self.gadget_assembly = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_GADGET_ASSEMBLY_DB")
         # Callbacks
-        self.gadget_assembly.callback = lambda *args, **kwargs: True
         self.move_and_place.callback = self.call_move_and_place
         self.submit_robot_operation.callback = self.call_submit_operation
         self.move_over.callback = self.call_move_over_pallet

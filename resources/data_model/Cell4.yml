@@ -1,4 +1,4 @@
-name: "Cell4" # name of the machine
+name: "cell4" # name of the machine
 machine_category: "unknown" # category of the machine
 machine_type: "unknown" # type of the machine
 machine_model: "unknown" # model of the machine
@@ -133,7 +133,7 @@ root:
                 - !!NumericalVariableNode
                   name: "errorCode"
                   description: ""
-            - !!MethodNode
+            - !!AsyncMethodNode
               name: "OPC_UA_PLACE_TO_PALLET_DB"
               description: ""
               parameters:
@@ -153,38 +153,38 @@ root:
                   name: "errorCode"
                   description: ""
 
-            - !!MethodNode
-              name: "OPC_UA_CLEAR_BUFFER_DB"
-              description: ""
-            - !!MethodNode
-              name: "OPC_UA_ABB_PICK_BOARD_FROM_PALLET_DB"
-              description: ""
-              returns:
-                - !!BooleanVariableNode
-                  name: "result"
-                  description: ""
-                - !!NumericalVariableNode
-                  name: "boardPosition"
-                  description: ""
-                - !!NumericalVariableNode
-                  name: "errorCode"
-                  description: ""
-            - !!MethodNode
-              name: "OPC_UA_GADGET_ASSEMBLY_DB"
-              description: ""
-              parameters:
-                - !!NumericalVariableNode
-                  name: "phaseNumber"
-                  description: ""
-                  default_value: 0
-                - !!NumericalVariableNode
-                  name: "boardPosition"
-                  description: ""
-                  default_value: 0
-              returns:
-                - !!BooleanVariableNode
-                  name: "result"
-                  description: ""       
+          # - !!MethodNode
+          #   name: "OPC_UA_CLEAR_BUFFER_DB"
+          #   description: ""
+          # - !!MethodNode
+          #   name: "OPC_UA_ABB_PICK_BOARD_FROM_PALLET_DB"
+          #   description: ""
+          #   returns:
+          #     - !!BooleanVariableNode
+          #       name: "result"
+          #       description: ""
+          #     - !!NumericalVariableNode
+          #       name: "boardPosition"
+          #       description: ""
+          #     - !!NumericalVariableNode
+          #       name: "errorCode"
+          #       description: ""
+          # - !!MethodNode
+          #   name: "OPC_UA_GADGET_ASSEMBLY_DB"
+          #   description: ""
+          #   parameters:
+          #     - !!NumericalVariableNode
+          #       name: "phaseNumber"
+          #       description: ""
+          #       default_value: 0
+          #     - !!NumericalVariableNode
+          #       name: "boardPosition"
+          #       description: ""
+          #       default_value: 0
+          #   returns:
+          #     - !!BooleanVariableNode
+          #       name: "result"
+          #       description: ""       
         - !!FolderNode
           name: "DataBlocksGlobal"
           description: "DataBlocksInstance"

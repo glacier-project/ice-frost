@@ -1,4 +1,4 @@
-name: "Cell5" # name of the machine
+name: "cell5" # name of the machine
 machine_category: "unknown" # category of the machine
 machine_type: "unknown" # type of the machine
 machine_model: "unknown" # model of the machine
@@ -80,7 +80,7 @@ root:
               description: "Indicates if the shape is correct"
     - !!FolderNode
       name: "Methods"
-      description: "Variables"
+      description: ""
       children:        
         - !!CompositeMethodNode
           name: "CheckQualityCovers"
@@ -131,7 +131,7 @@ root:
               description: "Quality of the Lego"
           cfg:
             - !!ReadRemoteVariableNode
-              variable: "/Objects/ConveyorHMI/ConveyorObjects/Bayes/Bay4/PalletPosition2/PalletPosition2"
+              variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_4_2"
               remote_id: "conveyor"
               store_as: "pallet_id"
             - !!ReadRemoteVariableNode
