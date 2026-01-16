@@ -21,7 +21,7 @@ reactor Cell4 extends FrostMachine{
     state abb_pick_board 
     state gadget_assembly 
     
-    timer check_status(0, 1 sec)
+    timer check_status(0, 10 sec)
 
     state invoked = False
     method call_move_and_place(posPickOnPallet, posPlaceOnPallet, posPickOnBuffer, posPlaceFromBufferToPallet){=
@@ -91,7 +91,7 @@ reactor Cell4 extends FrostMachine{
         self.invoked = True
         return (True, 0)
     =}
-        
+
     reaction(startup){=
         '''
         Initialize the Cell4 reactor, setting up the initial state and scheduling the first routine.
@@ -124,7 +124,9 @@ reactor Cell4 extends FrostMachine{
     reaction(check_status){=
         if self.invoked:
             self.logger.info("Operation completed.")
-            self.operation_done.value = False
+            self.operation_running.value = False
+            self.operation_done.value = True
+            self.invoked = False
     =}
 
 }

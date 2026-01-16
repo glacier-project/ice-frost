@@ -3,27 +3,23 @@ machine_category: "unknown" # category of the machine
 machine_type: "unknown" # type of the machine
 machine_model: "unknown" # model of the machine
 description: "" # description of the machine
-#connectors:
-#  - !!OpcuaConnector
-#    name: "OpcuaConnector1"
-#    ip_env_var: "ICE_CONVEYOR_IP"
-#    port_env_var: "ICE_CONVEYOR_PORT"
-#    # security_policy: "SecurityPolicyBasic256Sha256"
-#    # private_key_file_path: "certificates/peer-private-key-example-4.pem"
-#    # certificate_file_path: "certificates/peer-certificate-example-4.der"
-#    # trust_store_certificates_paths: ['certificates']
+connectors:
+  - !!OpcuaConnector
+    name: "OpcuaConnector1"
+    ip_env_var: "ICE_CONVEYOR_IP"
+    port_env_var: "ICE_CONVEYOR_PORT"
+    # security_policy: "SecurityPolicyBasic256Sha256"
+    # private_key_file_path: "certificates/peer-private-key-example-4.pem"
+    # certificate_file_path: "certificates/peer-certificate-example-4.der"
+    # trust_store_certificates_paths: ['certificates']
 root:
   !!FolderNode
   name: "Objects"
   description: "OPCUA"
-  #connector_name: "OpcuaConnector1"
   children:
     - !!FolderNode
       name: "ConveyorHMI"
       description: "HMI"
-      remote_resource_spec:
-        !!OpcuaRemoteResourceSpec
-        namespace: "7"
       children:
         - !!FolderNode
           name: "ConveyorDataExchange"
@@ -34,7 +30,7 @@ root:
               description: ""
               children:
                 - !!FolderNode
-                  name: "ConveyorCommandsPointer"
+                  name: "UtilityMethods"
                   description: ""
                   children:
                     - !!AsyncMethodNode
@@ -55,6 +51,217 @@ root:
                         - !!StringVariableNode
                           name: "res"
                           description: ""
+                    - !!CompositeMethodNode
+                      name: "ReserveFreePalletOfType2"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "numPallets"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "contentPos1"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "contentPos2"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "contentPos3"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "palletType"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!NumericalVariableNode
+                          name: "reservationId"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                      cfg:
+                        - !!CallMethodNode
+                          method: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/reservePalletOfType2"
+                          args: 
+                            - "${numPallets}"
+                            - "${contentPos1}"
+                            - "${contentPos2}"
+                            - "${contentPos3}"
+                            - "${palletType}"
+                    - !!AsyncMethodNode
+                      name: "reservePalletOfType2"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "numPallets"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "contentPos1"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "contentPos2"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "contentPos3"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "palletType"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!NumericalVariableNode
+                          name: "reservationId"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                    - !!CompositeMethodNode
+                      name: "callReservedPalletTo"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "reservationId"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "destination"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!NumericalVariableNode
+                          name: "pallet"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                      cfg:
+                        - !!CallMethodNode
+                          method: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/callFreePalletToWithReservation"
+                          args: 
+                            - "${destination}"
+                            - "${reservationId}"
+                    - !!CompositeMethodNode
+                      name: "setPalletDestination"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "palletNumber"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "destination"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!BooleanVariableNode
+                          name: "result"
+                          description: ""
+                          default_value: True
+                      cfg:
+                        - !!CallMethodNode
+                          method: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/setDestination"
+                          args: 
+                            - "${palletNumber}"
+                            - "${destination}"
+                    - !!CompositeMethodNode
+                      name: "setPalletDestinationWithReservation"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "palletNumber"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "destination"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "reservationId"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!BooleanVariableNode
+                          name: "result"
+                          description: ""
+                          default_value: True
+                      cfg:
+                        - !!CallMethodNode
+                          method: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/setDestination"
+                          args: 
+                            - "${palletNumber}"
+                            - "${destination}"
+                        - !!WriteVariableNode
+                          variable: "Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet${palletNumber}/reserved"
+                          value: "${reservationId}"
+                    - !!AsyncMethodNode
+                      name: "getReservedPallet"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "reservationId"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!NumericalVariableNode
+                          name: "pallet"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                    - !!CompositeMethodNode
+                      name: "callReservedPalletTo"
+                      description: ""
+                      parameters:
+                        - !!NumericalVariableNode
+                          name: "reservationId"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                        - !!NumericalVariableNode
+                          name: "destination"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                          default_value: 0
+                      returns:
+                        - !!NumericalVariableNode
+                          name: "pallet"
+                          description: ""
+                          measure_unit: "NoneMeasureUnits.NONE"
+                      cfg:
+                        - !!CallMethodNode
+                          method: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/getReservedPallet"
+                          args: 
+                            - "${reservationId}"
+                        - !!CallMethodNode
+                          method: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+                          args: 
+                            - "${pallet}"
+                            - "${destination}"
+                - !!FolderNode
+                  name: "ConveyorCommandsPointer"
+                  connector_name: "OpcuaConnector1" 
+                  remote_resource_spec:
+                    !!OpcuaRemoteResourceSpec
+                    namespace: ns=2;i=49
+                  description: ""
+                  children:
                     - !!AsyncMethodNode
                       name: "setPalletDestination"
                       remote_resource_spec:
@@ -241,19 +448,6 @@ root:
                           name: "result"
                           description: ""
                     - !!AsyncMethodNode
-                      name: "release"
-                      description: ""
-                      parameters:
-                        - !!NumericalVariableNode
-                          name: "palletNumber"
-                          description: ""
-                          measure_unit: "NoneMeasureUnits.NONE"
-                          default_value: 0
-                      returns:
-                        - !!BooleanVariableNode
-                          name: "result"
-                          description: ""
-                    - !!AsyncMethodNode
                       name: "setPartOnPallet"
                       remote_resource_spec:
                         !!OpcuaRemoteResourceSpec
@@ -352,6 +546,10 @@ root:
                   initial_value: 0
                 - !!NumericalVariableNode
                   name: "destination_palletid_3_1"
+                  connector_name: "OpcuaConnector1"
+                  remote_resource_spec:
+                    !!OpcuaRemoteResourceSpec
+                    node_id: ns=7;g=a07c7ea2-ba14-cf5a-50e3-9e37cc681a0d
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
                   initial_value: 0
@@ -372,6 +570,10 @@ root:
                   initial_value: 0
                 - !!NumericalVariableNode
                   name: "destination_palletid_4_2"
+                  connector_name: "OpcuaConnector1"
+                  remote_resource_spec:
+                    !!OpcuaRemoteResourceSpec
+                    node_id: ns=7;g=7951204d-9a09-b9d3-01af-2960be4d1c5b
                   description: ""
                   measure_unit: "NoneMeasureUnits.NONE"
                   initial_value: 0
@@ -610,6 +812,10 @@ root:
                           initial_value: 0
             - !!FolderNode
               name: "Pallets"
+              connector_name: "OpcuaConnector1"
+              remote_resource_spec:
+                !!OpcuaRemoteResourceSpec
+                namespace: ns=7;g=7a49ff3d-6963-3a24-3302-ded7e307ea5f
               description: ""
               children:
                 - !!ObjectVariableNode
@@ -617,32 +823,41 @@ root:
                   description: ""
                   properties:
                     - !!NumericalVariableNode
-                      name: "destination"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
                       name: "reserved"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=ed8101fa-f93f-891e-f999-ce933a5e1c51
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=8d956a20-c514-c71a-cac2-f54888d62779
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=5d9fd638-f136-a140-bca3-17891885cc19
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
+                      initial_value: 2
                     - !!NumericalVariableNode
                       name: "contentPosition3"
-                      description: ""
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=bac02e17-f542-7cae-de2b-f291f7311012
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=176bccde-ce1b-8a04-f01f-61243f951f81
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
@@ -651,32 +866,41 @@ root:
                   description: ""
                   properties:
                     - !!NumericalVariableNode
-                      name: "destination"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
                       name: "reserved"
-                      description: ""
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=2341dc0c-b67f-196c-5614-b50c51493c73
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=ed46f28d-018a-d3e8-f448-2f4a5ac969a1
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=dd59e17f-372c-3f5f-8376-c3986869a1c0
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
+                      initial_value: 2
                     - !!NumericalVariableNode
                       name: "contentPosition3"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=885fb0c9-d775-2026-0a81-49636e0e3de7
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=772da22e-f51f-5883-8a09-a955f00e7a7f
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
@@ -685,32 +909,41 @@ root:
                   description: ""
                   properties:
                     - !!NumericalVariableNode
-                      name: "destination"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
                       name: "reserved"
-                      description: ""
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=593a0da6-1351-0b31-7b7f-347ba44c0b68
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=b23a8481-fbcc-3011-5192-338398599471
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=efd16f2d-9f3d-8099-2c5f-0846932b2a12
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
+                      initial_value: 2
                     - !!NumericalVariableNode
                       name: "contentPosition3"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=1c8f41a2-f005-8d90-4db1-2b9c8432f5e7
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=22d2f1cb-b807-3124-f1c5-69e688f44b00
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
@@ -719,32 +952,42 @@ root:
                   description: ""
                   properties:
                     - !!NumericalVariableNode
-                      name: "destination"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
                       name: "reserved"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=64965301-6a67-d1f3-2ccc-a014b3da3c5d
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=ab06b909-b6df-0a2d-cf8f-07e60fe7d828
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=605a80a8-5e85-1d28-7dd2-92d26e536a18
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
+                      initial_value: 2
                     - !!NumericalVariableNode
                       name: "contentPosition3"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=06eeb188-20cf-240d-43f2-3731504e4f82
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=1d795f1d-917f-9763-86d3-89dccb25e627
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
@@ -753,32 +996,42 @@ root:
                   description: ""
                   properties:
                     - !!NumericalVariableNode
-                      name: "destination"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
                       name: "reserved"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=c203a66e-403b-67a7-f8d6-d7a53379131e
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=209a9b97-a4cf-b201-b8a8-a909d1d93832
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=bd717d9a-f3f7-8f47-f3fd-f33ace6abcdf
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
+                      initial_value: 2
                     - !!NumericalVariableNode
                       name: "contentPosition3"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=3f48a891-7b29-1e4a-5537-bff55890be9c
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=23d8a6e7-026f-a808-8bb3-73b3b7adf1f4
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
@@ -787,171 +1040,45 @@ root:
                   description: ""
                   properties:
                     - !!NumericalVariableNode
-                      name: "destination"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
                       name: "reserved"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=3b0bc845-4a58-f0ab-85e4-824d1374f03e
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition1"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=23246c7a-1505-cbd2-9ae0-8b091cc3e3ee
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "contentPosition2"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=fd17d9ad-5932-6f81-f93a-38f665ecb668
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
+                      initial_value: 2
                     - !!NumericalVariableNode
                       name: "contentPosition3"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=6f12b5d3-1af2-a9e0-99db-0d7d251ab48a
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       initial_value: 0
                     - !!NumericalVariableNode
                       name: "type"
+                      remote_resource_spec:
+                        !!OpcuaRemoteResourceSpec
+                        node_id: ns=7;g=d052b3c9-0a95-c4a1-25ac-28dde4bd7ff0
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                - !!ObjectVariableNode
-                  name: "Pallet7"
-                  description: ""
-                  properties:
-                    - !!NumericalVariableNode
-                      name: "destination"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "reserved"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "contentPosition1"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "contentPosition2"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "contentPosition3"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "type"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                - !!ObjectVariableNode
-                  name: "Pallet8"
-                  description: ""
-                  properties:
-                    - !!NumericalVariableNode
-                      name: "destination"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "reserved"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "contentPosition1"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "contentPosition2"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "contentPosition3"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "type"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                - !!ObjectVariableNode
-                  name: "Pallet9"
-                  description: ""
-                  properties:
-                    - !!NumericalVariableNode
-                      name: "destination"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "reserved"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "contentPosition1"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "contentPosition2"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "contentPosition3"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "type"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                - !!ObjectVariableNode
-                  name: "Pallet10"
-                  description: ""
-                  properties:
-                    - !!NumericalVariableNode
-                      name: "destination"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "reserved"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "contentPosition1"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "contentPosition2"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "contentPosition3"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
-                    - !!NumericalVariableNode
-                      name: "type"
-                      description: ""
-                      measure_unit: "NoneMeasureUnits.NONE"
-                      initial_value: 0
+                      initial_value: 0                
             - !!FolderNode #skip
               name: "Segments"
               description: ""

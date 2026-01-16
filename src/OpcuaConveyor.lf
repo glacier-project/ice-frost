@@ -3,6 +3,48 @@ target Python;
 import FrostMachine from "../frost/src/lib/FrostMachine.lf"
 
 
-reactor OpcuaConveyor extends FrostMachine {
+reactor MetaConveyor extends FrostMachine {
+
+    method call_reserveFreePalletOfType2(numPallets, contentPos1, contentPos2, contentPos3, palletType){=
+        '''
+        Reserves free pallets of a specific type.
+        Args:
+            numPallets (int): Number of pallets to reserve.
+            contentPos1 (int): Content position 1.
+            contentPos2 (int): Content position 2.
+            contentPos3 (int): Content position 3.
+            palletType (int): Type of the pallet.
+        Returns:
+            list: A list containing the reservation status and reservation ID.
+        '''
+        reservationId = self.reservationIds[-1] + 1
+        while reservationId in self.reservationIds:
+            reservationId += 1
+        self.reservationIds.append(reservationId)
+        reserved_count = 0
+        for pallet in self.pallets:
+            if pallet.get_property("type").value != palletType:
+                continue
+            
+            if pallet.get_property("reserved").value != 0:
+                continue
+
+            if pallet.get_property("contentPosition1").value != contentPos1:
+                continue
+            if pallet.get_property("contentPosition2").value != contentPos2:
+                continue
+            if pallet.get_property("contentPosition3").value != contentPos3:
+                continue
+
+            pallet.get_property("reserved").value = reservationId
+            reserved_count += 1
+            if reserved_count >= numPallets:
+                break
+
+        if reserved_count == numPallets:
+            return reservationId
+        else:
+            raise ValueError("Not enough pallets available to reserve")
+    =}
 
 }

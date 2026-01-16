@@ -1,6 +1,6 @@
 target Python{
-    fast: True,
-    timeout: 10000s,
+    fast: False,
+    timeout: 1800s,
     files: [
         "../frost/src/python_lib/frost.py",
         "../frost/src/python_lib/l_formatter.py",
@@ -12,15 +12,10 @@ target Python{
     single-threaded: false,
 }
 
-import Cell1 from "Cell1.lf"
-import Cell2 from "Cell2.lf"
-import Cell4 from "Cell4.lf"
-import Cell5 from "Cell5.lf" 
-import Warehouse from "Warehouse.lf"
-import Kairos from "Kairos.lf"
 import Cell_Conveyor from "Cell_Conveyor.lf"
+import MetaConveyor from "MetaConveyor.lf"
 import FrostScheduler from "../frost/src/lib/scheduler/FrostScheduler.lf"
-
+import FrostMachine from "../frost/src/lib/FrostMachine.lf"
 import FrostBus from "../frost/src/lib/FrostBus.lf"
 
 preamble{= 
@@ -37,6 +32,8 @@ CONDITIONS_PATH = os.environ.get("CONDITIONS_PATH")
 =}
 
 
+
+
 main reactor{
     preamble{=
         # with open(CONFIG_PATH) as stream:
@@ -48,7 +45,6 @@ main reactor{
         # logger = logging.getLogger()
         # logger.setLevel(logging.INFO)
         # initialize_logger(logging.INFO, TimeFormat.MSECS)
-        logging.getLogger("kafka").setLevel(logging.WARNING)
         # logger.addHandler(handler)
         recipe_path = os.environ.get("RECIPE_PATH")
         conditions_path = os.environ.get("CONDITIONS_PATH")
@@ -57,13 +53,13 @@ main reactor{
     /*cell1 = new Cell1(_data_model_path = "../resources/data_model/Cell1.yml")
     cell2 = new Cell2(_data_model_path = "../resources/data_model/Cell2.yml")
     */
-    cell4 = new Cell4(name="cell4")
+    cell4 = new FrostMachine(name="cell4")
     
-    cell5 = new Cell5(name="cell5")
+    cell5 = new FrostMachine(name="cell5")
     /*
     warehouse = new Warehouse(_data_model_path = "../resources/data_model/Warehouse.yml")
     kairos_aa = new Kairos(_data_model_path = "../resources/data_model/RBKairos.yml")*/
-    conveyor = new Cell_Conveyor(name="conveyor", _update_step= 1 msec)
+    conveyor = new MetaConveyor(name="conveyor", _update_step= 1 msec)
     scheduler = new FrostScheduler(name = "scheduler")
     bus = new FrostBus(name="frost_bus", width = 4)
     //ice_proxy = new ICEProxy(name="iceproxy")

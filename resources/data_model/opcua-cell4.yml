@@ -1,0 +1,217 @@
+name: "cell4" # name of the machine
+machine_category: "unknown" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "" # description of the machine
+connectors:
+  - !!OpcuaConnector
+    name: "OpcuaConnector4"
+    ip_env_var: "ICE_CELL4_IP"
+    port_env_var: "ICE_CELL4_PORT"
+root:
+  !!FolderNode
+  name: "Objects"
+  description: "OPCUA"
+  children:
+    - !!FolderNode
+      name: "Cell_4_Robot_Coordinator_PLC"               
+      description: "Cell_4_Robot_Coordinator_PLC"
+      children:
+        - !!FolderNode
+          name: "DataBlocksInstance"
+          connector_name: "OpcuaConnector4"
+          description: "DataBlocksInstance"
+          children:
+            - !!FolderNode
+              name: "OPC_UA_MOVE_AND_PLACE_DB"
+              remote_resource_spec:
+                !!OpcuaRemoteResourceSpec
+                node_id: ns=3;s="OPC_UA_MOVE_AND_PLACE_DB"
+              description: ""
+              children:
+                - !!AsyncMethodNode
+                  name: "Method"
+                  remote_resource_spec:
+                    !!OpcuaRemoteResourceSpec
+                    node_id: ns=3;s="OPC_UA_MOVE_AND_PLACE_DB".Method
+                  description: ""
+                  parameters:
+                    - !!NumericalVariableNode
+                      name: "posPickOnPallet"
+                      description: ""
+                      default_value: 0
+                    - !!NumericalVariableNode
+                      name: "posPlaceOnPallet"
+                      description: ""
+                      default_value: 0
+                    - !!NumericalVariableNode
+                      name: "posPickOnBuffer"
+                      description: ""
+                      default_value: 0
+                    - !!NumericalVariableNode
+                      name: "posPlaceFromBufferToPallet"
+                      description: ""
+                      default_value: 0
+                    - !!StringVariableNode
+                      name: "opcuaParentNode"
+                      description: ""
+                      default_value: 'ns=3;s="OPC_UA_MOVE_AND_PLACE_DB"'
+                  returns:
+                    - !!BooleanVariableNode
+                      name: "result"
+                      description: ""
+                      default_value: True
+                    - !!NumericalVariableNode
+                      name: "errorCode"
+                      description: ""
+                      default_value: 0
+            - !!FolderNode
+              name: "OPC_UA_MOVE_OVER_PALLET_DB"
+              remote_resource_spec:
+                !!OpcuaRemoteResourceSpec
+                node_id: ns=3;s="OPC_UA_MOVE_OVER_PALLET_DB"
+              description: ""
+              children:
+                - !!AsyncMethodNode
+                  name: "Method"
+                  connector_name: "OpcuaConnector4"
+                  remote_resource_spec:
+                    !!OpcuaRemoteResourceSpec
+                    node_id: ns=3;s="OPC_UA_MOVE_OVER_PALLET_DB".Method
+                  description: ""
+                  parameters:
+                    - !!NumericalVariableNode
+                      name: "posPick"
+                      description: ""
+                      default_value: 0
+                    - !!NumericalVariableNode
+                      name: "posPlace"
+                      description: ""
+                      default_value: 0
+                    - !!StringVariableNode
+                      name: "opcuaParentNode"
+                      description: ""
+                      default_value: 'ns=3;s="OPC_UA_MOVE_OVER_PALLET_DB"'
+                  returns:
+                    - !!BooleanVariableNode
+                      name: "result"
+                      description: ""
+                      default_value: True
+                    - !!NumericalVariableNode
+                      name: "errorCode"
+                      description: ""
+                      default_value: 0
+            - !!FolderNode
+              name: "OPC_UA_PICK_FROM_PALLET_DB"
+              remote_resource_spec:
+                !!OpcuaRemoteResourceSpec
+                node_id: ns=3;s="OPC_UA_PICK_FROM_PALLET_DB"
+              description: ""
+              children:
+                - !!AsyncMethodNode
+                  name: "Method"
+                  remote_resource_spec:
+                    !!OpcuaRemoteResourceSpec
+                    node_id: ns=3;s="OPC_UA_PICK_FROM_PALLET_DB".Method
+                  description: ""
+                  parameters:
+                    - !!NumericalVariableNode
+                      name: "posPick"
+                      description: ""
+                      measure_unit: "NoneMeasureUnits.NONE"
+                      default_value: 0
+                    - !!NumericalVariableNode
+                      name: "itemShape"
+                      description: ""
+                      measure_unit: "NoneMeasureUnits.NONE"
+                      default_value: 0
+                    - !!StringVariableNode
+                      name: "opcuaParentNode"
+                      description: ""
+                      default_value: 'ns=3;s="OPC_UA_PICK_FROM_PALLET_DB"'
+                  returns:
+                    - !!BooleanVariableNode
+                      name: "result"
+                      description: ""
+                      default_value: True
+                    - !!NumericalVariableNode
+                      name: "palletPosition"
+                      description: ""
+                      default_value: 0
+                    - !!NumericalVariableNode
+                      name: "errorCode"
+                      description: ""
+                      default_value: 0
+            - !!FolderNode
+              name: "OPC_UA_PLACE_TO_PALLET_DB"
+              remote_resource_spec:
+                !!OpcuaRemoteResourceSpec
+                node_id: ns=3;s="OPC_UA_PLACE_TO_PALLET_DB"
+              description: ""
+              children:
+                - !!AsyncMethodNode
+                  name: "Method"
+                  connector_name: "OpcuaConnector4"
+                  remote_resource_spec:
+                    !!OpcuaRemoteResourceSpec
+                    node_id: ns=3;s="OPC_UA_PLACE_TO_PALLET_DB".Method
+                  description: ""
+                  parameters:
+                    - !!NumericalVariableNode
+                      name: "posPickOnBuffer"
+                      description: ""
+                      default_value: 0
+                    - !!NumericalVariableNode
+                      name: "posPlaceOnPallet"
+                      description: ""
+                      default_value: 0
+                    - !!StringVariableNode
+                      name: "opcuaParentNode"
+                      description: ""
+                      default_value: 'ns=3;s="OPC_UA_PLACE_TO_PALLET_DB"'
+                  returns:
+                    - !!BooleanVariableNode
+                      name: "result"
+                      description: ""
+                      default_value: True
+                    - !!NumericalVariableNode
+                      name: "errorCode"
+                      description: ""
+                      default_value: 0
+        - !!FolderNode
+          name: "DataBlocksGlobal"
+          connector_name: "OpcuaConnector4"
+          remote_resource_spec:
+            !!OpcuaRemoteResourceSpec
+            node_id: ns=3;s="DataBlocksGlobal"
+          description: "DataBlocksGlobal"
+          children:
+            - !!FolderNode 
+              name: "DB_ROBOTS"
+              remote_resource_spec:
+                !!OpcuaRemoteResourceSpec
+                node_id: ns=3;s="DB_ROBOTS"
+              description: "DB_ROBOTS"
+              children:
+                - !!BooleanVariableNode
+                  name: "plcOperationRunning"
+                  remote_resource_spec:
+                    !!OpcuaRemoteResourceSpec
+                    node_id: ns=3;s="DB_ROBOTS"."plcOperationRunning"
+                  description: ice_data_cell4_control
+                  initial_value: False
+                - !!BooleanVariableNode
+                  name: "plcOperationDone"
+                  remote_resource_spec:
+                    !!OpcuaRemoteResourceSpec
+                    node_id: ns=3;s="DB_ROBOTS"."plcOperationDone"
+                  description: ice_data_cell4_control
+                  initial_value: False
+                - !!BooleanVariableNode
+                  name: "plcOperationError"
+                  remote_resource_spec:
+                    !!OpcuaRemoteResourceSpec
+                    node_id: ns=3;s="DB_ROBOTS"."plcOperationError"
+                  description: ice_data_cell4_control
+                  initial_value: False
+           

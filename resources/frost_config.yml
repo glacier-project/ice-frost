@@ -1,73 +1,73 @@
 time_precision: MSECS
-logging_level: INFO
+logging_level: WARNING
 reactors:
-  iceproxy:
-    logging_level: DEBUG
-    parameters:
+  # iceproxy:
+    # logging_level: DEBUG
+    # parameters:
       # kafka_bootstrap_servers: localhost:9093
       # kafka_client_user: username
       # kafka_client_password: password
       # kafka_security_protocol: SASL_PLAINTEXT
       # kafka_sasl_mechanism: SCRAM-SHA-512
   frost_bus:
-    logging_level: WARNING
+    logging_level: INFO
     parameters:
       data_model_path: "resources/data_model/frost_bus.yml"
     reactors:
       message_filter:
         logging_level: WARNING
   conveyor:
-    logging_level: INFO
+    logging_level: WARNING
     parameters:
-      data_model_path: "resources/data_model/conveyor.yml"
-    reactors:
-      message_filter:
-        logging_level: INFO
-      conveyor_belt:
-        logging_level: INFO
-        reactors:
-          controller:
-            logging_level: INFO
-          Segment_1:
-            logging_level: INFO
-            parameters:
-              segment_time: 12700
-          Segment_2:
-            logging_level: INFO
-            parameters:
-              segment_time: 20200            
-          Segment_3:
-            logging_level: INFO
-            parameters:
-              segment_time: 13250
-          Segment_4:
-            logging_level: INFO
-            parameters:
-              segment_time: 4800
-          Segment_5:
-            logging_level: INFO
-            parameters:
-              segment_time: 6900
-          Segment_6:
-            logging_level: INFO
-            parameters:
-              segment_time: 14500
-          Segment_7:
-            logging_level: INFO
-            parameters:
-              segment_time: 20200
-          Segment_8:
-            logging_level: INFO
-            parameters:
-              segment_time: 12700
-          EM:
-            logging_level: INFO
-            parameters:
-              mutex_time: 2500
-          HB: 
-            logging_level: INFO
-            parameters:
-              interchange_time: 4800 
+      data_model_path: "resources/data_model/opcua-conveyor.yml"
+    #reactors:
+    #  message_filter:
+    #    logging_level: WARNING
+    #  conveyor_belt:
+    #    logging_level: WARNING
+    #    reactors:
+    #      controller:
+    #        logging_level: WARNING
+    #      Segment_1:
+    #        logging_level: WARNING
+    #        parameters:
+    #          segment_time: 12700
+    #      Segment_2:
+          #   logging_level: WARNING
+          #   parameters:
+          #     segment_time: 20200            
+          # Segment_3:
+          #   logging_level: WARNING
+          #   parameters:
+          #     segment_time: 13250
+          # Segment_4:
+          #   logging_level: WARNING
+          #   parameters:
+          #     segment_time: 4800
+          # Segment_5:
+          #   logging_level: WARNING
+          #   parameters:
+          #     segment_time: 6900
+          # Segment_6:
+          #   logging_level: WARNING
+          #   parameters:
+          #     segment_time: 14500
+          # Segment_7:
+          #   logging_level: WARNING
+          #   parameters:
+          #     segment_time: 20200
+          # Segment_8:
+          #   logging_level: WARNING
+          #   parameters:
+          #     segment_time: 12700
+          # EM:
+          #   logging_level: WARNING
+          #   parameters:
+          #     mutex_time: 2500
+          # HB: 
+          #   logging_level: WARNING
+          #   parameters:
+          #     interchange_time: 4800 
   # scheduler:
   #   logging_level: WARNING
   #   parameters:
@@ -89,19 +89,19 @@ reactors:
         RESERVE: /Scheduler/RESERVE
         PUT_BACK: /Scheduler/PUT_BACK
   cell5:
-    logging_level: INFO
+    logging_level: WARNING
     parameters:
-      data_model_path: "resources/data_model/cell5.yml"
+      data_model_path: "resources/data_model/opcua-cell5.yml"
       path: "src/fmu/QualityCell.fmu"
       time_step: 1000
-    reactors:
-      message_filter:
-        logging_level: WARNING
+    # reactors:
+    #   message_filter:
+    #     logging_level: WARNING
   cell4:
-    logging_level: INFO
+    logging_level: DEBUG
     parameters:
-      data_model_path: "resources/data_model/Cell4.yml"
-    reactors:
-      message_filter:
-        logging_level: WARNING
+      data_model_path: "resources/data_model/opcua-cell4.yml"
+    # reactors:
+    #   message_filter:
+    #     logging_level: WARNING
   

@@ -59,7 +59,7 @@ reactor Cell5 extends FrostMachine, FMUWrapper{
         self.fmu.setInt32([self.vrs_shape1, self.vrs_shape2, self.vrs_shape3], [shape1, shape2, shape3])
         self.fmu.setInt32([self.vrs_pallet1, self.vrs_pallet2, self.vrs_pallet3], [pallet_content1, pallet_content2, pallet_content3])
         self.busy.value = True
-        self.logger.info(f"Checking LEGO shapes: {shape1}, {shape2}, {shape3} with pallet contents: {pallet_content1}, {pallet_content2}, {pallet_content3}")
+        self.logger.warning(f"Checking LEGO shapes: {shape1}, {shape2}, {shape3} with pallet contents: {pallet_content1}, {pallet_content2}, {pallet_content3}")
         return True
     =}
 
@@ -68,7 +68,7 @@ reactor Cell5 extends FrostMachine, FMUWrapper{
         if self.fmu == None:
             return 0
         self.simulate(None)
-        self.logger.info(f"values: input={self.fmu.getString([self.vrs_input])}, output={self.fmu.getString([self.vrs_result])}")
+        self.logger.debug(f"values: input={self.fmu.getString([self.vrs_input])}, output={self.fmu.getString([self.vrs_result])}")
         if self.busy.value:
             if do_step.value == "success":               
                 self.result.value = True
@@ -93,8 +93,8 @@ reactor Cell5 extends FrostMachine, FMUWrapper{
         # Initialize data model nodes
         self.check_quality_covers = self.data_model.get_node("Cell5/Methods/CheckQualityCovers")
         self.check_quality_lego = self.data_model.get_node("Cell5/Methods/CheckQualityLego")
-        self.check_color_node = self.data_model.get_node("Cell5/Utils/check_color")
-        self.check_shape_node = self.data_model.get_node("Cell5/Utils/check_shape")
+        self.check_color_node = self.data_model.get_node("Cell5/Utils/CheckQualityCovers")
+        self.check_shape_node = self.data_model.get_node("Cell5/Utils/CheckQualityLego")
         self.num_gadget_checks = self.data_model.get_node("Cell5/Statistics/ChecksGadget")
         self.num_lego_checks = self.data_model.get_node("Cell5/Statistics/ChecksLego")
         self.num_total_checks = self.data_model.get_node("Cell5/Statistics/ChecksTotal")
@@ -102,13 +102,13 @@ reactor Cell5 extends FrostMachine, FMUWrapper{
         self.num_lego_failures = self.data_model.get_node("Cell5/Statistics/FaultsLego")
         self.num_total_failures = self.data_model.get_node("Cell5/Statistics/FaultsTotal")
         self.last_result = self.data_model.get_node("Cell5/Status/LastResult")
-        self.busy = self.data_model.get_node("Cell5/results/busy")
+        self.busy = self.data_model.get_node("Cell5/Status/Busy")
         self.result_ready = self.data_model.get_node("Cell5/results/result_ready")
         self.result = self.data_model.get_node("Cell5/results/result")
         
         # Set callbacks
         self.check_color_node.callback = self.check_color
-        self.check_shape_node.callback = self.check_shape
+        self.check_quality_lego.callback = self.check_shape
         
         # Value References
         self.vrs_result = [v.valueReference for v in self.model_description.modelVariables if v.name == "result"][0]

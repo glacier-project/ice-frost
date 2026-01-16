@@ -13,7 +13,19 @@ out <- reservationId
 
 ```python
 reservationId -> in
-Pallet = conveyor.call_resrved_pallet(reservationId,  dest = Cell4)
+istr 0: Tray = {target: Warehosue, node: extract}
+
+istr 1: Tray == 10:
+            istr 0
+
+istr 2: Tray == 1:
+        istr 3
+        else
+        istr 1
+
+istr 3: Mobile Robot ....           
+
+conveyor.call_resrved_pallet(reservationId,  dest = Cell4)
 Wait conveyor.variable( = Cell4) == Pallet
 shape1 = conveyor.read(${Pallet}.content_2)
 bufferPos = cell4.pick_part_on_pallet(pos=2)
