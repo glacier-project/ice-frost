@@ -150,8 +150,6 @@ reactor MetaConveyor extends FrostMachine{
         self.call_free_pallet_of_type_to = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/CallFreePalletOfTypeTo")
         self.call_free_pallet_of_type_to.callback = self._call_free_pallet_of_type_to
 
-{=set_post_update_value_callback does not work, the machine data model needs to be updated =}
-
         # Subscribe to FIFOs and destinations
         for segment, pallet_position in [
             (self.segment_1, PalletPosition.S1),
