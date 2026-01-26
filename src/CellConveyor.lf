@@ -15,13 +15,14 @@ reactor CellConveyor extends MetaConveyor{
     conveyor = new Conveyor(name = {=self.name + ".conveyor_belt"=})
 
     reaction (startup){= 
+        self.init_data_model_nodes()
+
         self.callFreePalletTo.callback = self.free_pallet_to
         self.callFreePalletToWithReservation.callback = self.reserve_pallet_to
         self.callFreePalletOfTypeTo.callback = self.free_pallet_of_type_to
         self.callFreePalletOfTypeToWithReservation.callback = self.free_pallet_of_type_to_with_reservation
         self.reservePallet.callback = self.reserve_pallet
         self.getReservedPallet.callback = self.get_reserved_pallet
-
     =}
 
     state model_pallets
@@ -208,16 +209,16 @@ reactor CellConveyor extends MetaConveyor{
         """
         temp = segment.get_property(self.FIFO)
         ls = []
-        # TODO: What is the meaning of value[0]?
+
         if value[0] > 0:
-            for i in range(0, 9):                
+            for i in range(0, 10):                
                 if temp.get_property(self.item.format(n=i)).value == 0:
                     temp.get_property(self.item.format(n=i)).value = value[1]
                     ls.append(temp.get_property(self.item.format(n=i)).value)
                     break       
                 ls.append(temp.get_property(self.item.format(n=i)).value)  
         else:
-            for i in range(0, 8):
+            for i in range(0, 9):
                 temp.get_property(self.item.format(n=i)).value = temp.get_property(self.item.format(n=i+1)).value
                 ls.append(temp.get_property(self.item.format(n=i)).value)                
             temp.get_property(self.item.format(n=9)).value = 0

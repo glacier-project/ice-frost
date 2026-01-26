@@ -101,6 +101,7 @@ reactor Controller extends FrostBase{
     =}
     reaction (startup)-> to_switches, to_bayes, create_pallet, create_pallet_event{=
         self.belt_status = {SwitchName.A.value: True, SwitchName.B.value: True, SwitchName.C.value: True, SwitchName.D.value: True, SwitchName.E.value: True, SwitchName.F.value: True, BayName.LU.value: True, SwitchName.H.value: True, SwitchName.I.value: True, SwitchName.L.value: True, SwitchName.M.value: True}
+        
         self.pallets_to_be_created.append([SegmentName.Segment_1, 1])
         self.pallets_to_be_created.append([SegmentName.Segment_2, 2])
         self.pallets_to_be_created.append([SegmentName.Segment_3, 3])

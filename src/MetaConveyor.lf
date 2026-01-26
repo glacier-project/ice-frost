@@ -80,10 +80,11 @@ reactor MetaConveyor extends FrostMachine{
     state reservationIds
 
     // Metrics
-    state metric 
-    state pallet_metric = {= PalletDistanceMetric() =}
+    state pallet_metric
+    // state _paction_update_segment
+    // physical action update_segment
 
-    reaction(startup){=
+    method init_data_model_nodes() {=
         self.reservationIds = [0]
         """Initialize the Conveyor reactor."""
         self.pallet_1 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet1)
@@ -102,7 +103,7 @@ reactor MetaConveyor extends FrostMachine{
         self.bay4 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay4)
         self.bay5 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay5)      
         pallets_in_bay = {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None, 8: None, 9: None, 10: None}
-        self.pallets = self.data_model.get_node(self.conveyor_obj + self.Pallets[:-1])      
+   
         self.segment_1 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment1)    
         self.segment_2 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment2)
         self.segment_3 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment3)
@@ -147,6 +148,9 @@ reactor MetaConveyor extends FrostMachine{
 
         self.reserveFreePalletofType2.callback = self.call_reserveFreePalletOfType2
 
+        # Initialize pallet metric
+        self.pallet_metric = _get_pallet_metric(self.pallet_metric)
+
         self.call_free_pallet_of_type_to = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/CallFreePalletOfTypeTo")
         self.call_free_pallet_of_type_to.callback = self._call_free_pallet_of_type_to
 
@@ -161,8 +165,12 @@ reactor MetaConveyor extends FrostMachine{
             (self.segment_7, PalletPosition.S7),
             (self.segment_8, PalletPosition.S8),
         ]:
-            fifo_size = segment["FIFO"]["size"]
-            fifo_size.set_post_update_value_callback(lambda prev_value, new_value, pos=pallet_position, seg=segment: self._update_segment(pos, seg, new_value, prev_value))
+            for i in range(10):
+                item_node = segment["FIFO"][f"item{i}"]
+                item_callback = lambda subscription, node, value, pos=pallet_position: self.update_pallet_position(value, pos)
+                item_subscription = DataChangeSubscription(f"{item_node.name}_subscription", subscription_callback=item_callback)
+                result = item_node.subscribe(item_subscription)
+                self.logger.error(f"Subscribed to FIFO item node {item_node.name} with result: {result}")
 
         for destination_node, pallet_position in [
             (self.n_destination_1_1, PalletPosition.SPEA_1),
@@ -177,23 +185,19 @@ reactor MetaConveyor extends FrostMachine{
             (self.n_destination_4_3, PalletPosition.MILL_3),
             (self.n_destination_5,   PalletPosition.WH),
         ]:
-            destination_node.set_post_update_value_callback(lambda prev_value, new_value, pos=pallet_position: self._update_pallet_position(new_value, pos))        
+            destination_callback = lambda subscription, node, value, pos=pallet_position: self.update_pallet_position(value, pos)
+            destination_subscription = DataChangeSubscription(f"{destination_node.name}_subscription", subscription_callback=destination_callback)
+            result = destination_node.subscribe(destination_subscription)
+            self.logger.error(f"Subscribed to destination node {destination_node.name} with result: {result}")    
     =}
 
-    method _update_pallet_position(pallet_id, pallet_position){=
+    method update_pallet_position(pallet_id, pallet_position){=
+        if pallet_id <= 0:
+            return 
+        
         timestamp = self._get_current_logical_time_ms()
-        self.logger.debug(f"Updating pallet position for pallet {pallet_id} to position {pallet_position} at time {timestamp}")
+        self.logger.info(f"Updating pallet position for pallet {pallet_id} to position {pallet_position} at time {timestamp}")
         self.pallet_metric.set_pallet_position(pallet_id, pallet_position, timestamp)
-        return True
-    =}
-
-    method _update_segment(pallet_position, segment, fifo_size, prev_fifo_size){=
-
-        for i in range(fifo_size):
-            pallet_id = segment["FIFO"][f"item{i}"].value
-            self._update_pallet_position(pallet_id, pallet_position)
-
-        return True
     =}
 
     method _get_pallets_for(destination){=
@@ -213,14 +217,12 @@ reactor MetaConveyor extends FrostMachine{
 
     method _call_free_pallet_of_type_to(contentPos1, contentPos2, contentPos3, palletType, destination){=
 
-        if self.metric == "DistanceMetric":
-            pallets = self._get_pallets_for(destination)
-        else:
-            pallets = [i for i in range(1, 11)]
+        pallets = self._get_pallets_for(destination)
         self.logger.error(f"Pallets sorted by distance to {destination}: {pallets}")
 
         for pallet_id in pallets:
             pallet = self.pallets[pallet_id - 1]
+
             if pallet["reserved"].value:
                 self.logger.info(f"Pallet {pallet} is reserved")
                 continue
@@ -301,6 +303,10 @@ reactor MetaConveyor extends FrostMachine{
                 return int(pallet.name[-1])
 
         raise ValueError("No pallet found for the given reservation ID")
+    =}
+
+    reaction(shutdown){=
+        self.pallet_metric.close_log_file()
     =}
 
 }
