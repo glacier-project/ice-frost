@@ -81,8 +81,7 @@ reactor MetaConveyor extends FrostMachine{
 
     // Metrics
     state pallet_metric
-    // state _paction_update_segment
-    // physical action update_segment
+    state conveyor_graph
 
     method init_data_model_nodes() {=
         self.reservationIds = [0]
@@ -149,7 +148,7 @@ reactor MetaConveyor extends FrostMachine{
         self.reserveFreePalletofType2.callback = self.call_reserveFreePalletOfType2
 
         # Initialize pallet metric
-        self.pallet_metric = _get_pallet_metric(self.pallet_metric)
+        self.pallet_metric = _get_pallet_metric(self.pallet_metric, self.conveyor_graph)
 
         self.call_free_pallet_of_type_to = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/CallFreePalletOfTypeTo")
         self.call_free_pallet_of_type_to.callback = self._call_free_pallet_of_type_to
@@ -170,7 +169,7 @@ reactor MetaConveyor extends FrostMachine{
                 item_callback = lambda subscription, node, value, pos=pallet_position: self.update_pallet_position(value, pos)
                 item_subscription = DataChangeSubscription(f"{item_node.name}_subscription", subscription_callback=item_callback)
                 result = item_node.subscribe(item_subscription)
-                self.logger.error(f"Subscribed to FIFO item node {item_node.name} with result: {result}")
+                self.logger.debug(f"Subscribed to FIFO item node {item_node.name} with result: {result}")
 
         for destination_node, pallet_position in [
             (self.n_destination_1_1, PalletPosition.SPEA_1),
@@ -188,7 +187,7 @@ reactor MetaConveyor extends FrostMachine{
             destination_callback = lambda subscription, node, value, pos=pallet_position: self.update_pallet_position(value, pos)
             destination_subscription = DataChangeSubscription(f"{destination_node.name}_subscription", subscription_callback=destination_callback)
             result = destination_node.subscribe(destination_subscription)
-            self.logger.error(f"Subscribed to destination node {destination_node.name} with result: {result}")    
+            self.logger.debug(f"Subscribed to destination node {destination_node.name} with result: {result}")    
     =}
 
     method update_pallet_position(pallet_id, pallet_position){=
@@ -203,7 +202,7 @@ reactor MetaConveyor extends FrostMachine{
     method _get_pallets_for(destination){=
         conveyor_pos = get_conveyor_position(destination)
 
-        return self.pallet_metric.get_pallets_sorted_by_distance_to(conveyor_pos, timestamp=self._get_current_logical_time_ms())
+        return self.pallet_metric.get_pallets_to(conveyor_pos, timestamp=self._get_current_logical_time_ms())
     =}
 
     method _content_matches(palletContent, targetContent){=
@@ -218,7 +217,7 @@ reactor MetaConveyor extends FrostMachine{
     method _call_free_pallet_of_type_to(contentPos1, contentPos2, contentPos3, palletType, destination){=
 
         pallets = self._get_pallets_for(destination)
-        self.logger.error(f"Pallets sorted by distance to {destination}: {pallets}")
+        self.logger.info(f"Pallets sorted by distance to {destination}: {pallets}")
 
         for pallet_id in pallets:
             pallet = self.pallets[pallet_id - 1]
