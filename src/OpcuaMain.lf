@@ -1,6 +1,4 @@
 target Python{
-    #fast: True,
-    #timeout: 3600s,
     files: [
         "../frost/src/python_lib/frost.py",
         "../frost/src/python_lib/l_formatter.py",
@@ -59,7 +57,6 @@ logging.getLogger("asyncua").setLevel("ERROR")
 
 
 main reactor {
-    //conveyor = new OpcuaConveyor(name="conveyor", _update_step= 1 msec)
     conveyor = new OpcuaVirtualConveyor(name="conveyor", _update_step= 1 msec)
     scheduler = new FrostScheduler(name="scheduler")
     bus = new FrostBus(name="frost_bus", width = 2)

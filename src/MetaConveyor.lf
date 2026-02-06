@@ -173,15 +173,15 @@ reactor MetaConveyor extends FrostMachine{
 
         for destination_node, pallet_position in [
             (self.n_destination_1_1, PalletPosition.SPEA_1),
-            (self.n_destination_2_1, PalletPosition.QC_1),
-            (self.n_destination_2_2, PalletPosition.QC_2),
-            (self.n_destination_2_3, PalletPosition.QC_3),
+            (self.n_destination_2_1, PalletPosition.MILL_1),
+            (self.n_destination_2_2, PalletPosition.MILL_2),
+            (self.n_destination_2_3, PalletPosition.MILL_3),
             (self.n_destination_3_1, PalletPosition.RBTC_1),
             (self.n_destination_3_2, PalletPosition.RBTC_2),
             (self.n_destination_3_3, PalletPosition.RBTC_3),
-            (self.n_destination_4_1, PalletPosition.MILL_1),
-            (self.n_destination_4_2, PalletPosition.MILL_2),
-            (self.n_destination_4_3, PalletPosition.MILL_3),
+            (self.n_destination_4_1, PalletPosition.QC_1),
+            (self.n_destination_4_2, PalletPosition.QC_2),
+            (self.n_destination_4_3, PalletPosition.QC_3),
             (self.n_destination_5,   PalletPosition.WH),
         ]:
             destination_callback = lambda subscription, node, value, pos=pallet_position: self.update_pallet_position(value, pos)
