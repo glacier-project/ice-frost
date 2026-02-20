@@ -464,7 +464,8 @@ reactor Controller extends FrostBase{
         
         if event == Events.pallet_arrived:
             if self.pallet_destinations[pallet_id] != bay:
-                raise Exception(f"Controller error: pallet {pallet_id} has no destination")
+                status[InterchangeInputs.BAY] = pallet_id
+                self.actions[pallet_id] = calculate_next_action(bay, self.pallet_destinations[pallet_id], bay_status, pallet_id)
             bay_status[0] = pallet_id  
         elif event == Events.pallet_released:
             bay_status[0] = 0
