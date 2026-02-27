@@ -22,11 +22,11 @@ reactor Bay extends FrostBase{
     Plat2 = new BaySwitch(name = {= self.plat2_name =})
     Plat3 = new BaySwitch(name = {= self.plat3_name =})
 
-    Plat1.to_forward -> Plat2.from_back after 2 sec
-    Plat2.to_forward -> Plat3.from_back after 2 sec
-    Plat3.to_back -> Plat2.from_forward after 2 sec
-    Plat2.to_back -> Plat1.from_forward after 2 sec
-    Plat1.to_back -> to_belt after 2 sec
+    Plat1.to_forward -> Plat2.from_back after 0
+    Plat2.to_forward -> Plat3.from_back after 0
+    Plat3.to_back -> Plat2.from_forward after 0
+    Plat2.to_back -> Plat1.from_forward after 0
+    Plat1.to_back -> to_belt after 0
 
     input controller_command
     output ask_to_controller

@@ -34,6 +34,7 @@ root:
                   remote_resource_spec:
                     !!OpcuaRemoteResourceSpec
                     node_id: ns=3;s="OPC_UA_MOVE_AND_PLACE_DB".Method
+                    parent_node_id: ns=3;s="OPC_UA_MOVE_AND_PLACE_DB"
                   description: ""
                   parameters:
                     - !!NumericalVariableNode
@@ -52,10 +53,6 @@ root:
                       name: "posPlaceFromBufferToPallet"
                       description: ""
                       default_value: 0
-                    - !!StringVariableNode
-                      name: "opcuaParentNode"
-                      description: ""
-                      default_value: 'ns=3;s="OPC_UA_MOVE_AND_PLACE_DB"'
                   returns:
                     - !!BooleanVariableNode
                       name: "result"
@@ -78,6 +75,7 @@ root:
                   remote_resource_spec:
                     !!OpcuaRemoteResourceSpec
                     node_id: ns=3;s="OPC_UA_MOVE_OVER_PALLET_DB".Method
+                    parent_node_id: ns=3;s="OPC_UA_MOVE_OVER_PALLET_DB"
                   description: ""
                   parameters:
                     - !!NumericalVariableNode
@@ -88,10 +86,6 @@ root:
                       name: "posPlace"
                       description: ""
                       default_value: 0
-                    - !!StringVariableNode
-                      name: "opcuaParentNode"
-                      description: ""
-                      default_value: 'ns=3;s="OPC_UA_MOVE_OVER_PALLET_DB"'
                   returns:
                     - !!BooleanVariableNode
                       name: "result"
@@ -113,6 +107,7 @@ root:
                   remote_resource_spec:
                     !!OpcuaRemoteResourceSpec
                     node_id: ns=3;s="OPC_UA_PICK_FROM_PALLET_DB".Method
+                    parent_node_id: ns=3;s="OPC_UA_PICK_FROM_PALLET_DB"
                   description: ""
                   parameters:
                     - !!NumericalVariableNode
@@ -125,10 +120,6 @@ root:
                       description: ""
                       measure_unit: "NoneMeasureUnits.NONE"
                       default_value: 0
-                    - !!StringVariableNode
-                      name: "opcuaParentNode"
-                      description: ""
-                      default_value: 'ns=3;s="OPC_UA_PICK_FROM_PALLET_DB"'
                   returns:
                     - !!BooleanVariableNode
                       name: "result"
@@ -155,6 +146,7 @@ root:
                   remote_resource_spec:
                     !!OpcuaRemoteResourceSpec
                     node_id: ns=3;s="OPC_UA_PLACE_TO_PALLET_DB".Method
+                    parent_node_id: ns=3;s="OPC_UA_PLACE_TO_PALLET_DB"
                   description: ""
                   parameters:
                     - !!NumericalVariableNode
@@ -165,10 +157,6 @@ root:
                       name: "posPlaceOnPallet"
                       description: ""
                       default_value: 0
-                    - !!StringVariableNode
-                      name: "opcuaParentNode"
-                      description: ""
-                      default_value: 'ns=3;s="OPC_UA_PLACE_TO_PALLET_DB"'
                   returns:
                     - !!BooleanVariableNode
                       name: "result"

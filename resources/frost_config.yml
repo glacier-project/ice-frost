@@ -19,55 +19,142 @@ reactors:
   conveyor:
     logging_level: WARNING
     parameters:
-      data_model_path: "resources/data_model/opcua-conveyor.yml"
-    #reactors:
-    #  message_filter:
-    #    logging_level: WARNING
-    #  conveyor_belt:
-    #    logging_level: WARNING
-    #    reactors:
-    #      controller:
-    #        logging_level: WARNING
-    #      Segment_1:
-    #        logging_level: WARNING
-    #        parameters:
-    #          segment_time: 12700
-    #      Segment_2:
-          #   logging_level: WARNING
-          #   parameters:
-          #     segment_time: 20200            
-          # Segment_3:
-          #   logging_level: WARNING
-          #   parameters:
-          #     segment_time: 13250
-          # Segment_4:
-          #   logging_level: WARNING
-          #   parameters:
-          #     segment_time: 4800
-          # Segment_5:
-          #   logging_level: WARNING
-          #   parameters:
-          #     segment_time: 6900
-          # Segment_6:
-          #   logging_level: WARNING
-          #   parameters:
-          #     segment_time: 14500
-          # Segment_7:
-          #   logging_level: WARNING
-          #   parameters:
-          #     segment_time: 20200
-          # Segment_8:
-          #   logging_level: WARNING
-          #   parameters:
-          #     segment_time: 12700
-          # EM:
-          #   logging_level: WARNING
-          #   parameters:
-          #     mutex_time: 2500
-          # HB: 
-          #   logging_level: WARNING
-          #   parameters:
-          #     interchange_time: 4800 
+      data_model_path: "resources/data_model/conveyor.yml"
+    reactors:
+     message_filter:
+       logging_level: WARNING
+     conveyor_belt:
+       logging_level: WARNING
+       reactors:
+          controller:
+            logging_level: WARNING
+          Segment_1:
+            logging_level: WARNING
+            parameters:
+              segment_time: 12700
+          Segment_2:
+              logging_level: WARNING
+              parameters:
+                segment_time: 20200            
+          Segment_3:
+            logging_level: WARNING
+            parameters:
+              segment_time: 13250
+          Segment_4:
+            logging_level: WARNING
+            parameters:
+              segment_time: 8691
+          Segment_5:
+            logging_level: WARNING
+            parameters:
+              segment_time: 6900
+          Segment_6:
+            logging_level: WARNING
+            parameters:
+              segment_time: 14500
+          Segment_7:
+            logging_level: WARNING
+            parameters:
+              segment_time: 20200
+          Segment_8:
+            logging_level: WARNING
+            parameters:
+              segment_time: 12700
+          EM:
+            logging_level: WARNING
+            parameters:
+              mutex_time: 2500
+          HB: 
+            logging_level: WARNING
+            parameters:
+              interchange_time: 4800           
+          Bay2:
+            logging_level: WARNING
+            reactors:      
+              "1":
+                logging_level: WARNING
+                parameters:
+                  forward_time: 2077
+                  backward_time: 1272
+              "2":
+                logging_level: WARNING
+                parameters:
+                  forward_time: 4857
+                  backward_time: 1766
+              "3":
+                logging_level: WARNING
+                parameters:
+                  forward_time: 2000
+                  backward_time: 4413
+          Bay3:
+            logging_level: WARNING
+            reactors:      
+              "1":
+                logging_level: WARNING
+                parameters:
+                  forward_time: 3779
+                  backward_time: 2833
+              "2":
+                logging_level: WARNING
+                parameters:
+                  forward_time: 2173
+                  backward_time: 3925
+              "3":
+                logging_level: WARNING
+                parameters:
+                  forward_time: 2000
+                  backward_time: 2061
+          Bay4:
+            logging_level: WARNING
+            reactors:    
+              "1":
+                logging_level: WARNING
+                parameters:
+                  forward_time: 2603
+                  backward_time: 1585
+              "2":
+                logging_level: WARNING
+                parameters:
+                  forward_time: 4292
+                  backward_time: 2809
+              "3":
+                logging_level: WARNING
+                parameters:
+                  forward_time: 2000
+                  backward_time: 3492
+          LoadUnloadZone:
+            logging_level: WARNING
+          # Additional conveyor components
+          H:
+            logging_level: WARNING
+          IC:
+            logging_level: WARNING  
+          A:
+            logging_level: WARNING
+          B:
+            logging_level: WARNING
+          C:
+            logging_level: WARNING
+          D:
+            logging_level: WARNING
+          E:
+            logging_level: WARNING
+          F:
+            logging_level: WARNING
+          FA:
+            logging_level: WARNING
+          I:
+            logging_level: WARNING
+          L:
+            logging_level: WARNING
+          M:
+            logging_level: WARNING
+          LD:
+            logging_level: WARNING
+          Bay1_1:
+            logging_level: WARNING
+           
+          
   # scheduler:
   #   logging_level: WARNING
   #   parameters:
@@ -77,7 +164,7 @@ reactors:
   #     message_filter:
   #       logging_level: WARNING
   scheduler:
-    logging_level: DEBUG
+    logging_level: WARNING
     parameters:
       data_model_path: "resources/scheduler_tasks/demo-lego-scheduler.yml"
       scheduling_instance: "resources/schedules/simulation-lego-demo.json"
@@ -88,20 +175,23 @@ reactors:
         DISASSEMBLE: /Scheduler/DISASSEMBLE
         RESERVE: /Scheduler/RESERVE
         PUT_BACK: /Scheduler/PUT_BACK
+    reactors:
+      message_filter:
+        logging_level: WARNING
   cell5:
     logging_level: WARNING
     parameters:
-      data_model_path: "resources/data_model/opcua-cell5.yml"
+      data_model_path: "resources/data_model/cell5.yml"
       path: "src/fmu/QualityCell.fmu"
       time_step: 1000
-    # reactors:
-    #   message_filter:
-    #     logging_level: WARNING
+    reactors:
+      message_filter:
+        logging_level: WARNING
   cell4:
-    logging_level: DEBUG
+    logging_level: WARNING
     parameters:
-      data_model_path: "resources/data_model/opcua-cell4.yml"
-    # reactors:
-    #   message_filter:
-    #     logging_level: WARNING
+      data_model_path: "resources/data_model/Cell4.yml"
+    reactors:
+      message_filter:
+        logging_level: WARNING
   

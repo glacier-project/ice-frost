@@ -1,5 +1,7 @@
 target Python{
-    files: [Conveyor/conveyor_utils.py]
+    files: [
+        "Conveyor/conveyor_utils.py",
+    ]
 }
 
 import FrostMachine from "../frost/src/lib/FrostMachine.lf"
@@ -125,9 +127,9 @@ reactor MetaConveyor extends FrostMachine{
         self.n_destination_5 = self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_5)
 
         # Methods
-        self.setPalletDestination = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination")
-        self.reserveFreePalletofType2 = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/reservePalletOfType2")
-        self.getReservedPallet = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/getReservedPallet")
+        self.setPalletDestination = self.data_model.get_node(self.conveyor_data_exchange + "Commands/ConveyorCommandsPointer/setPalletDestination")
+        self.reserveFreePalletofType2 = self.data_model.get_node(self.conveyor_data_exchange + "Commands/UtilityMethods/reservePalletOfType2")
+        self.getReservedPallet = self.data_model.get_node(self.conveyor_data_exchange + "Commands/UtilityMethods/getReservedPallet")
         self.dynamic_node = self.data_model.get_node("Objects/dynamic_node")
         self.zero_node = self.data_model.get_node("Objects/zero_node")
         self.pallets = [self.pallet_1, self.pallet_2, self.pallet_3, self.pallet_4, self.pallet_5, self.pallet_6, self.pallet_7, self.pallet_8, self.pallet_9, self.pallet_10] 
@@ -145,78 +147,80 @@ reactor MetaConveyor extends FrostMachine{
         self.callFreePalletOfTypeToWithReservation = self.data_model.get_node(self.commands_pointer + "callFreePalletOfTypeToWithReservation")
         self.reservePallet = self.data_model.get_node(self.commands_pointer + "reservePallet")
 
-        self.reserveFreePalletofType2.callback = self.call_reserveFreePalletOfType2
+        if self.reserveFreePalletofType2 is not None:
+            self.reserveFreePalletofType2.callback = self.call_reserveFreePalletOfType2
 
-        # Initialize pallet metric
-        self.pallet_metric = _get_pallet_metric(self.pallet_metric, self.conveyor_graph)
+        # Initialize pallet metric - IGNORED
+        # self.pallet_metric = _get_pallet_metric(self.pallet_metric, self.conveyor_graph)
 
-        self.call_free_pallet_of_type_to = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/CallFreePalletOfTypeTo")
-        self.call_free_pallet_of_type_to.callback = self._call_free_pallet_of_type_to
+        self.call_free_pallet_of_type_to = self.data_model.get_node(self.conveyor_data_exchange + "Commands/ConveyorCommandsPointer/CallFreePalletOfTypeTo")
+        if self.call_free_pallet_of_type_to is not None:
+            self.call_free_pallet_of_type_to.callback = self._call_free_pallet_of_type_to
 
-        # Subscribe to FIFOs and destinations
-        for segment, pallet_position in [
-            (self.segment_1, PalletPosition.S1),
-            (self.segment_2, PalletPosition.S2),
-            (self.segment_3, PalletPosition.S3),
-            (self.segment_4, PalletPosition.S4_1),
-            (self.segment_5, PalletPosition.S5),
-            (self.segment_6, PalletPosition.S6),
-            (self.segment_7, PalletPosition.S7),
-            (self.segment_8, PalletPosition.S8),
-        ]:
-            for i in range(10):
-                item_node = segment["FIFO"][f"item{i}"]
-                item_callback = lambda subscription, node, value, pos=pallet_position: self.update_pallet_position(value, pos)
-                item_subscription = DataChangeSubscription(f"{item_node.name}_subscription", subscription_callback=item_callback)
-                result = item_node.subscribe(item_subscription)
-                self.logger.debug(f"Subscribed to FIFO item node {item_node.name} with result: {result}")
+        # # Subscribe to FIFOs and destinations
+        # for segment, pallet_position in [
+        #     (self.segment_1, PalletPosition.S1),
+        #     (self.segment_2, PalletPosition.S2),
+        #     (self.segment_3, PalletPosition.S3),
+        #     (self.segment_4, PalletPosition.S4_1),
+        #     (self.segment_5, PalletPosition.S5),
+        #     (self.segment_6, PalletPosition.S6),
+        #     (self.segment_7, PalletPosition.S7),
+        #     (self.segment_8, PalletPosition.S8),
+        # ]:
+        #     for i in range(10):
+        #         item_node = segment["FIFO"][f"item{i}"]
+        #         item_callback = lambda subscription, node, value, pos=pallet_position: self.update_pallet_position(value, pos)
+        #         item_subscription = DataChangeSubscription(f"{item_node.name}_subscription", subscription_callback=item_callback)
+        #         result = item_node.subscribe(item_subscription)
+        #         self.logger.debug(f"Subscribed to FIFO item node {item_node.name} with result: {result}")
 
-        for destination_node, pallet_position in [
-            (self.n_destination_1_1, PalletPosition.SPEA_1),
-            (self.n_destination_2_1, PalletPosition.MILL_1),
-            (self.n_destination_2_2, PalletPosition.MILL_2),
-            (self.n_destination_2_3, PalletPosition.MILL_3),
-            (self.n_destination_3_1, PalletPosition.RBTC_1),
-            (self.n_destination_3_2, PalletPosition.RBTC_2),
-            (self.n_destination_3_3, PalletPosition.RBTC_3),
-            (self.n_destination_4_1, PalletPosition.QC_1),
-            (self.n_destination_4_2, PalletPosition.QC_2),
-            (self.n_destination_4_3, PalletPosition.QC_3),
-            (self.n_destination_5,   PalletPosition.WH),
-        ]:
-            destination_callback = lambda subscription, node, value, pos=pallet_position: self.update_pallet_position(value, pos)
-            destination_subscription = DataChangeSubscription(f"{destination_node.name}_subscription", subscription_callback=destination_callback)
-            result = destination_node.subscribe(destination_subscription)
-            self.logger.debug(f"Subscribed to destination node {destination_node.name} with result: {result}")    
+        # for destination_node, pallet_position in [
+        #     (self.n_destination_1_1, PalletPosition.SPEA_1),
+        #     (self.n_destination_2_1, PalletPosition.MILL_1),
+        #     (self.n_destination_2_2, PalletPosition.MILL_2),
+        #     (self.n_destination_2_3, PalletPosition.MILL_3),
+        #     (self.n_destination_3_1, PalletPosition.RBTC_1),
+        #     (self.n_destination_3_2, PalletPosition.RBTC_2),
+        #     (self.n_destination_3_3, PalletPosition.RBTC_3),
+        #     (self.n_destination_4_1, PalletPosition.QC_1),
+        #     (self.n_destination_4_2, PalletPosition.QC_2),
+        #     (self.n_destination_4_3, PalletPosition.QC_3),
+        #     (self.n_destination_5,   PalletPosition.WH),
+        # ]:
+        #     destination_callback = lambda subscription, node, value, pos=pallet_position: self.update_pallet_position(value, pos)
+        #     destination_subscription = DataChangeSubscription(f"{destination_node.name}_subscription", subscription_callback=destination_callback)
+        #     result = destination_node.subscribe(destination_subscription)
+        #     self.logger.debug(f"Subscribed to destination node {destination_node.name} with result: {result}")    
     =}
 
-    method update_pallet_position(pallet_id, pallet_position){=
-        if pallet_id <= 0:
-            return 
+    // method update_pallet_position(pallet_id, pallet_position){=
+    //     if pallet_id <= 0:
+    //         return 
         
-        timestamp = self._get_current_logical_time_ms()
-        self.logger.info(f"Updating pallet position for pallet {pallet_id} to position {pallet_position} at time {timestamp}")
-        self.pallet_metric.set_pallet_position(pallet_id, pallet_position, timestamp)
-    =}
+    //     timestamp = self._get_current_logical_time_ms()
+    //     self.logger.info(f"Updating pallet position for pallet {pallet_id} to position {pallet_position} at time {timestamp}")
+    //     self.pallet_metric.set_pallet_position(pallet_id, pallet_position, timestamp)
+    // =}
 
-    method _get_pallets_for(destination){=
-        conveyor_pos = get_conveyor_position(destination)
+    // method _get_pallets_for(destination){=
+    //     conveyor_pos = get_conveyor_position(destination)
 
-        return self.pallet_metric.get_pallets_to(conveyor_pos, timestamp=self._get_current_logical_time_ms())
-    =}
+    //     return self.pallet_metric.get_pallets_to(conveyor_pos, timestamp=self._get_current_logical_time_ms())
+    // =}
 
-    method _content_matches(palletContent, targetContent){=
-        if targetContent == -1:
-            return True
-        elif targetContent == -2:
-            return palletContent != 0
-        else:
-            return palletContent == targetContent
-    =}
+    // method _content_matches(palletContent, targetContent){=
+    //     if targetContent == -1:
+    //         return True
+    //     elif targetContent == -2:
+    //         return palletContent != 0
+    //     else:
+    //         return palletContent == targetContent
+    // =}
 
     method _call_free_pallet_of_type_to(contentPos1, contentPos2, contentPos3, palletType, destination){=
 
-        pallets = self._get_pallets_for(destination)
+        #pallets = self._get_pallets_for(destination)
         self.logger.info(f"Pallets sorted by distance to {destination}: {pallets}")
 
         for pallet_id in pallets:
@@ -304,8 +308,8 @@ reactor MetaConveyor extends FrostMachine{
         raise ValueError("No pallet found for the given reservation ID")
     =}
 
-    reaction(shutdown){=
-        self.pallet_metric.close_log_file()
-    =}
+    // reaction(shutdown){=
+    //     self.pallet_metric.close_log_file()
+    // =}
 
 }
