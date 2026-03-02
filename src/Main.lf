@@ -33,8 +33,6 @@ CONDITIONS_PATH = os.environ.get("CONDITIONS_PATH")
 =}
 
 
-
-
 main reactor{
     preamble{=
         # with open(CONFIG_PATH) as stream:
