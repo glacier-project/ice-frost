@@ -14,6 +14,7 @@ reactor SingleSwitchBay extends FrostBase{
     output ask_to_controller
 
     state pallet = {=None=}
+    state outgoing = False
     logical action delay
     state incoming_time = 2000
     state outgoing_time = 2000
@@ -44,7 +45,7 @@ reactor SingleSwitchBay extends FrostBase{
 
     logical action pending_pallet
     reaction(pending_pallet) -> pending_pallet, ask_to_controller{=
-        if self.pallet == None:
+        if self.pallet == None or self.outgoing:
             return 0
         self.logger.debug(f"Bay Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
         self._set_output_port([Events.pallet_pending, self.pallet.id, self.conveyor_name], ask_to_controller)
@@ -71,18 +72,20 @@ reactor SingleSwitchBay extends FrostBase{
         if not isinstance(action_to_be_performed, BayAction):
             raise Exception(f"Switch {self.conveyor_name} error: unknown command {cmd}")
 
-        if cmd == ControllerCommand.move:               
+        if cmd == ControllerCommand.move: 
+            if self.outgoing:
+                return 0              
             if self.pallet is None:
                 raise Exception(f"Switch {self.conveyor_name} error: no pallet to move")
             
             if action_to_be_performed == BayAction.back:
                 self.logger.debug(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to segment")
                 delay.schedule(MSEC(self.outgoing_time))
+                self.outgoing = True
                 # self._set_output_port(self.pallet, to_belt)
                 # self._set_output_port([Events.pallet_released.value, 0], to_frost)
                 # self._set_output_port([Events.pallet_released, self.pallet.id], ask_to_controller)
 
-                self.pallet = None
             elif action_to_be_performed == BayAction.none:
                 self.logger.debug(f"Switch {self.conveyor_name} keeping pallet {self.pallet.id} in the bay")
                 self._set_output_port([Events.pallet_pending, self.pallet.id], ask_to_controller)
@@ -100,5 +103,8 @@ reactor SingleSwitchBay extends FrostBase{
         self._set_output_port(self.pallet, to_belt)
         self._set_output_port([Events.pallet_released.value, 0], to_frost)
         self._set_output_port([Events.pallet_released, self.pallet.id], ask_to_controller)
+        
+        self.pallet = None
+        self.outgoing = False
     =}
 }
