@@ -1,5 +1,5 @@
 time_precision: MSECS
-logging_level: WARNING
+logging_level: ERROR
 reactors:
   # iceproxy:
     # logging_level: DEBUG
@@ -10,161 +10,161 @@ reactors:
       # kafka_security_protocol: SASL_PLAINTEXT
       # kafka_sasl_mechanism: SCRAM-SHA-512
   frost_bus:
-    logging_level: INFO
+    logging_level: ERROR
     parameters:
       data_model_path: "resources/data_model/frost_bus.yml"
     reactors:
       message_filter:
-        logging_level: WARNING
+        logging_level: ERROR
   conveyor:
-    logging_level: WARNING
+    logging_level: ERROR
     parameters:
       data_model_path: "resources/data_model/conveyor.yml"
     reactors:
      message_filter:
-       logging_level: WARNING
+       logging_level: ERROR
      conveyor_belt:
-       logging_level: WARNING
+       logging_level: ERROR
        reactors:
           controller:
-            logging_level: WARNING
+            logging_level: ERROR
           Segment_1:
-            logging_level: WARNING
+            logging_level: ERROR
             parameters:
               segment_time: 12700
           Segment_2:
-              logging_level: WARNING
+              logging_level: ERROR
               parameters:
                 segment_time: 20200            
           Segment_3:
-            logging_level: WARNING
+            logging_level: ERROR
             parameters:
               segment_time: 13250
           Segment_4:
-            logging_level: WARNING
+            logging_level: ERROR
             parameters:
               segment_time: 8691
           Segment_5:
-            logging_level: WARNING
+            logging_level: ERROR
             parameters:
               segment_time: 6900
           Segment_6:
-            logging_level: WARNING
+            logging_level: ERROR
             parameters:
               segment_time: 14500
           Segment_7:
-            logging_level: WARNING
+            logging_level: ERROR
             parameters:
               segment_time: 20200
           Segment_8:
-            logging_level: WARNING
+            logging_level: ERROR
             parameters:
               segment_time: 12700
           EM:
-            logging_level: WARNING
+            logging_level: ERROR
             parameters:
               mutex_time: 2500
           HB: 
-            logging_level: WARNING
+            logging_level: ERROR
             parameters:
               interchange_time: 4800           
           Bay2:
-            logging_level: WARNING
+            logging_level: ERROR
             reactors:      
               "1":
-                logging_level: WARNING
+                logging_level: ERROR
                 parameters:
                   forward_time: 2077
                   backward_time: 1272
               "2":
-                logging_level: WARNING
+                logging_level: ERROR
                 parameters:
                   forward_time: 4857
                   backward_time: 1766
               "3":
-                logging_level: WARNING
+                logging_level: ERROR
                 parameters:
                   forward_time: 2000
                   backward_time: 4413
           Bay3:
-            logging_level: WARNING
+            logging_level: ERROR
             reactors:      
               "1":
-                logging_level: WARNING
+                logging_level: ERROR
                 parameters:
                   forward_time: 3779
                   backward_time: 2833
               "2":
-                logging_level: WARNING
+                logging_level: ERROR
                 parameters:
                   forward_time: 2173
                   backward_time: 3925
               "3":
-                logging_level: WARNING
+                logging_level: ERROR
                 parameters:
                   forward_time: 2000
                   backward_time: 2061
           Bay4:
-            logging_level: WARNING
+            logging_level: ERROR
             reactors:    
               "1":
-                logging_level: WARNING
+                logging_level: ERROR
                 parameters:
                   forward_time: 2603
                   backward_time: 1585
               "2":
-                logging_level: WARNING
+                logging_level: ERROR
                 parameters:
                   forward_time: 4292
                   backward_time: 2809
               "3":
-                logging_level: WARNING
+                logging_level: ERROR
                 parameters:
                   forward_time: 2000
                   backward_time: 3492
           LoadUnloadZone:
-            logging_level: WARNING
+            logging_level: ERROR
           # Additional conveyor components
           H:
-            logging_level: WARNING
+            logging_level: ERROR
           IC:
-            logging_level: WARNING  
+            logging_level: ERROR  
           A:
-            logging_level: WARNING
+            logging_level: ERROR
           B:
-            logging_level: WARNING
+            logging_level: ERROR
           C:
-            logging_level: WARNING
+            logging_level: ERROR
           D:
-            logging_level: WARNING
+            logging_level: ERROR
           E:
-            logging_level: WARNING
+            logging_level: ERROR
           F:
-            logging_level: WARNING
+            logging_level: ERROR
           FA:
-            logging_level: WARNING
+            logging_level: ERROR
           I:
-            logging_level: WARNING
+            logging_level: ERROR
           L:
-            logging_level: WARNING
+            logging_level: ERROR
           M:
-            logging_level: WARNING
+            logging_level: ERROR
           LD:
-            logging_level: WARNING
+            logging_level: ERROR
           Bay1_1:
-            logging_level: WARNING
+            logging_level: ERROR
            
           
   # scheduler:
-  #   logging_level: WARNING
+  #   logging_level: ERROR
   #   parameters:
   #     recipe_path: "resources/recipes/recipes/conveyor.yaml"
   #     condition_path: "resources/recipes/conditions/conveyor.yaml"
   #   reactors:
   #     message_filter:
-  #       logging_level: WARNING
+  #       logging_level: ERROR
   scheduler:
-    logging_level: WARNING
+    logging_level: ERROR
     parameters:
       data_model_path: "resources/scheduler_tasks/demo-lego-scheduler.yml"
       scheduling_instance: "resources/schedules/simulation-lego-demo.json"
@@ -177,21 +177,21 @@ reactors:
         PUT_BACK: /Scheduler/PUT_BACK
     reactors:
       message_filter:
-        logging_level: WARNING
+        logging_level: ERROR
   cell5:
-    logging_level: WARNING
+    logging_level: ERROR
     parameters:
       data_model_path: "resources/data_model/cell5.yml"
       path: "src/fmu/QualityCell.fmu"
       time_step: 1000
     reactors:
       message_filter:
-        logging_level: WARNING
+        logging_level: ERROR
   cell4:
-    logging_level: WARNING
+    logging_level: ERROR
     parameters:
       data_model_path: "resources/data_model/Cell4.yml"
     reactors:
       message_filter:
-        logging_level: WARNING
+        logging_level: ERROR
   
