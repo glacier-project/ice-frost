@@ -1,5 +1,6 @@
 conveyor_obj = "Objects/ConveyorHMI/ConveyorObjects/"
 conveyor_data_exchange = "Objects/ConveyorHMI/ConveyorDataExchange/"
+UTILITYMETHODS = "Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/"
 Pallets = "Pallets/"
 Bayes = "Bayes/"
 Segments = "Segments/"

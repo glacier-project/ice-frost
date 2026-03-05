@@ -21,7 +21,8 @@ reactor Cell4 extends FrostMachine{
     state abb_pick_board 
     state gadget_assembly 
     
-    timer check_status(0, 10 sec)
+    state finish_job 
+    logical action check_status
 
     state invoked = False
     method call_move_and_place(posPickOnPallet, posPlaceOnPallet, posPickOnBuffer, posPlaceFromBufferToPallet){=
@@ -36,6 +37,7 @@ reactor Cell4 extends FrostMachine{
         self.operation_done.value = False
         self.operation_running.value = True
         self.invoked = True
+        self.finish_job.schedule(SEC(10))
         return (True, 0)
     =}
     method call_submit_operation(programID, robotID, srcAreaId, srcAreaPosX, srcAreaPosY, dstAreaId, dstAreaPosX, dstAreaPosY, argExtra){=
@@ -45,6 +47,7 @@ reactor Cell4 extends FrostMachine{
         self.operation_done.value = False
         self.operation_running.value = True
         self.invoked = True
+        self.finish_job.schedule(SEC(10))
         return (True, 0)
     =}
     method call_move_over_pallet(posPick, posPlace){=
@@ -57,6 +60,7 @@ reactor Cell4 extends FrostMachine{
         self.operation_done.value = False
         self.operation_running.value = True
         self.invoked = True
+        self.finish_job.schedule(SEC(10))
         return (True, 0)
     =}
     method call_pick_from_pallet(posPick, itemShape){=
@@ -77,6 +81,7 @@ reactor Cell4 extends FrostMachine{
                 pos = int(node.name)
                 break
         self.invoked = True
+        self.finish_job.schedule(SEC(10))
         return (True, pos, 0)
     =}
     method call_place_to_pallet(posPickOnBuffer, posPlaceOnPallet){=
@@ -89,30 +94,32 @@ reactor Cell4 extends FrostMachine{
         self.operation_done.value = False
         self.operation_running.value = True
         self.invoked = True
+        self.finish_job.schedule(SEC(10))
         return (True, 0)
     =}
 
-    reaction(startup){=
+    reaction(startup) -> check_status{=
         '''
         Initialize the Cell4 reactor, setting up the initial state and scheduling the first routine.
         It also sends a registration message to the communication channel.
         '''
-        self.operation_running = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationRunning")
-        self.operation_done = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone")
-        self.operation_error = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationError")
-        self.abb_prog_running = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/ABB/programRunning")
-        self.kuka_prog_running = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/KUKA/programRunning")
-        self.abb_positions = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_BUFFER/ABBPositions")
-        self.kuka_positions = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_BUFFER/KUKAPositions")
+        self.finish_job = check_status
+        self.operation_running = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationRunning")
+        self.operation_done = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone")
+        self.operation_error = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationError")
+        self.abb_prog_running = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/ABB/programRunning")
+        self.kuka_prog_running = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/KUKA/programRunning")
+        self.abb_positions = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_BUFFER/ABBPositions")
+        self.kuka_positions = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_BUFFER/KUKAPositions")
         #Methods
-        self.clear_buffer = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_CLEAR_BUFFER_DB")
-        self.move_and_place = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_MOVE_AND_PLACE_DB")
-        self.move_over = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_MOVE_OVER_PALLET_DB")
-        self.pick_from_pallet = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_PICK_FROM_PALLET_DB")
-        self.place_to_pallet = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_PLACE_TO_PALLET_DB")
-        self.submit_robot_operation = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_SUBMIT_ROBOT_OPERATION_DB")
-        self.abb_pick_board = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_ABB_PICK_BOARD_FROM_PALLET_DB")  
-        self.gadget_assembly = self.data_model.get_node("Cell4/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_GADGET_ASSEMBLY_DB")
+        self.clear_buffer = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_CLEAR_BUFFER_DB/Method")
+        self.move_and_place = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_MOVE_AND_PLACE_DB/Method")
+        self.move_over = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_MOVE_OVER_PALLET_DB/Method")
+        self.pick_from_pallet = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_PICK_FROM_PALLET_DB/Method")
+        self.place_to_pallet = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_PLACE_TO_PALLET_DB/Method")
+        self.submit_robot_operation = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_SUBMIT_ROBOT_OPERATION_DB/Method")
+        self.abb_pick_board = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_ABB_PICK_BOARD_FROM_PALLET_DB/Method")  
+        self.gadget_assembly = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_GADGET_ASSEMBLY_DB/Method")
         # Callbacks
         self.move_and_place.callback = self.call_move_and_place
         self.submit_robot_operation.callback = self.call_submit_operation

@@ -21,7 +21,7 @@ reactor Scheduler extends FrostReactor{
         Initializes the Scheduler reactor, setting up the initial state and scheduling the first routine.
         It also sends a registration message to the communication channel.
         """
-        routine.schedule(SEC(1))
+        routine.schedule(SEC(10))
         self.recipe = get_messages(self.recipe_path)
         self.conditions = get_conditions(self.condition_path)
     =}

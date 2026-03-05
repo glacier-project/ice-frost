@@ -13,8 +13,8 @@ root:
       cfg:
         - !!CallRemoteMethodNode
           remote_id: "conveyor"
-          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/ReserveFreePalletOfType2"
-          args: [2, 0, 2, 0, 0]  # num of pallets, contentPos1, contentPos2, contentPos3, type
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/reservePalletOfTypeWithDestination"
+          args: [1, 0, 2, 0, 0, 25]  # num of pallets, contentPos1, contentPos2, contentPos3, type
     - !!CompositeMethodNode
       name: "RBTC"
       parameters:
@@ -35,12 +35,8 @@ root:
         # Call the first pallet and get the lego
         - !!CallRemoteMethodNode
           remote_id: "conveyor"
-          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/getReservedPallet"
-          args: ["${reservationId}"]  # reservationId, destination
-        - !!CallRemoteMethodNode
-          remote_id: "conveyor"
-          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-          args: ["${pallet}", 25]  # pallet number, destination
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/callReservedPalletTo"
+          args: ["${reservationId}", 25]  # reservationId, destination
         - !!WaitRemoteEventNode
           remote_id: "conveyor"
           variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_3_1"
@@ -73,12 +69,12 @@ root:
           args: ["${pallet}", 0]  # pallet number, destination
         - !!CallRemoteMethodNode
           remote_id: "conveyor"
-          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/getReservedPallet"
-          args: ["${reservationId}"]  # reservationId, destination
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/reservePalletOfTypeWithDestination"
+          args: [1, 0, 2, 0, 0, 25]  # num of pallets, contentPos1, contentPos2, contentPos3, type
         - !!CallRemoteMethodNode
           remote_id: "conveyor"
-          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-          args: ["${pallet}", 25]  # pallet number, destination
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/callReservedPalletTo"
+          args: ["${reservationId}", 25]  # reservationId, destination
         - !!WaitRemoteEventNode
           remote_id: "conveyor"
           variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_3_1"
@@ -216,8 +212,8 @@ root:
       cfg:
         - !!CallRemoteMethodNode
           remote_id: "conveyor"
-          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/ReserveFreePalletOfType2"
-          args: [1, 0, 0, 0, 0]  # num of pallets, contentPos1, contentPos2, contentPos3, type
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/reservePalletOfTypeWithDestination"
+          args: [1, 0, 0, 0, 0, 25]  # num of pallets, contentPos1, contentPos2, contentPos3, type
     - !!CompositeMethodNode
       name: "PUT_BACK"
       parameters:
@@ -233,12 +229,8 @@ root:
       cfg:
         - !!CallRemoteMethodNode
           remote_id: "conveyor"
-          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/getReservedPallet"
-          args: ["${reservationId}"]  # reservationId, destination
-        - !!CallRemoteMethodNode
-          remote_id: "conveyor"
-          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-          args: ["${pallet}", 25]  # reservationId, destination
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/callReservedPalletTo"
+          args: ["${reservationId}", 25]  # reservationId, destination
         - !!WaitRemoteEventNode
           remote_id: "conveyor"
           variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_3_1"

@@ -7,41 +7,36 @@ import Conveyor from "Conveyor/conveyor.lf"
 
 reactor CellConveyor extends MetaConveyor{
 
-    reaction(channel_in){=
-        msg = channel_in[0].value
-        self.logger.warning(f"Received message from FrostBus: {msg}")
-    =}
-
-    conveyor = new Conveyor(name = {=self.name + ".conveyor_belt"=})
-
-    reaction (startup){= 
-        self.init_data_model_nodes()
-
-        self.callFreePalletTo.callback = self.free_pallet_to
-        self.callFreePalletToWithReservation.callback = self.reserve_pallet_to
-        self.callFreePalletOfTypeTo.callback = self.free_pallet_of_type_to
-        self.callFreePalletOfTypeToWithReservation.callback = self.free_pallet_of_type_to_with_reservation
-        self.reservePallet.callback = self.reserve_pallet
-        self.getReservedPallet.callback = self.get_reserved_pallet
-    =}
-
     state model_pallets
-    
-    method _update_model_pallet_destination(pallet, value){=
-        self.logger.debug(f"Updating model pallet {pallet} destination to {value}")
-        if value == 0 or value == None:
-            self.messages_to_conveyor.append([pallet, str(0)])
-        else:
-            self.messages_to_conveyor.append([pallet, self.convert_destination(value)])
-
-        return True
-    =}
 
     // Periodically send messages to the conveyor system
     logical action check
     state messages_to_conveyor = {=[]=}
+
+    conveyor = new Conveyor(name = {=self.name + ".conveyor_belt"=})
+
+    reaction(startup){=
+        self.init_data_model_nodes()
+
+        self.callFreePalletTo.callback                  = self.free_pallet_to
+        self.callFreePalletToWithReservation.callback   = self.reserve_pallet_to
+        self.callFreePalletOfTypeToWithReservation.callback = self.free_pallet_of_type_to_with_reservation
+        self.reservePallet.callback                     = self.reserve_pallet
+        self.getReservedPallet.callback                 = self.get_reserved_pallet
+        self.setPalletDestination.callback              = self.setPalletDest
+    =}
+
+    reaction(startup) -> check{=
+        check.schedule(SEC(1))
+        
+        for i in range(1, 11):
+            p = self.pallets[i-1]
+            p.get_property("destination").set_post_update_value_callback(
+                lambda prev, curr, pallet=i: self._update_model_pallet_destination(pallet, curr)
+            )
+    =}
+
     reaction(check) -> conveyor.from_frost{=
-        # If there are messages, send the next one immediately; otherwise, wait 1 second
         if self.messages_to_conveyor:
             conveyor.from_frost.set(self.messages_to_conveyor.pop(0))
             check.schedule(MSEC(1))
@@ -49,363 +44,206 @@ reactor CellConveyor extends MetaConveyor{
             check.schedule(SEC(1))
     =}
 
-    method get_reserved_pallet(reservationId){=
-        """
-        Returns a reserved pallet based on the reservation ID.
-        Args:
-            reservationId (int): The reservation ID to look for.
-        """
-        assert reservationId in self.reservationIds, "Invalid reservation ID"
-        
-        for pallet in self.pallets:
-            if pallet.get_property("reserved").value == reservationId:
-                return int(pallet.name[-1])
+    reaction(channel_in){=
+        msg = channel_in[0].value
+        self.logger.warning(f"Received message from FrostBus: {msg}")
+    =}
 
-        raise ValueError("No pallet found for the given reservation ID")
+    method _update_model_pallet_destination(pallet, value){=
+        self.logger.debug(f"Updating model pallet {pallet} destination to {value}")
+        if value == 0 or value is None:
+            self.messages_to_conveyor.append([pallet, str(0)])
+        else:
+            self.messages_to_conveyor.append([pallet, self.convert_destination(value)])
+        return True
     =}
 
     method getTargetNode(destination){=
-        """
-        Returns the target node based on the destination value.
-        :param destination: The destination value to determine the target node.
-        :return: The target node as a string.
-        """
         if destination == 40:
             return self.conveyor_obj + self.Bayes + self.Bay5 + "/" + self.IndexPosition + "/" + self.palletNum
-        
         bay_num = int(destination / 8)
         pos_num = destination % 8
         bay = self.dict_bay_conveyor.get(bay_num)
         if bay:
-            s = self.conveyor_obj + self.Bayes + bay + "/" + self.PalletPosition.format(n=pos_num) + "/" + self.palletNum
-            return s
+            return self.conveyor_obj + self.Bayes + bay + "/" + self.PalletPosition.format(n=pos_num) + "/" + self.palletNum
         raise ValueError("Invalid destination value")
     =}
 
     method convert_destination(destination){=
         if destination is None:
             raise ValueError("Destination cannot be None")
-        temp = destination
-        position = ""
         temp = int(destination / 8)
-        if temp != 5:            
-            position = str(destination % 8)
+        position = "" if temp == 5 else str(destination % 8)
         letter = self.dict_bay_conveyor.get(temp)
-        return str(letter + "_" + position) if temp != 5 else str(letter)
+        return str(letter) if temp == 5 else str(letter + "_" + position)
     =}
 
     method setPalletDest(palletNumber, destination){=
-        """
-        Sets the destination of a pallet and sends a command to the conveyor system.
-        """       
         self.logger.info(f"Setting destination for pallet {palletNumber} to {destination}")
         self.pallets[palletNumber-1].get_property("destination").value = destination
         return True
     =}
-    
+
     method move_pallet_to_LTU(palletNumber){=
-        """
-        Releases a pallet by sending a command to the conveyor system.
-        """
         self.pallets[palletNumber-1].get_property("destination").value = 0
         return True
     =}
-    
+
     method free_pallet_to(destination){=
-        """
-        Frees a pallet to the specified destination by sending a command to the conveyor system.
-        """
         for pallet in self.pallets:
             if pallet.get_property("reserved").value != 0:
                 continue
-            else:
-                self.pallets[int(pallet.name[-1])-1].get_property("destination").value = destination
-                return (True, int(pallet.name[-1]))
-                
+            self.pallets[int(pallet.name[-1])-1].get_property("destination").value = destination
+            return (True, int(pallet.name[-1]))
         return (False, 0)
     =}
 
     method reserve_pallet_to(destination, reservationId){=
-        """
-        Reserves a pallet with the given reservation ID.
-        """
         for pallet in self.pallets:
-            if pallet.get_property("reserved").value != 0:
-                continue
-            else:
-                pallet.get_property("reserved").value = reservationId
-                self.setPalletDest(int(pallet.name[-1]), destination)
-                return [True, int(pallet.name[-1])]
-
-                
-        return [False, 0]
-    =}
-
-    method free_pallet_of_type_to(palletType, destination){=
-        """
-        Frees a pallet of the specified type to the given destination.
-        """
-        for pallet in self.pallets:
-            if pallet.get_property("type").value != palletType:
-                continue
-            self.setPalletDest(int(pallet.name[-1]), destination)
-            return [True, int(pallet.name[-1])]
-
-        return [False, 0]
-
-    =}
-
-    method free_pallet_of_type_to_with_reservation(palletType, destination, reservationId){=
-        """
-        Frees a pallet of the specified type to the given destination with a reservation ID.
-        """
-        for pallet in self.pallets:
-            if pallet.get_property("type").value != palletType:
-                continue
-            
             if pallet.get_property("reserved").value != 0:
                 continue
             pallet.get_property("reserved").value = reservationId
             self.setPalletDest(int(pallet.name[-1]), destination)
             return [True, int(pallet.name[-1])]
+        return [False, 0]
+    =}
 
+    method free_pallet_of_type_to(palletType, destination){=
+        for pallet in self.pallets:
+            if pallet.get_property("type").value != palletType:
+                continue
+            self.setPalletDest(int(pallet.name[-1]), destination)
+            return [True, int(pallet.name[-1])]
+        return [False, 0]
+    =}
+
+    method free_pallet_of_type_to_with_reservation(palletType, destination, reservationId){=
+        for pallet in self.pallets:
+            if pallet.get_property("type").value != palletType:
+                continue
+            if pallet.get_property("reserved").value != 0:
+                continue
+            pallet.get_property("reserved").value = reservationId
+            self.setPalletDest(int(pallet.name[-1]), destination)
+            return [True, int(pallet.name[-1])]
         return [False, 0]
     =}
 
     method reserve_pallet(palletNumber, reservationId){=
-        """
-        Reserves a pallet with the given reservation ID.
-        """
         for pallet in self.pallets:
             if pallet.get_property("reserved").value != 0:
                 continue
             pallet.get_property("reserved").value = reservationId
             return True
-
         return False
     =}
 
-    reaction(startup)-> check{=
-        """
-        Initializes the Cell_Conveyor reactor, setting up the initial state and scheduling the first check.
-        """
-        check.schedule(SEC(1))
-        self.setPalletDestination.callback = self.setPalletDest
-        for i in range(1, 11):
-            p = self.pallets[i-1]
-            p.get_property("destination").set_post_update_value_callback(
-                lambda prev, curr, pallet=i: (
-                    self._update_model_pallet_destination(pallet, curr)
-                )
-            )
-    =}
-
     method update_segment(segment, value){=
-        """
-        Updates the segment state with the given value.
-        :param segment: The segment to be updated.
-        :param value: [0] 1 if pallet arrived, -1 if pallet left
-                      [1] pallet number (if any)
-        """
         temp = segment.get_property(self.FIFO)
         ls = []
-
         if value[0] > 0:
-            for i in range(0, 10):                
+            for i in range(0, 10):
                 if temp.get_property(self.item.format(n=i)).value == 0:
                     temp.get_property(self.item.format(n=i)).value = value[1]
                     ls.append(temp.get_property(self.item.format(n=i)).value)
-                    break       
-                ls.append(temp.get_property(self.item.format(n=i)).value)  
+                    break
+                ls.append(temp.get_property(self.item.format(n=i)).value)
         else:
             for i in range(0, 9):
                 temp.get_property(self.item.format(n=i)).value = temp.get_property(self.item.format(n=i+1)).value
-                ls.append(temp.get_property(self.item.format(n=i)).value)                
+                ls.append(temp.get_property(self.item.format(n=i)).value)
             temp.get_property(self.item.format(n=9)).value = 0
         temp.get_property(self.size).value += value[0]
-
-        self.logger.info(f"Segment {segment.name} updated with values: {ls}")
+        self.logger.debug(f"Segment {segment.name} updated with values: {ls}")
         self.logger.debug(f"FIFO value after update: {temp.value}")
     =}
 
     method update_single_bay(bay, value){=
-        """
-        Updates the bay state with the given value.
-        :param bay: The bay to be updated.
-        :param value: 
-                    [0] 0 if pallet released, 1 if pallet arrived
-                    [1] pallet id or 0 if pallet released
-        """
         self.logger.debug(f"Updating {bay.name} with value: {value}")
         ls = []
         if bay == self.bay1:
             bay.get_property(self.PalletPosition.format(n=1)).get_property(self.palletNum).value = value[1]
-            if value[0] < 0:
-                self.zero_node.value = value[1]
             ls.append(self.bay1.get_property(self.PalletPosition.format(n=1)).get_property(self.palletNum).value)
             self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_1_1).value = value[1]
             self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_ok_.format(s="1_1")).value = True if value[0] > 0 else False
         elif bay == self.bay5:
             self.bay5.get_property(self.IndexPosition).get_property(self.palletNum).value = value[1]
-            if value[0] < 0:
-                self.zero_node.value = value[1]
+
             ls.append(self.bay5.get_property(self.IndexPosition).get_property(self.palletNum).value)
             self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_5).value = value[1]
             self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_ok_.format(s="5")).value = True if value[0] > 0 else False
         else:
             raise ValueError("Invalid bay for update")
-
-        self.logger.warning(f"{bay.name} updated with values: {ls}")
+        self.logger.debug(f"{bay.name} updated with values: {ls}")
     =}
 
     method update_bay(bay, pallet, position){=
-        """
-        Updates the bay state with the given value.
-        :param bay: The bay to be updated.
-        :param pallet: The pallet number to set.
-        :param position: The position in the bay.
-        """
         assert isinstance(pallet, int), "Pallet must be an integer"
         assert isinstance(position, str), "Position must be a string"
         self.logger.debug(f"Updating {bay.name} position {position} with pallet: {pallet}")
         position = int(position[-1])
-        # Set the pallet number at the given position in the bay
         bay.get_property(self.PalletPosition.format(n=int(position))).get_property(self.palletNum).value = pallet
         self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_pallet_id_.format(bay=bay.name[-1], pos=position)).value = pallet
         self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_ok_.format(s=f"{int(bay.name[-1])}_{position}")).value = True if pallet > 0 else False
-        self.logger.info(f"{bay.name} position {position} updated with {pallet}")
+        self.logger.debug(f"{bay.name} position {position} updated with {pallet}")
     =}
-    
+
     reaction(conveyor.Segment1){=
-        """
-        Updates the Segment1 state with the value from the conveyor system.
-        """
-        self.logger.debug(f"Updating Segment1 with value: {conveyor.Segment1.value}")
         self.update_segment(self.segment_1, conveyor.Segment1.value)
     =}
     reaction(conveyor.Segment2){=
-        """
-        Updates the Segment2 state with the value from the conveyor system.
-        """
-        self.logger.debug(f"Updating Segment2 with value: {conveyor.Segment2.value}")
         self.update_segment(self.segment_2, conveyor.Segment2.value)
     =}
     reaction(conveyor.Segment3){=
-        """
-        Updates the Segment3 state with the value from the conveyor system.
-        """
-        self.logger.debug(f"Updating Segment3 with value: {conveyor.Segment3.value}")
         self.update_segment(self.segment_3, conveyor.Segment3.value)
     =}
     reaction(conveyor.Segment4){=
-        """
-        Updates the Segment4 state with the value from the conveyor system. 
-        """
-        self.logger.debug(f"Updating Segment4 with value: {conveyor.Segment4.value}")
         self.update_segment(self.segment_4, conveyor.Segment4.value)
     =}
     reaction(conveyor.Segment5){=
-        """
-        Updates the Segment5 state with the value from the conveyor system.
-        """
-        self.logger.debug(f"Updating Segment5 with value: {conveyor.Segment5.value}")
         self.update_segment(self.segment_5, conveyor.Segment5.value)
     =}
     reaction(conveyor.Segment6){=
-        """
-        Updates the Segment6 state with the value from the conveyor system.
-        """
-        self.logger.debug(f"Updating Segment6 with value: {conveyor.Segment6.value}")
         self.update_segment(self.segment_6, conveyor.Segment6.value)
     =}
     reaction(conveyor.Segment7){=
-        """
-        Updates the Segment7 state with the value from the conveyor system.
-        """
-        self.logger.debug(f"Updating Segment7 with value: {conveyor.Segment7.value}")
         self.update_segment(self.segment_7, conveyor.Segment7.value)
     =}
     reaction(conveyor.Segment8){=
-        """
-        Updates the Segment8 state with the value from the conveyor system.
-        """
-        self.logger.debug(f"Updating Segment8 with value: {conveyor.Segment8.value}")
         self.update_segment(self.segment_8, conveyor.Segment8.value)
     =}
-    
+
     reaction(conveyor.Bay1){=
-        """
-        Updates the bay1 state with the value from the conveyor system.
-        """
         self.update_single_bay(self.bay1, conveyor.Bay1.value)
     =}
     reaction(conveyor.Bay2_1){=
-        """
-        Updates the bay2 state at position 1 with the value from the conveyor system.
-        """
         self.update_bay(self.bay2, conveyor.Bay2_1.value[0], conveyor.Bay2_1.value[1])
     =}
     reaction(conveyor.Bay2_2){=
-        """
-        Updates the bay2 state at position 2 with the value from the conveyor system.
-        """
         self.update_bay(self.bay2, conveyor.Bay2_2.value[0], conveyor.Bay2_2.value[1])
     =}
     reaction(conveyor.Bay2_3){=
-        """
-        Updates the bay2 state at position 3 with the value from the conveyor system.
-        """
         self.update_bay(self.bay2, conveyor.Bay2_3.value[0], conveyor.Bay2_3.value[1])
     =}
-
     reaction(conveyor.Bay3_1){=
-        """
-        Updates the bay3 state at position 1 with the value from the conveyor system.
-        """
         self.update_bay(self.bay3, conveyor.Bay3_1.value[0], conveyor.Bay3_1.value[1])
     =}
     reaction(conveyor.Bay3_2){=
-        """
-        Updates the bay3 state at position 2 with the value from the conveyor system.
-        """
         self.update_bay(self.bay3, conveyor.Bay3_2.value[0], conveyor.Bay3_2.value[1])
     =}
     reaction(conveyor.Bay3_3){=
-        """
-        Updates the bay3 state at position 3 with the value from the conveyor system.
-        """
         self.update_bay(self.bay3, conveyor.Bay3_3.value[0], conveyor.Bay3_3.value[1])
     =}
-
     reaction(conveyor.Bay4_1){=
-        """
-        Updates the bay4 state at position 1 with the value from the conveyor system.
-        """
         self.update_bay(self.bay4, conveyor.Bay4_1.value[0], conveyor.Bay4_1.value[1])
     =}
     reaction(conveyor.Bay4_2){=
-        """
-        Updates the bay4 state at position 2 with the value from the conveyor system.
-        """
         self.update_bay(self.bay4, conveyor.Bay4_2.value[0], conveyor.Bay4_2.value[1])
     =}
     reaction(conveyor.Bay4_3){=
-        """
-        Updates the bay4 state at position 3 with the value from the conveyor system.
-        """
         self.update_bay(self.bay4, conveyor.Bay4_3.value[0], conveyor.Bay4_3.value[1])
     =}
     reaction(conveyor.Bay5){=
-        """
-        Updates the Bay5 state with the value from the conveyor system.
-        """
         self.update_single_bay(self.bay5, conveyor.Bay5.value)
-    =}
-
-    reaction(conveyor.Release){=
-        """
-        Handles the release of pallets from the conveyor system.
-        """
-        self.zero_node.value = conveyor.Release.value
     =}
 }
