@@ -77,13 +77,15 @@ reactor MetaConveyor extends FrostMachine{
     state bayes
     state dict_bay_conveyor
     state reservationIds
+    state reservation_map  // {reservationId: pallet_id}
 
     // Metrics
     state pallet_metric
     state conveyor_graph
 
     method init_data_model_nodes() {=
-        self.reservationIds = [1]
+        self.reservationIds = []
+        self.reservation_map = {}
 
         # Pallets
         self.pallet_1  = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet1)
@@ -192,13 +194,10 @@ reactor MetaConveyor extends FrostMachine{
         Args:
             reservationId (int): The reservation ID to look for.
         """
-        assert reservationId in self.reservationIds, "Invalid reservation ID"
-        
-        for pallet in self.pallets:
-            if pallet.get_property("reserved").value == reservationId:
-                return int(pallet.name[-1])
+        if reservationId in self.reservation_map:
+            return self.reservation_map[reservationId]
 
-        raise ValueError("No pallet found for the given reservation ID")
+        raise ValueError(f"No pallet found for reservation ID {reservationId}")
     =}
 
     method update_pallet_position(pallet_id, pallet_position){=
@@ -250,45 +249,38 @@ reactor MetaConveyor extends FrostMachine{
     =}
 
     method _reservePalletOfTypeWithDestination(numPallets, contentPos1, contentPos2, contentPos3, palletType, destination){=
-        reserved_ids =list()
-        for pallet in self.pallets:
-            reserved_id = pallet.get_property("reserved").value
-            if reserved_id != 0:
-                reserved_ids.append(reserved_id)
-
-        self.reservationIds = reserved_ids
-        if self.reservationIds == []:
-            self.reservationIds = [1]
-            
-
         if destination is None or destination < 0:
             destination = 0
-        reservationId = self.reservationIds[-1] + 1
+        reservationId = 1
         while reservationId in self.reservationIds:
             reservationId += 1
         self.reservationIds.append(reservationId)
         reserved_count = 0
 
-        for pallet in self.pallets:
-            if pallet.get_property("type").value != palletType:
-                continue
+        for p in self._get_pallets_for(destination):
+            pallet = self.pallets[p - 1]
             if pallet.get_property("reserved").value != 0:
                 continue
-            if pallet.get_property("contentPosition1").value != contentPos1:
+            if palletType != -1 and pallet["type"].value != palletType:
+                self.logger.debug(f"Pallet type does not match for pallet {pallet_id}")
                 continue
-            if pallet.get_property("contentPosition2").value != contentPos2:
+            if not self._content_matches(pallet["contentPosition1"].value, contentPos1):
                 continue
-            if pallet.get_property("contentPosition3").value != contentPos3:
+            if not self._content_matches(pallet["contentPosition2"].value, contentPos2):
+                continue
+            if not self._content_matches(pallet["contentPosition3"].value, contentPos3):
                 continue
 
             pallet.get_property("reserved").value = reservationId
             reserved_count += 1
+            self.reservation_map[reservationId] = int(pallet.name[-1])
             if reserved_count >= numPallets:
                 break
 
         if reserved_count == numPallets:
             return reservationId
         else:
+            self.reservationIds.remove(reservationId)
             raise ValueError("Not enough pallets available to reserve")
     =}
 

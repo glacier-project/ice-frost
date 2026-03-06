@@ -964,7 +964,7 @@ root: !!FolderNode
             connector_name: OpcuaConnector1
             description: ''
             id: b97e0665-e12e-4391-81b9-f2d666dd0e1b
-            initial_value: 1
+            initial_value: 0
             measure_unit: NoneMeasureUnits.NONE
             name: reserved
             remote_resource_spec: !!OpcuaRemoteResourceSpec

@@ -13,7 +13,6 @@ reactors:
     parameters:
       data_model_path: "resources/data_model/conveyor.yml"
       conveyor_graph: "resources/conveyor_graph/conveyor_graph.gml"
-      pallet_metric: "ID"
     reactors:
      message_filter:
        logging_level: ERROR
