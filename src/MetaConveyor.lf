@@ -273,7 +273,7 @@ reactor MetaConveyor extends FrostMachine{
 
             pallet.get_property("reserved").value = reservationId
             reserved_count += 1
-            self.reservation_map[reservationId] = int(pallet.name[-1])
+            self.reservation_map[reservationId] = p
             if reserved_count >= numPallets:
                 break
 
