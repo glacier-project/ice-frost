@@ -8,6 +8,7 @@ import FrostMachine from "../frost/src/lib/FrostMachine.lf"
 
 reactor MetaConveyor extends FrostMachine{
     preamble{=
+        from pallet_distance import SAVE_PUPDATES
         from conveyor_utils import (
             conveyor_obj, conveyor_data_exchange, UTILITYMETHODS, Pallets, Bayes, Segments, Commands, Destinations, destination_pallet_id_,
             destination_1_1, destination_2_1, destination_2_2, destination_2_3, destination_3_1, destination_3_2, destination_3_3, destination_4_1, destination_4_2, destination_4_3, destination_5, destination_ok_,
@@ -262,7 +263,7 @@ reactor MetaConveyor extends FrostMachine{
             if pallet.get_property("reserved").value != 0:
                 continue
             if palletType != -1 and pallet["type"].value != palletType:
-                self.logger.debug(f"Pallet type does not match for pallet {pallet_id}")
+                self.logger.debug(f"Pallet type does not match for pallet {p}")
                 continue
             if not self._content_matches(pallet["contentPosition1"].value, contentPos1):
                 continue

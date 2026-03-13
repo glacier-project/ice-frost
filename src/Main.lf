@@ -6,7 +6,7 @@ target Python{
         "../frost/src/python_lib/time_utils.py",
         "python_utils/ice_proxy.py",
         "python_utils/handle_recipe.py",
-        "MetaConveyor_utils/pallet_distance.py",
+        "MetaConveyor_utils/pallet_distance.py"
     ],
     logging: error,
     single-threaded: false,

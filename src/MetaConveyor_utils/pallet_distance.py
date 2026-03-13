@@ -19,7 +19,7 @@ SEGMENT_1_TT = 17584
 SEGMENT_2_TT = 22198
 SEGMENT_3_TT = 18315
 SEGMENT_4_TT = 8691
-SEGMENT_5_TT = 9955
+SEGMENT_5_TT = 10055
 SEGMENT_6_TT = 17594
 SEGMENT_7_TT = 21649
 SEGMENT_8_TT = 13399
@@ -31,20 +31,20 @@ BAY2_IO = 1272
 BAY3_IO = 2833
 BAY4_IO = 1585
 
-BAY2_12 = 2077
-BAY2_21 = 1766
-BAY2_23 = 4857
-BAY2_32 = 4413
+BAY2_12 = 1766
+BAY2_21 = 2077
+BAY2_23 = 4413
+BAY2_32 = 4857
 
-BAY3_12 = 3779
-BAY3_21 = 3925
-BAY3_23 = 2173
-BAY3_32 = 2061
+BAY3_12 = 3925
+BAY3_21 = 3779
+BAY3_23 = 2061
+BAY3_32 = 2173
 
-BAY4_12 = 2603
-BAY4_21 = 2809
-BAY4_23 = 4292
-BAY4_32 = 3492
+BAY4_12 = 2809
+BAY4_21 = 2603
+BAY4_23 = 3492
+BAY4_32 = 4292
 
 class ConveyorPosition:
     """Represents a position on the conveyor system.
@@ -198,7 +198,7 @@ def create_default_conveyor_graph(pallets: list[PalletStatus] | None = None) -> 
         },
         "34": {
             "35": {"weight": BAY4_12},
-            "H": {"weight": BAY4_IO},
+            "H": {"weight": BAY4_IO + HALF_INTERCHANGE_TT},
             "B": {"weight": BAY4_IO + INTERCHANGE_TT},
         },
         "35": {"36": {"weight": BAY4_23}, "34": {"weight": BAY4_21}},
@@ -230,7 +230,7 @@ def create_default_conveyor_graph(pallets: list[PalletStatus] | None = None) -> 
         },
         "17": {
             "18": {"weight": BAY2_12},
-            "L": {"weight": BAY2_IO},
+            "L": {"weight": BAY2_IO + HALF_INTERCHANGE_TT},
             "D": {"weight": BAY2_IO + INTERCHANGE_TT},
         },
         "18": {"19": {"weight": BAY2_23}, "17": {"weight": BAY2_21}},
@@ -242,7 +242,7 @@ def create_default_conveyor_graph(pallets: list[PalletStatus] | None = None) -> 
         },
         "25": {
             "26": {"weight": BAY3_12},
-            "I": {"weight": BAY3_IO},
+            "I": {"weight": BAY3_IO + HALF_INTERCHANGE_TT},
             "C": {"weight": BAY3_IO + INTERCHANGE_TT},
         },
         "26": {"27": {"weight": BAY3_23}, "25": {"weight": BAY3_21}},
