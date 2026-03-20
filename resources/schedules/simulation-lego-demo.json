@@ -42,7 +42,7 @@
           "id": "0005",
           "name": "RESERVE",
           "processing_time": 60,
-          "dependencies": ["0003"],
+          "dependencies": ["0004"],
           "requires": ["reserve_pallet"],
           "priority": 1
         },

@@ -1,11 +1,20 @@
-target Python;
+target Python{
+    files: [Conveyor/conveyor_utils.py]
+}
 
-import FrostMachine from "../frost/src/lib/FrostMachine.lf"
+import MetaConveyor from "MetaConveyor.lf"
 
+reactor OpcuaConveyor extends MetaConveyor{
+    state _pallet_position
+    physical action pallet_position
 
-reactor MetaConveyor extends FrostMachine {
+    reaction(startup) -> pallet_position{=
+        self._pallet_position = pallet_position
+        self.init_data_model_nodes()
+        self.getReservedPallet.callback = self.get_reserved_pallet
+    =}
 
-    method call_reserveFreePalletOfType2(numPallets, contentPos1, contentPos2, contentPos3, palletType){=
+    method call_reserveFreePalletOfType2(numPallets, contentPos1, contentPos2, contentPos3, palletType, destination){=
         '''
         Reserves free pallets of a specific type.
         Args:
@@ -17,12 +26,17 @@ reactor MetaConveyor extends FrostMachine {
         Returns:
             list: A list containing the reservation status and reservation ID.
         '''
-        reservationId = self.reservationIds[-1] + 1
+        reservationId = 1
         while reservationId in self.reservationIds:
             reservationId += 1
         self.reservationIds.append(reservationId)
         reserved_count = 0
-        for pallet in self.pallets:
+        if destination != None:
+           pallets = self._get_pallets_for(destination)
+        else:
+            pallets = [i for i in range(1, 11)]  # If no destination is provided, consider all pallets
+        for pallet_id in pallets:
+            pallet = self.pallets[pallet_id - 1]
             if pallet.get_property("type").value != palletType:
                 continue
             
@@ -38,13 +52,14 @@ reactor MetaConveyor extends FrostMachine {
 
             pallet.get_property("reserved").value = reservationId
             reserved_count += 1
+            self.reservation_map[reservationId] = pallet_id
             if reserved_count >= numPallets:
                 break
 
         if reserved_count == numPallets:
             return reservationId
         else:
+            self.reservationIds.remove(reservationId)
             raise ValueError("Not enough pallets available to reserve")
     =}
-
 }

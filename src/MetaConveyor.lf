@@ -1,13 +1,16 @@
 target Python{
-    files: [Conveyor/conveyor_utils.py]
+    files: [
+        "Conveyor/conveyor_utils.py",
+    ],
 }
 
 import FrostMachine from "../frost/src/lib/FrostMachine.lf"
 
 reactor MetaConveyor extends FrostMachine{
     preamble{=
-       from conveyor_utils import (
-            conveyor_obj, conveyor_data_exchange, Pallets, Bayes, Segments, Commands, Destinations, destination_pallet_id_,
+        from pallet_distance import SAVE_PUPDATES
+        from conveyor_utils import (
+            conveyor_obj, conveyor_data_exchange, UTILITYMETHODS, Pallets, Bayes, Segments, Commands, Destinations, destination_pallet_id_,
             destination_1_1, destination_2_1, destination_2_2, destination_2_3, destination_3_1, destination_3_2, destination_3_3, destination_4_1, destination_4_2, destination_4_3, destination_5, destination_ok_,
             commands_pointer, IndexPosition, setDestination, PalletPosition, palletNum,
             Pallet, Pallet1, Pallet2, Pallet3, Pallet4, Pallet5, Pallet6, Pallet7, Pallet8, Pallet9, Pallet10,
@@ -17,7 +20,7 @@ reactor MetaConveyor extends FrostMachine{
         )
     =}
 
-    //PALLETS
+    // PALLETS
     state pallet_1
     state pallet_2
     state pallet_3
@@ -28,26 +31,26 @@ reactor MetaConveyor extends FrostMachine{
     state pallet_8
     state pallet_9
     state pallet_10
-    //BAYES
+
+    // BAYS
     state bay1
     state bay2
     state bay3
     state bay4
     state bay5
-
     state pallets_in_bay
 
-    //SEGMENTS
-    state segment_1 
-    state segment_2 
-    state segment_3 
-    state segment_4 
-    state segment_5 
-    state segment_6 
-    state segment_7 
-    state segment_8 
+    // SEGMENTS
+    state segment_1
+    state segment_2
+    state segment_3
+    state segment_4
+    state segment_5
+    state segment_6
+    state segment_7
+    state segment_8
 
-    //DESTINATIONS
+    // DESTINATIONS
     state n_destination_1_1
     state n_destination_2_1
     state n_destination_2_2
@@ -60,50 +63,58 @@ reactor MetaConveyor extends FrostMachine{
     state n_destination_4_3
     state n_destination_5
 
-    //METHODS
+    // METHODS (data model nodes)
     state setPalletDestination
     state callFreePalletTo
     state callFreePalletToWithReservation
-    state callFreePalletOfTypeTo
     state callFreePalletOfTypeToWithReservation
     state reservePallet
     state getReservedPallet
-    state reserveFreePalletofType2
+    state reservePalletOfTypeWithDestination
     state call_free_pallet_of_type_to
-    //COMMANDS
-    state dynamic_node  
-    state zero_node  
-    //LocalVariables
-    state pallets 
-    state bayes    
+
+    // Local Variables
+    state pallets
+    state bayes
     state dict_bay_conveyor
     state reservationIds
+    state reservation_map  // {reservationId: pallet_id}
 
     // Metrics
     state pallet_metric
     state conveyor_graph
 
     method init_data_model_nodes() {=
-        self.reservationIds = [0]
-        """Initialize the Conveyor reactor."""
-        self.pallet_1 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet1)
-        self.pallet_2 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet2)
-        self.pallet_3 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet3)
-        self.pallet_4 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet4)
-        self.pallet_5 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet5)
-        self.pallet_6 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet6)
-        self.pallet_7 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet7)
-        self.pallet_8 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet8)
-        self.pallet_9 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet9)
+        self.reservationIds = []
+        self.reservation_map = {}
+
+        # Pallets
+        self.pallet_1  = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet1)
+        self.pallet_2  = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet2)
+        self.pallet_3  = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet3)
+        self.pallet_4  = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet4)
+        self.pallet_5  = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet5)
+        self.pallet_6  = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet6)
+        self.pallet_7  = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet7)
+        self.pallet_8  = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet8)
+        self.pallet_9  = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet9)
         self.pallet_10 = self.data_model.get_node(self.conveyor_obj + self.Pallets + self.Pallet10)
+        self.pallets = [
+            self.pallet_1, self.pallet_2, self.pallet_3, self.pallet_4, self.pallet_5,
+            self.pallet_6, self.pallet_7, self.pallet_8, self.pallet_9, self.pallet_10
+        ]
+
+        # Bays
         self.bay1 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay1)
         self.bay2 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay2)
         self.bay3 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay3)
         self.bay4 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay4)
-        self.bay5 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay5)      
-        pallets_in_bay = {1: None, 2: None, 3: None, 4: None, 5: None, 6: None, 7: None, 8: None, 9: None, 10: None}
-   
-        self.segment_1 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment1)    
+        self.bay5 = self.data_model.get_node(self.conveyor_obj + self.Bayes + self.Bay5)
+        self.bayes = {5: self.bay5, 11: self.bay1, 21: self.bay2, 31: self.bay3, 41: self.bay4}
+        self.dict_bay_conveyor = {1: self.Bay1, 2: self.Bay2, 3: self.Bay3, 4: self.Bay4, 5: self.Bay5}
+
+        # Segments
+        self.segment_1 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment1)
         self.segment_2 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment2)
         self.segment_3 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment3)
         self.segment_4 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment4)
@@ -111,6 +122,7 @@ reactor MetaConveyor extends FrostMachine{
         self.segment_6 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment6)
         self.segment_7 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment7)
         self.segment_8 = self.data_model.get_node(self.conveyor_obj + self.Segments + self.Segment8)
+
         # Destinations
         self.n_destination_1_1 = self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_1_1)
         self.n_destination_2_1 = self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_2_1)
@@ -121,39 +133,25 @@ reactor MetaConveyor extends FrostMachine{
         self.n_destination_3_3 = self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_3_3)
         self.n_destination_4_1 = self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_4_1)
         self.n_destination_4_2 = self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_4_2)
-        self.n_destination_4_3 = self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_4_3) 
-        self.n_destination_5 = self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_5)
+        self.n_destination_4_3 = self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_4_3)
+        self.n_destination_5   = self.data_model.get_node(self.conveyor_data_exchange + self.Destinations + self.destination_5)
 
-        # Methods
-        self.setPalletDestination = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination")
-        self.reserveFreePalletofType2 = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/reservePalletOfType2")
-        self.getReservedPallet = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/getReservedPallet")
-        self.dynamic_node = self.data_model.get_node("Objects/dynamic_node")
-        self.zero_node = self.data_model.get_node("Objects/zero_node")
-        self.pallets = [self.pallet_1, self.pallet_2, self.pallet_3, self.pallet_4, self.pallet_5, self.pallet_6, self.pallet_7, self.pallet_8, self.pallet_9, self.pallet_10] 
-        self.bayes = {5: self.bay5, 11:self.bay1, 21:self.bay2, 31:self.bay3, 41:self.bay4}
-        self.dict_bay_conveyor = {
-            1:self.Bay1,
-            2:self.Bay2, 
-            3:self.Bay3, 
-            4:self.Bay4,
-            5:self.Bay5,
-        } 
-        self.callFreePalletTo = self.data_model.get_node(self.commands_pointer + "callFreePalletTo")
-        self.callFreePalletToWithReservation = self.data_model.get_node(self.commands_pointer + "callFreePalletToWithReservation")
-        self.callFreePalletOfTypeTo = self.data_model.get_node(self.commands_pointer + "callFreePalletOfTypeTo")
+        # Command nodes
+        self.setPalletDestination              = self.data_model.get_node(self.commands_pointer + "setPalletDestination")
+        self.callFreePalletTo                  = self.data_model.get_node(self.commands_pointer + "callFreePalletTo")
+        self.callFreePalletToWithReservation   = self.data_model.get_node(self.commands_pointer + "callFreePalletToWithReservation")
         self.callFreePalletOfTypeToWithReservation = self.data_model.get_node(self.commands_pointer + "callFreePalletOfTypeToWithReservation")
-        self.reservePallet = self.data_model.get_node(self.commands_pointer + "reservePallet")
-
-        self.reserveFreePalletofType2.callback = self.call_reserveFreePalletOfType2
+        self.reservePallet                     = self.data_model.get_node(self.commands_pointer + "reservePallet")
+        self.getReservedPallet                 = self.data_model.get_node(self.UTILITYMETHODS + "getReservedPallet")
+        self.reservePalletOfTypeWithDestination       = self.data_model.get_node(self.UTILITYMETHODS + "reservePalletOfTypeWithDestination")
+        
+        self.getReservedPallet.callback = self.get_reserved_pallet
+        self.reservePalletOfTypeWithDestination.callback = self._reservePalletOfTypeWithDestination
 
         # Initialize pallet metric
         self.pallet_metric = _get_pallet_metric(self.pallet_metric, self.conveyor_graph)
 
-        self.call_free_pallet_of_type_to = self.data_model.get_node("Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/CallFreePalletOfTypeTo")
-        self.call_free_pallet_of_type_to.callback = self._call_free_pallet_of_type_to
-
-        # Subscribe to FIFOs and destinations
+        # Subscribe to FIFOs
         for segment, pallet_position in [
             (self.segment_1, PalletPosition.S1),
             (self.segment_2, PalletPosition.S2),
@@ -171,6 +169,7 @@ reactor MetaConveyor extends FrostMachine{
                 result = item_node.subscribe(item_subscription)
                 self.logger.debug(f"Subscribed to FIFO item node {item_node.name} with result: {result}")
 
+        # Subscribe to destinations
         for destination_node, pallet_position in [
             (self.n_destination_1_1, PalletPosition.SPEA_1),
             (self.n_destination_2_1, PalletPosition.MILL_1),
@@ -187,21 +186,31 @@ reactor MetaConveyor extends FrostMachine{
             destination_callback = lambda subscription, node, value, pos=pallet_position: self.update_pallet_position(value, pos)
             destination_subscription = DataChangeSubscription(f"{destination_node.name}_subscription", subscription_callback=destination_callback)
             result = destination_node.subscribe(destination_subscription)
-            self.logger.debug(f"Subscribed to destination node {destination_node.name} with result: {result}")    
+            self.logger.debug(f"Subscribed to destination node {destination_node.name} with result: {result}")
+    =}
+
+    method get_reserved_pallet(reservationId){=
+        """
+        Returns a reserved pallet based on the reservation ID.
+        Args:
+            reservationId (int): The reservation ID to look for.
+        """
+        if reservationId in self.reservation_map:
+            return self.reservation_map[reservationId]
+
+        raise ValueError(f"No pallet found for reservation ID {reservationId}")
     =}
 
     method update_pallet_position(pallet_id, pallet_position){=
         if pallet_id <= 0:
-            return 
-        
+            return
         timestamp = self._get_current_logical_time_ms()
-        self.logger.info(f"Updating pallet position for pallet {pallet_id} to position {pallet_position} at time {timestamp}")
+        self.logger.debug(f"Updating pallet position for pallet {pallet_id} to position {pallet_position} at time {timestamp}")
         self.pallet_metric.set_pallet_position(pallet_id, pallet_position, timestamp)
     =}
 
     method _get_pallets_for(destination){=
         conveyor_pos = get_conveyor_position(destination)
-
         return self.pallet_metric.get_pallets_to(conveyor_pos, timestamp=self._get_current_logical_time_ms())
     =}
 
@@ -215,97 +224,68 @@ reactor MetaConveyor extends FrostMachine{
     =}
 
     method _call_free_pallet_of_type_to(contentPos1, contentPos2, contentPos3, palletType, destination){=
-
         pallets = self._get_pallets_for(destination)
-        self.logger.info(f"Pallets sorted by distance to {destination}: {pallets}")
+        self.logger.debug(f"Pallets sorted by distance to {destination}: {pallets}")
 
         for pallet_id in pallets:
             pallet = self.pallets[pallet_id - 1]
 
             if pallet["reserved"].value:
-                self.logger.info(f"Pallet {pallet} is reserved")
+                self.logger.debug(f"Pallet {pallet_id} is reserved")
                 continue
-
             if palletType != -1 and pallet["type"].value != palletType:
-                self.logger.info(f"Pallet type does not match for pallet {pallet}")
+                self.logger.debug(f"Pallet type does not match for pallet {pallet_id}")
                 continue
-
             if not self._content_matches(pallet["contentPosition1"].value, contentPos1):
-                self.logger.info(f"Content position 1 does not match for pallet {pallet}")
                 continue
             if not self._content_matches(pallet["contentPosition2"].value, contentPos2):
-                self.logger.info(f"Content position 2 does not match for pallet {pallet}")
                 continue
             if not self._content_matches(pallet["contentPosition3"].value, contentPos3):
-                self.logger.info(f"Content position 3 does not match for pallet {pallet}")
                 continue
 
-            pallet["reserved"].value = 1  # Mark as reserved
-            # pallet_id = int(pallet.name[-1])
+            pallet["reserved"].value = 1
             return pallet_id
 
         raise ValueError("No free pallet of the specified type and content positions found")
     =}
 
-    method call_reserveFreePalletOfType2(numPallets, contentPos1, contentPos2, contentPos3, palletType){=
-        '''
-        Reserves free pallets of a specific type.
-        Args:
-            numPallets (int): Number of pallets to reserve.
-            contentPos1 (int): Content position 1.
-            contentPos2 (int): Content position 2.
-            contentPos3 (int): Content position 3.
-            palletType (int): Type of the pallet.
-        Returns:
-            list: A list containing the reservation status and reservation ID.
-        '''
-        reservationId = self.reservationIds[-1] + 1
+    method _reservePalletOfTypeWithDestination(numPallets, contentPos1, contentPos2, contentPos3, palletType, destination){=
+        if destination is None or destination < 0:
+            destination = 0
+        reservationId = 1
         while reservationId in self.reservationIds:
             reservationId += 1
         self.reservationIds.append(reservationId)
         reserved_count = 0
-        for pallet in self.pallets:
-            if pallet.get_property("type").value != palletType:
-                continue
-            
+
+        for p in self._get_pallets_for(destination):
+            pallet = self.pallets[p - 1]
             if pallet.get_property("reserved").value != 0:
                 continue
-
-            if pallet.get_property("contentPosition1").value != contentPos1:
+            if palletType != -1 and pallet["type"].value != palletType:
+                self.logger.debug(f"Pallet type does not match for pallet {p}")
                 continue
-            if pallet.get_property("contentPosition2").value != contentPos2:
+            if not self._content_matches(pallet["contentPosition1"].value, contentPos1):
                 continue
-            if pallet.get_property("contentPosition3").value != contentPos3:
+            if not self._content_matches(pallet["contentPosition2"].value, contentPos2):
+                continue
+            if not self._content_matches(pallet["contentPosition3"].value, contentPos3):
                 continue
 
             pallet.get_property("reserved").value = reservationId
             reserved_count += 1
+            self.reservation_map[reservationId] = p
             if reserved_count >= numPallets:
                 break
 
         if reserved_count == numPallets:
             return reservationId
         else:
+            self.reservationIds.remove(reservationId)
             raise ValueError("Not enough pallets available to reserve")
-    =}
-
-    method get_reserved_pallet(reservationId){=
-        """
-        Returns a reserved pallet based on the reservation ID.
-        Args:
-            reservationId (int): The reservation ID to look for.
-        """
-        assert reservationId in self.reservationIds, "Invalid reservation ID"
-        
-        for pallet in self.pallets:
-            if pallet.get_property("reserved").value == reservationId:
-                return int(pallet.name[-1])
-
-        raise ValueError("No pallet found for the given reservation ID")
     =}
 
     reaction(shutdown){=
         self.pallet_metric.close_log_file()
     =}
-
 }
