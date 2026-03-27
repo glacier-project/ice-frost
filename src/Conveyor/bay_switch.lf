@@ -105,7 +105,6 @@ reactor BaySwitch extends FrostBase{
                 self.outgoing = True
                 #self._set_output_port(self.pallet, to_forward)
             elif action_to_be_performed == BayAction.none:
-                self.logger.debug(f"Bay Switch {self.conveyor_name} not moving pallet {self.pallet.id}")
                 pending_pallet.schedule(SEC(0))
                 return 0
             
