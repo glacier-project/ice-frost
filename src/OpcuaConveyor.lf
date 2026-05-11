@@ -1,0 +1,65 @@
+target Python{
+    files: [Conveyor/conveyor_utils.py]
+}
+
+import MetaConveyor from "MetaConveyor.lf"
+
+reactor OpcuaConveyor extends MetaConveyor{
+    state _pallet_position
+    physical action pallet_position
+
+    reaction(startup) -> pallet_position{=
+        self._pallet_position = pallet_position
+        self.init_data_model_nodes()
+        self.getReservedPallet.callback = self.get_reserved_pallet
+    =}
+
+    method call_reserveFreePalletOfType2(numPallets, contentPos1, contentPos2, contentPos3, palletType, destination){=
+        '''
+        Reserves free pallets of a specific type.
+        Args:
+            numPallets (int): Number of pallets to reserve.
+            contentPos1 (int): Content position 1.
+            contentPos2 (int): Content position 2.
+            contentPos3 (int): Content position 3.
+            palletType (int): Type of the pallet.
+        Returns:
+            list: A list containing the reservation status and reservation ID.
+        '''
+        reservationId = 1
+        while reservationId in self.reservationIds:
+            reservationId += 1
+        self.reservationIds.append(reservationId)
+        reserved_count = 0
+        if destination != None:
+           pallets = self._get_pallets_for(destination)
+        else:
+            pallets = [i for i in range(1, 11)]  # If no destination is provided, consider all pallets
+        for pallet_id in pallets:
+            pallet = self.pallets[pallet_id - 1]
+            if pallet.get_property("type").value != palletType:
+                continue
+            
+            if pallet.get_property("reserved").value != 0:
+                continue
+
+            if pallet.get_property("contentPosition1").value != contentPos1:
+                continue
+            if pallet.get_property("contentPosition2").value != contentPos2:
+                continue
+            if pallet.get_property("contentPosition3").value != contentPos3:
+                continue
+
+            pallet.get_property("reserved").value = reservationId
+            reserved_count += 1
+            self.reservation_map[reservationId] = pallet_id
+            if reserved_count >= numPallets:
+                break
+
+        if reserved_count == numPallets:
+            return reservationId
+        else:
+            self.reservationIds.remove(reservationId)
+            raise ValueError("Not enough pallets available to reserve")
+    =}
+}

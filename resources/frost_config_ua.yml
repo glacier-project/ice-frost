@@ -11,9 +11,8 @@ reactors:
   conveyor:
     logging_level: ERROR
     parameters:
-      data_model_path: "resources/data_model/conveyor.yml"
+      data_model_path: "resources/data_model/opcua_conveyor_full.yml"
       conveyor_graph: "resources/conveyor_graph/conveyor_graph.gml"
-      pallet_metric: "DISTANCE"
     reactors:
      message_filter:
        logging_level: ERROR
@@ -165,7 +164,7 @@ reactors:
   cell5:
     logging_level: ERROR
     parameters:
-      data_model_path: "resources/data_model/cell5.yml"
+      data_model_path: "resources/data_model/opcua_cell5.yml"
       path: "src/fmu/QualityCell.fmu"
       time_step: 1000
     reactors:
@@ -174,7 +173,7 @@ reactors:
   cell4:
     logging_level: ERROR
     parameters:
-      data_model_path: "resources/data_model/cell4.yml"
+      data_model_path: "resources/data_model/opcua_cell4.yml"
     reactors:
       message_filter:
         logging_level: ERROR

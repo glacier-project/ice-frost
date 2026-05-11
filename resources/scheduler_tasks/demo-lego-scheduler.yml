@@ -1,0 +1,259 @@
+name: "scheduler" 
+root:
+  !!FolderNode
+  name: "Scheduler"
+  description: ""
+  children:
+    - !!CompositeMethodNode
+      name: "LD"
+      returns:
+        - !!NumericalVariableNode
+          name: "reservationId"
+          default_value: 0
+      cfg:
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/reservePalletOfTypeWithDestination"
+          args: [1, 0, 2, 0, 0, 25]  # num of pallets, contentPos1, contentPos2, contentPos3, type
+    - !!CompositeMethodNode
+      name: "RBTC"
+      parameters:
+        - !!NumericalVariableNode
+          name: "reservationId"
+          default_value: 0
+      returns:
+        - !!NumericalVariableNode
+          name: "pallet"
+          default_value: 0
+        - !!NumericalVariableNode
+          name: "shape1"
+          default_value: 0
+        - !!NumericalVariableNode
+          name: "shape2"
+          default_value: 0
+      cfg:
+        # Call the first pallet and get the lego
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/callReservedPalletTo"
+          args: ["${reservationId}", 25]  # reservationId, destination
+        - !!WaitRemoteEventNode
+          remote_id: "conveyor"
+          variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_3_1"
+          rhs: "${pallet}"
+          operator: "=="
+        - !!ReadRemoteVariableNode
+          remote_id: "conveyor"
+          variable: "/Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet${pallet}/contentPosition2"
+          store_as: "shape1"
+        - !!CallRemoteMethodNode
+          remote_id: "cell4"
+          method: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_PICK_FROM_PALLET_DB/Method"
+          args: [2, "${shape1}"]  # posPick, shape1
+        - !!WaitRemoteEventNode
+          remote_id: "cell4"
+          variable: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone"
+          operator: "=="
+          rhs: True        
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet"
+          args: ["${pallet}"]  # pallet number  
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet"
+          args: ["${pallet}", 2]       
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+          args: ["${pallet}", 0]  # pallet number, destination
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/reservePalletOfTypeWithDestination"
+          args: [1, 0, 2, 0, 0, 25]  # num of pallets, contentPos1, contentPos2, contentPos3, type
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/callReservedPalletTo"
+          args: ["${reservationId}", 25]  # reservationId, destination
+        - !!WaitRemoteEventNode
+          remote_id: "conveyor"
+          variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_3_1"
+          rhs: "${pallet}"
+          operator: "=="
+        - !!ReadRemoteVariableNode
+          remote_id: "conveyor"
+          variable: "/Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet${pallet}/contentPosition2"
+          store_as: "shape2"
+        - !!CallRemoteMethodNode
+          remote_id: "cell4"
+          method: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_MOVE_AND_PLACE_DB/Method"
+          args: [2, 3, "${palletPosition}", 1]  # posPlace, shape2, palletPosition, place pos
+        - !!WaitRemoteEventNode
+          remote_id: "cell4"
+          variable: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone"
+          operator: "=="
+          rhs: True
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet"
+          args: ["${pallet}", 2]
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet"
+          args: ["${pallet}", 3, "${shape2}"]
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet"
+          args: ["${pallet}", 1, "${shape1}"]
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+          args: ["${pallet}", 0]  # pallet number, destination
+    - !!CompositeMethodNode
+      name: "QC"
+      parameters:
+        - !!NumericalVariableNode
+          name: "pallet"
+          default_value: 0
+        - !!NumericalVariableNode
+          name: "shape1"
+          default_value: 0
+        - !!NumericalVariableNode
+          name: "shape2"
+          default_value: 0
+      cfg:
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+          args: ["${pallet}", 34]  # pallet number, destination
+        - !!WaitRemoteEventNode
+          remote_id: "conveyor"
+          variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_4_2"
+          rhs: "${pallet}"
+          operator: "=="  
+        - !!CallRemoteMethodNode
+          remote_id: "cell5"
+          method: "/Cell5/Utils/CheckQualityLego"
+          args: ["${shape1}", 0, "${shape2}"]  # shape1, shape2, shape3
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+          args: ["${pallet}", 0]  # pallet number, destination
+    - !!CompositeMethodNode
+      name: "DISASSEMBLE"
+      parameters:
+        - !!NumericalVariableNode
+          name: "pallet"
+          default_value: 0
+        - !!NumericalVariableNode
+          name: "shape1"
+          default_value: 0
+        - !!NumericalVariableNode
+          name: "shape2"
+          default_value: 0
+      returns:
+        - !!NumericalVariableNode
+          name: "palletPosition"
+          default_value: 0
+      cfg:
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+          args: ["${pallet}", 25]  # pallet number, destination
+        - !!WaitRemoteEventNode
+          remote_id: "conveyor"
+          variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_3_1"
+          rhs: "${pallet}"
+          operator: "=="  
+        - !!CallRemoteMethodNode
+          remote_id: "cell4"
+          method: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_PICK_FROM_PALLET_DB/Method"
+          args: [1, "${shape1}"]  # posPick, shape1
+        - !!WaitRemoteEventNode
+          remote_id: "cell4"
+          variable: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone"
+          operator: "=="
+          rhs: True
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet"
+          args: ["${pallet}", 1]
+        - !!CallRemoteMethodNode
+          remote_id: "cell4"
+          method: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_MOVE_OVER_PALLET_DB/Method"
+          args: [3, 2]
+        - !!WaitRemoteEventNode
+          remote_id: "cell4"
+          variable: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone"
+          operator: "=="
+          rhs: True
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet"
+          args: ["${pallet}", 3]
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet"
+          args: ["${pallet}", 2, "${shape2}"]          
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet"
+          args: ["${pallet}"]  # pallet
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+          args: ["${pallet}", 0]  # pallet number, destination
+    - !!CompositeMethodNode
+      name: "RESERVE"
+      returns: 
+        - !!NumericalVariableNode
+          name: "reservationId"
+          default_value: 0
+      cfg:
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/reservePalletOfTypeWithDestination"
+          args: [1, 0, 0, 0, 0, 25]  # num of pallets, contentPos1, contentPos2, contentPos3, type
+    - !!CompositeMethodNode
+      name: "PUT_BACK"
+      parameters:
+        - !!NumericalVariableNode
+          name: "reservationId"
+          default_value: 0
+        - !!NumericalVariableNode
+          name: "shape1"
+          default_value: 0
+        - !!NumericalVariableNode
+          name: "palletPosition"
+          default_value: 0
+      cfg:
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/UtilityMethods/callReservedPalletTo"
+          args: ["${reservationId}", 25]  # reservationId, destination
+        - !!WaitRemoteEventNode
+          remote_id: "conveyor"
+          variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_3_1"
+          rhs: "${pallet}"
+          operator: "=="
+        - !!CallRemoteMethodNode
+          remote_id: "cell4"
+          method: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_PLACE_TO_PALLET_DB/Method"
+          args: ["${palletPosition}", 2]  # buffer pos, pallet pos
+        - !!WaitRemoteEventNode
+          remote_id: "cell4"
+          variable: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone"
+          operator: "=="
+          rhs: True
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet"
+          args: ["${pallet}", 2, "${shape1}"]
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet"
+          args: ["${pallet}"]  # pallet number     
+        - !!CallRemoteMethodNode
+          remote_id: "conveyor"
+          method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+          args: ["${pallet}", 0]  # reservationId, destination

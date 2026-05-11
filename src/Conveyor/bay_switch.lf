@@ -5,6 +5,9 @@ import FrostBase from "../../frost/src/lib/FrostBase.lf"
 
 reactor BaySwitch extends FrostBase{
     state conveyor_name
+    state forward_time = 2000
+    state backward_time = 2000
+    logical action delay
 
     reaction(startup){=
         temp = self.name.split(".")
@@ -21,6 +24,7 @@ reactor BaySwitch extends FrostBase{
     output ask_to_controller
 
     state pallet = {=None=}
+    state outgoing = False
 
     logical action unhandled_pallet
 
@@ -34,7 +38,7 @@ reactor BaySwitch extends FrostBase{
 
     logical action pending_pallet
     reaction(pending_pallet) -> pending_pallet, ask_to_controller{=
-        if self.pallet == None:
+        if self.pallet == None or self.outgoing:
             return 0
         self.logger.debug(f"Bay Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
         self._set_output_port([Events.pallet_pending, self.pallet.id, self.conveyor_name], ask_to_controller)
@@ -63,7 +67,7 @@ reactor BaySwitch extends FrostBase{
         unhandled_pallet.schedule(0)
     =}
 
-    reaction(controller_command) -> ask_to_controller, to_forward, to_back, to_frost, pending_pallet{=
+    reaction(controller_command) -> ask_to_controller, delay, pending_pallet, to_back, to_forward{=
         '''
         controller_command format: [[header], [command], [args]]
             header = list of str with Segment names involved in the command
@@ -83,27 +87,39 @@ reactor BaySwitch extends FrostBase{
         if not isinstance(action_to_be_performed, BayAction):
             raise Exception(f"Bay Switch {self.conveyor_name} error: unknown command {cmd}")
 
-        if cmd == ControllerCommand.move:               
+        if cmd == ControllerCommand.move:        
+            if self.outgoing:
+                return 0
             if self.pallet is None:
                 self.logger.error(f"Bay Switch {self.conveyor_name} error: {value}")
-                raise Exception(f"Bay Switch {self.conveyor_name} error: no pallet to move")
+                # raise Exception(f"Bay Switch {self.conveyor_name} error: no pallet to move")
             
             if action_to_be_performed == BayAction.back:
-                self.logger.debug(f"Bay Switch {self.conveyor_name} moving pallet {self.pallet.id}")
-                self._set_output_port(self.pallet, to_back)
+                #self.logger.debug(f"Bay Switch {self.conveyor_name} moving pallet {self.pallet.id}")
+                delay.schedule(MSEC(self.backward_time), [self.pallet, to_back])
+                self.outgoing = True
+                #self._set_output_port(self.pallet, to_back)
             elif action_to_be_performed == BayAction.forward:
-                self.logger.debug(f"Bay Switch {self.conveyor_name} moving pallet {self.pallet.id} to next Bay Switch")
-                self._set_output_port(self.pallet, to_forward)
+                #self.logger.debug(f"Bay Switch {self.conveyor_name} moving pallet {self.pallet.id} to next Bay Switch")
+                delay.schedule(MSEC(self.forward_time), [self.pallet, to_forward])
+                self.outgoing = True
+                #self._set_output_port(self.pallet, to_forward)
             elif action_to_be_performed == BayAction.none:
-                self.logger.debug(f"Bay Switch {self.conveyor_name} not moving pallet {self.pallet.id}")
                 pending_pallet.schedule(SEC(0))
                 return 0
             
-            self._set_output_port([0, self.conveyor_name], to_frost)
-            self._set_output_port([Events.pallet_released, self.pallet.id, self.conveyor_name], ask_to_controller)
-
-            self.pallet = None
         else:
             raise Exception(f"Bay Switch {self.conveyor_name} error: unknown command {cmd}")
+    =}
+
+    reaction(delay) -> to_forward, to_back, to_frost, pending_pallet, ask_to_controller{=
+        pallet, port = delay.value
+        self._set_output_port(pallet, port)
+
+        self._set_output_port([0, self.conveyor_name], to_frost)
+        self._set_output_port([Events.pallet_released, self.pallet.id, self.conveyor_name], ask_to_controller)
+
+        self.pallet = None
+        self.outgoing = False
     =}
 }

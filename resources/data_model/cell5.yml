@@ -1,4 +1,4 @@
-name: "Cell5" # name of the machine
+name: "cell5" # name of the machine
 machine_category: "unknown" # category of the machine
 machine_type: "unknown" # type of the machine
 machine_model: "unknown" # model of the machine
@@ -25,23 +25,23 @@ root:
           description: "Quality of the Lego"
           initial_value: False
     - !!FolderNode
-      name: "Utils"
+      name: "Methods"      
       description: "Variables"
       children:
         - !!AsyncMethodNode
-          name: "check_color"
+          name: "CheckQualityCovers"
           description: "Checks color"
           parameters:
-            - !!StringVariableNode
+            - !!NumericalVariableNode
               name: "color"
               description: "Color to check"
-              default_value: ""
+              default_value: 0
           returns:
-            - !!BooleanVariableNode
+            - !!NumericalVariableNode
               name: "is_correct"
               description: "Indicates if the color is correct"
         - !!AsyncMethodNode
-          name: "check_shape"
+          name: "CheckQualityLego"
           description: "Checks shape"
           parameters:
             - !!NumericalVariableNode
@@ -58,7 +58,7 @@ root:
               name: "shape3"
               description: ""
               measure_unit: "NoneMeasureUnits.NONE"
-              default_value: 0     
+              default_value: 0
             - !!NumericalVariableNode
               name: "pallet_content1"
               description: ""
@@ -76,11 +76,11 @@ root:
               default_value: 0
           returns:
             - !!BooleanVariableNode
-              name: "is_correct"
+              name: "result"
               description: "Indicates if the shape is correct"
     - !!FolderNode
-      name: "Methods"
-      description: "Variables"
+      name: "Utils"
+      description: ""
       children:        
         - !!CompositeMethodNode
           name: "CheckQualityCovers"
@@ -96,7 +96,7 @@ root:
               description: "QualityCover"
           cfg: 
             - !!CallMethodNode
-              method: "Cell5/Utils/check_color"
+              method: "Cell5/Methods/CheckQualityCovers"
               args:
                 - "${color}"
             - !!WaitConditionNode
@@ -112,17 +112,17 @@ root:
           parameters:
             - !!NumericalVariableNode
               name: "shape1"
-              description: "Quality of the Lego"
+              description: ""
               measure_unit: "NoneMeasureUnits.NONE"
               default_value: 0
             - !!NumericalVariableNode
               name: "shape2"
-              description: "Lego image"
+              description: ""
               measure_unit: "NoneMeasureUnits.NONE"
               default_value: 0
             - !!NumericalVariableNode
               name: "shape3"
-              description: "Lego image"
+              description: ""
               measure_unit: "NoneMeasureUnits.NONE"
               default_value: 0
           returns:
@@ -131,7 +131,7 @@ root:
               description: "Quality of the Lego"
           cfg:
             - !!ReadRemoteVariableNode
-              variable: "/Objects/ConveyorHMI/ConveyorObjects/Bayes/Bay4/PalletPosition2/PalletPosition2"
+              variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_4_2"
               remote_id: "conveyor"
               store_as: "pallet_id"
             - !!ReadRemoteVariableNode
@@ -147,7 +147,7 @@ root:
               remote_id: "conveyor"
               store_as: "pallet_content3"
             - !!CallMethodNode
-              method: "Cell5/Utils/check_shape"
+              method: "Cell5/Methods/CheckQualityLego"
               args:
                 - "${shape1}"
                 - "${shape2}"
@@ -212,5 +212,3 @@ root:
           description: "Number of faults"
           measure_unit: "NoneMeasureUnits.NONE"
           initial_value: 0
-
-    
