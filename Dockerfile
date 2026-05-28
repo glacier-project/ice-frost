@@ -1,8 +1,5 @@
 FROM python:3.13-alpine3.22 AS venv_builder
 
-COPY src /tmp/src
-COPY frost /tmp/frost
-
 # Install system dependencies, including those for compiling lingo and Python dev files
 RUN pip install --upgrade pip && pip install virtualenv && python -m venv /venv
 RUN apk add --update --no-cache --virtual .tmp-build-deps git gcc g++ libc-dev make cmake python3-dev zlib-dev curl bash openjdk17-jre
@@ -16,6 +13,8 @@ RUN /venv/bin/pip install -r /tmp/requirements.txt
 
 # Build the project
 WORKDIR /tmp
+COPY src /tmp/src
+COPY frost /tmp/frost
 RUN ~/.local/bin/lfc src/Main.lf
 
 FROM python:3.13-alpine3.22
