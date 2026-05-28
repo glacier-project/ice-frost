@@ -176,3 +176,13 @@ Lingo.lock
 .env
 .envrc
 .vscode
+
+# Certificates
+*.der
+*.pem
+
+resources/discover_cell4_methods.py
+resources/schedules/recipe.json
+resources/schedules/service,json
+resources/test.py
+resources/test_cell5_methods.py

@@ -1,751 +1,810 @@
 target Python{
-    files: [source_folder/material.py,
-        source_folder/priorityalgorithm.py, 
+    files: [
         source_folder/pallet.py, 
         source_folder/routing_algorithm.py, 
-        source_folder/bay_algorithm.py, 
-        source_folder/new_destination.py, 
-        source_folder/bay_control.py,
+        source_folder/bay_routing_algorithm.py,
+        source_folder/interchange_scheduling.py,
+        source_folder/utils.py
     ]
 };
 
+import FrostBase from "../../frost/src/lib/FrostBase.lf"
+
 preamble{=
-    import logging
-    from pallet import Pallet 
-    from material import Material
-    from routing_algorithm import Routing
-    from bay_algorithm import Bay_Routing
-    from priorityalgorithm import PriorityAlgorithm 
-    from new_destination import New_Destination
-    from bay_control import Bay_Control   
-    from bay_control import Update_Truth_Table
-    from bay_control import Update_Bay
-    from enum import Enum
-    from material import Material
+    from pallet import Pallet
+    from interchange_scheduling import schedule_with_priority
+    from routing_algorithm import calculate_next_action
+    from bay_routing_algorithm import check_availability_from_to
+    from utils import Events, SegmentAction, ControllerCommand, SwitchAction, SwitchPort, BayAction, SwitchName, InterchangeName, SegmentName, InterchangeInputs, BayName
 =}
 
-reactor Controller{
+reactor Controller extends FrostBase{
+    state pallet_destinations = {={}=}
+    state pallets_at_destination = {={}=}
+    state actions = {={}=}
+    state pallet_names = []
+    state belt_status 
 
-    preamble{=        
-        class Events(Enum):
-            pallet_arrived = "_pallet_arrived"
-            move = "Move"
-            free = "Free"
-    =}
+    state bay4_status = {=[0, 0, 0]=}
+    state bay3_status = {=[0, 0, 0]=}
+    state bay2_status = {=[0, 0, 0]=}
+    state bay1_status = [0]
+    state lu_bay_status = [0]
 
-    state pallets
-    state pallet_names
-    state conveyor 
-    state set
+    output to_switches
+    output to_bayes
+    output to_segments
 
-    input A_IN
-    input B_IN
-    input C_IN 
-    input D_IN
-    input E_IN
-    input F_IN
-    input H_IN
-    input I_IN
-    input L_IN
-    input M_IN
+    input from_frost
+    output to_frost
+    output pallet_realeased 
 
-    input BAY_P_IN
-    input BAY_O_IN
-    input BAY_N_IN
-    input BAY_Z_IN
-
-    input SEG_AB
-    input SEG_BC
-    input SEG_CD
-    input SEG_DE
-    input SEG_ML
-    input SEG_LI
-    input SEG_IH
-    input SEG_HG
-    input SEG_GF
-
-    //BAYS BUFFERS
-    state N_
-    state O_
-    state P_
-    state Z = True
-    //DIRECT COMMUNICATION PORT
-    output OUT
-    output BAY_OUT
-    output SEG_OUT
-    output BAY_Z_OUT
-    output to_G
-    input from_G
-    //INDIRECT COMMUNICATION PORT
-    input FROST_IN
-    output FROST_OUT
-    output Release
-    output Pallets
-    //ACTIONS
-    logical action control_AF
-    logical action control_BH
-    logical action control_CI
-    logical action control_DL
-    logical action control_EM
-    logical action control_G
+    logical action control_af
+    logical action control_bh
+    logical action control_ci
+    logical action control_dl
+    logical action control_em
+    logical action control_lu
     logical action create_pallet
 
-    //Pallets
-    state pallets_to_be_created
+    state pallets_to_be_created = []
 
-    //SEGMENTS
-    state BH_buffers
-    state CI_buffers
-    state DL_buffers
-    state GF_buffers
-    state HG_buffers
-    state DE_buffers
-    state P_buffers
-    state O_buffers
-    state N_buffers
-    state M_buffers
-    state pallet_on_G
+    logical action create_pallet_event
+    state messages = []
+    logical action message_to_send
+    // @label create_pallet
+    reaction (create_pallet_event) -> to_switches, to_bayes, to_segments{=
+        dest, pallet_id = self.pallets_to_be_created.pop(0)
+        
+        self.pallet_names.append(pallet_id)
+        self.pallet_destinations[pallet_id] = "0"
+        self.actions[pallet_id] = None
 
-    ############################## ACTION REACTIONS ##############################
-    reaction (create_pallet) -> OUT{=
-        temp = self.pallets[self.pallets_to_be_created.pop(0)]        
-        temp.looping = True
-        self.pallet_names.append(temp.pallet_id)         
-        self.conveyor[temp.position] = False
-        y = "Create", temp.position, self.pallets[temp.pallet_id]
-        OUT.set(y)
+        message = [[dest.value], [ControllerCommand.create, None], [pallet_id]]
+        self.logger.debug(f"Message created: {message}")
+        if isinstance(dest, SwitchName):
+            self._set_output_port(message, to_switches)
+
+        elif isinstance(dest, SegmentName):            
+            self._set_output_port(message, to_segments)
+
+        elif isinstance(dest, BayName):
+            self._set_output_port(message, to_bayes)
+        
+        if self.pallets_to_be_created:
+            create_pallet_event.schedule(0)
     =}
 
+    method new_pallet_created(pallet_id){=
+        self.pallet_destinations[pallet_id] = "0"
+        self.actions[pallet_id] = SwitchAction.advance
+        self.pallet_names.append(pallet_id)
+    =}
+
+    state bh_status = {={InterchangeInputs.BAY: None, InterchangeInputs.UPPER_SEGMENT: None, InterchangeInputs.LOWER_SEGMENT: None}=}
+    state ci_status = {={InterchangeInputs.BAY: None, InterchangeInputs.UPPER_SEGMENT: None, InterchangeInputs.LOWER_SEGMENT: None}=}
+    state dl_status = {={InterchangeInputs.BAY: None, InterchangeInputs.UPPER_SEGMENT: None, InterchangeInputs.LOWER_SEGMENT: None}=}
+    state em_status = {={InterchangeInputs.BAY: None, InterchangeInputs.UPPER_SEGMENT: None, InterchangeInputs.LOWER_SEGMENT: None}=}
+    state lu_status = {={InterchangeInputs.BAY: None, InterchangeInputs.UPPER_SEGMENT: None, InterchangeInputs.LOWER_SEGMENT: None}=}
+    state bh_stop = [False]
+    state ci_stop = [False]
+    state dl_stop = [False]
+    state em_stop = [False]
+    state af_stop = [False]
+
+    ############################## Start and End REACTIONS ##############################
     reaction(shutdown){=
-        logging.info(f"Conveyor state: {self.conveyor}")
+        self.logger.debug(f"Conveyor state: {self.belt_status}, \n HB: {self.bh_status}, \n IC: {self.ci_status}, \n DL: {self.dl_status}, \n EM: {self.em_status}, \n LU: {self.lu_status}")
+        self.logger.debug(f"BH: {self.bh_stop}, CI: {self.ci_stop}, DL: {self.dl_stop}, EM: {self.em_stop}, AF: {self.af_stop}")
+        self.logger.debug(f"\n BAY4: {self.bay4_status}, \n BAY3: {self.bay3_status}, \n BAY2: {self.bay2_status}, \n BAY1: {self.bay1_status}, \n LU_BAY: {self.lu_bay_status}")
+        self.logger.debug(f"Pallet destinations: {self.pallet_destinations}, Actions: {self.actions}")
     =}
 
-    reaction (startup)-> OUT, BAY_OUT, create_pallet, Pallets{=
-        self.pallet_on_G = False
-        self.pallets_to_be_created = [2, 3, 4, 5, 6, 7, 8, 9, 10]
-        self.BH_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
-        self.CI_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
-        self.DL_buffers = {"BAY": None, "IN_UP": [], "IN_DOWN": []}
-        self.GF_buffers = []
-        self.HG_buffers = []
-        self.DE_buffers = []
-        self.P_buffers = []
-        self.O_buffers = []
-        self.N_buffers = []
-        self.M_buffers = []
-        self.pallets = {}
-        self.pallet_names = []
-        self.N_ = [True, True, True]
-        self.O_ = [True, True, True]
-        self.P_ = [True, True, True]
-        self.conveyor = {"A" : True, "B" : True, "C" : True, "D" : True, "E" : True, "F" : True, "G" : True, "H" : True, "I" : True, "L" : True, "M" : True}
-        temp = Pallet(pallet_id = 1, position = "I")
-        temp.looping = True
-        self.pallets[temp.pallet_id] = temp
-        self.pallet_names.append(temp.pallet_id)         
-        y = "Create", temp.position, self.pallets[temp.pallet_id]
-        OUT.set(y)
-        self.pallets[2] = Pallet(pallet_id = 2, position = "M")
-        self.pallets[3] = Pallet(pallet_id = 3, position = "L")
-        self.pallets[4] = Pallet(pallet_id = 4, position = "C")
-        self.pallets[5] = Pallet(pallet_id = 5, position = "D")
-        self.pallets[6] = Pallet(pallet_id = 6, position = "E")
-        self.pallets[7] = Pallet(pallet_id = 7, position = "H")
-        self.pallets[8] = Pallet(pallet_id = 8, position = "A")
-        self.pallets[9] = Pallet(pallet_id = 9, position = "B")
-        self.pallets[10] = Pallet(pallet_id = 10, position = "I")
-        for z in range(1, len(self.pallets)):
-            create_pallet.schedule(z-1)
-        Pallets.set(self.pallets)
+    method random_init(){=
+        import random
+        segments = [
+            SegmentName.Segment_1, SegmentName.Segment_2, SegmentName.Segment_3, 
+            SegmentName.Segment_5, SegmentName.Segment_6, SegmentName.Segment_7, 
+            SegmentName.Segment_8
+        ]
+
+        for i in range(1, 11):
+            segment = random.choice(segments)
+            self.pallets_to_be_created.append([segment, i])
     =}
 
-    reaction(control_AF) -> SEG_OUT{=
-        if self.conveyor["A"] == True and self.conveyor["F"] == True and not(not self.GF_buffers):
-            self.conveyor["A"] = False
-            self.conveyor["F"] = False
-            self.GF_buffers.pop(0)
-            y = ["GF"]
-            SEG_OUT.set(y)        
+    reaction (startup)-> to_switches, to_bayes, create_pallet, create_pallet_event{=
+        self.belt_status = {SwitchName.A.value: True, SwitchName.B.value: True, SwitchName.C.value: True, SwitchName.D.value: True, SwitchName.E.value: True, SwitchName.F.value: True, BayName.LU.value: True, SwitchName.H.value: True, SwitchName.I.value: True, SwitchName.L.value: True, SwitchName.M.value: True}
+        
+        self.random_init()
+
+
+        create_pallet_event.schedule(0)
     =}
-    reaction(control_BH)-> SEG_OUT, BAY_OUT, Release{=
-        if self.conveyor["B"] == True or self.conveyor["H"] == True:
-            y = PriorityAlgorithm(self.BH_buffers)
-            if y != None:
-                temp = None
-                if y != "BOTH":
-                    if y == "BAY":
-                        temp = self.BH_buffers[y]
-                    else:
-                        temp = self.BH_buffers[y][0]
-                if temp != None and temp.action == "OUT":
-                    if y == "IN_UP" and self.conveyor["H"] == True:
-                        self.BH_buffers["IN_UP"].pop(0)
-                        self.conveyor["H"] = False  
-                        y = ["IH"]
-                        SEG_OUT.set(y)
-                    elif y == "IN_DOWN" and self.conveyor["B"] == True:
-                        self.BH_buffers["IN_DOWN"].pop(0)
-                        self.conveyor["B"] = False
-                        y = ["AB"]
-                        SEG_OUT.set(y)
-                elif self.conveyor["B"] == True and self.conveyor["H"] == True:
-                    if y == "BAY":
-                        Release.set(self.BH_buffers["BAY"].pallet_id)
-                        self.BH_buffers["BAY"] = None
-                        BAY_OUT.set(["Release", "N"])  
-                        
-                        self.N_[0] = True          
-                    elif y == "IN_UP":
-                        self.BH_buffers["IN_UP"].pop(0)
-                        y = ["IH"]
-                        SEG_OUT.set(y)
-                    elif y == "IN_DOWN":
-                        self.BH_buffers["IN_DOWN"].pop(0)
-                        y = ["AB"]
-                        SEG_OUT.set(y)
-                    elif y == "BOTH":
-                        self.BH_buffers["IN_DOWN"].pop(0)
-                        self.BH_buffers["IN_UP"].pop(0)
-                        y = ["BOTH", "AB", "IH"]
-                        SEG_OUT.set(y)
-                    
-                    self.conveyor["B"] = False
-                    self.conveyor["H"] = False  
-            else:
-                self.conveyor["B"] = True
-                self.conveyor["H"] = True                          
-    =}
-    reaction(control_CI)-> SEG_OUT, BAY_OUT, Release{=
-        if self.conveyor["C"] == True or self.conveyor["I"] == True:
-            y = PriorityAlgorithm(self.CI_buffers)
-            if y != None:
-                temp = None
-                if y != "BOTH":
-                    if y == "BAY":
-                        temp = self.CI_buffers[y]   
-                    else:
-                        temp = self.CI_buffers[y][0]
-                if temp != None and temp.action == "OUT":
-                    if y == "IN_UP" and self.conveyor["I"] == True:
-                        self.CI_buffers["IN_UP"].pop(0)
-                        self.conveyor["I"] = False
-                        y = ["LI"]
-                        SEG_OUT.set(y)
-                    elif y == "IN_DOWN" and self.conveyor["C"] == True:
-                        self.CI_buffers["IN_DOWN"].pop(0)
-                        self.conveyor["C"] = False
-                        y = ["BC"]
-                        SEG_OUT.set(y)
-                elif self.conveyor["C"] == True and self.conveyor["I"] == True:
-                    if y == "BAY":
-                        Release.set(self.CI_buffers["BAY"].pallet_id)
-                        self.CI_buffers["BAY"] = None
-                        BAY_OUT.set(["Release", "O"]) 
-                        self.O_[0] = True
-                    elif y == "IN_UP":
-                        self.CI_buffers["IN_UP"].pop(0)
-                        y = ["LI"]
-                        SEG_OUT.set(y)
-                    elif y == "IN_DOWN":
-                        self.CI_buffers["IN_DOWN"].pop(0)
-                        y = ["BC"]
-                        SEG_OUT.set(y)
-                    elif y == "BOTH":
-                        self.CI_buffers["IN_DOWN"].pop(0)
-                        self.CI_buffers["IN_UP"].pop(0)
-                        y = ["BOTH", "BC", "LI"]
-                        SEG_OUT.set(y)
-                    
-                    self.conveyor["C"] = False
-                    self.conveyor["I"] = False  
-            else:
-                self.conveyor["C"] = True
-                self.conveyor["I"] = True                          
-    =}
-    reaction(control_DL)-> SEG_OUT, BAY_OUT, Release{=
-        if self.conveyor["D"] == True or self.conveyor["L"] == True:
-            y = PriorityAlgorithm(self.DL_buffers)
-            if y != None:
-                temp = None
-                if y != "BOTH":
-                    if y == "BAY":
-                        temp = self.DL_buffers[y]
-                    else:
-                        temp = self.DL_buffers[y][0]
-                    
-                if temp != None and temp.action == "OUT":
-                    if y == "IN_UP" and self.conveyor["L"] == True:
-                        self.DL_buffers["IN_UP"].pop(0)
-                        self.conveyor["L"] = False
-                        y = ["ML"]
-                        SEG_OUT.set(y)
-                    elif y == "IN_DOWN" and self.conveyor["D"] == True:
-                        self.DL_buffers["IN_DOWN"].pop(0)
-                        self.conveyor["D"] = False
-                        y = ["CD"]
-                        SEG_OUT.set(y)
-                elif self.conveyor["D"] == True and self.conveyor["L"] == True:
-                    if y == "BAY":
-                        Release.set(self.DL_buffers["BAY"].pallet_id)
-                        self.DL_buffers["BAY"] = None
-                        BAY_OUT.set(["Release", "P"])   
-                        self.P_[0] = True
-                    elif y == "IN_UP":
-                        self.DL_buffers["IN_UP"].pop(0)
-                        y = ["ML"]
-                        SEG_OUT.set(y)
-                    elif y == "IN_DOWN":
-                        self.DL_buffers["IN_DOWN"].pop(0)
-                        y = ["CD"]
-                        SEG_OUT.set(y)
-                    elif y == "BOTH":
-                        self.DL_buffers["IN_DOWN"].pop(0)
-                        self.DL_buffers["IN_UP"].pop(0)
-                        y = ["BOTH", "CD", "ML"]
-                        SEG_OUT.set(y)
-                    
-                    self.conveyor["D"] = False
-                    self.conveyor["L"] = False  
-            else:
-                self.conveyor["D"] = True
-                self.conveyor["L"] = True                          
-    =}
-    reaction(control_EM)-> SEG_OUT, BAY_Z_OUT{=
-        if self.conveyor["E"] == True and self.conveyor["M"] == True and (self.DE_buffers or self.M_buffers):
-            self.conveyor["E"] = False
-            self.conveyor["M"] = False
-            if self.M_buffers:
-                y = ["MOVE", "OUT"]
-                BAY_Z_OUT.set(y)
-                self.M_buffers.pop(0)
-                self.Z = True
-            else:             
-                self.DE_buffers.pop(0)
-                y = ["DE"]
-                SEG_OUT.set(y)
-    =}
-    reaction(control_G) -> SEG_OUT{=
-        if self.conveyor["G"] == True and (self.HG_buffers):
-            self.conveyor["G"] = False
-            self.HG_buffers.pop(0)
-            y = ["HG"]
-            SEG_OUT.set(y)
+    reaction(message_to_send) -> to_switches, to_bayes, to_segments, message_to_send{=
+        if self.messages == []:
+            return 0
+        message = self.messages.pop(0)
+        self.logger.debug(f"Controller sending message: {message}")
+        if isinstance(message[1][1], SegmentAction):
+            self.logger.debug(f"Controller sending message to segments: {message}")
+            self._set_output_port(message, to_segments)
+        elif isinstance(message[1][1], SwitchAction): 
+            self.logger.debug(f"Controller sending message to switches: {message}")
+            self._set_output_port(message, to_switches)
+        elif isinstance(message[1][1], BayAction):
+            self.logger.debug(f"Controller sending message to bays: {message}")
+            self.logger.debug(f"{self.bay4_status}, {self.bay3_status}, {self.bay2_status}, {self.bay1_status}, {self.lu_bay_status}")
+            self._set_output_port(message, to_bayes)
+        else:
+            raise Exception(f"Controller error: no action to be performed {message}")
+
+        if self.messages:
+            self.logger.debug(f"Messages still in queue: {self.messages}, {self.dl_status}, {self.belt_status['L']}")
+            message_to_send.schedule(int(len(self.messages) + 1))
     =}
 
+    ############################### CONTROL REACTIONS ##############################
+    method _check_interchange_status(switches){=
+        '''
+        check if all the switches involved in the interchange are free
+            switches: list of switches involved in the interchange
+            return: True if all the switches are free, False otherwise
+        '''
+        self.logger.debug(f"{switches} status: {[self.belt_status[switch] for switch in switches]}")
+        return all(self.belt_status[switch] == True for switch in switches)
+    =}
+    method lock_positions(pos, act, switches, stop, pallet_id){=
+        '''
+        update the status of the switches involved in the action
+            pos: position of the pallet in the interchange (InterchangeInputs)
+            act: action to be performed by the pallet (SwitchAction)
+            switches: list of switches involved in the interchange
+            stop: list with a single boolean element indicating if the interchange is stopped
+            pallet_id: id of the pallet to be moved
+        '''
+        self.logger.debug(f"Locking positions for pallet {pallet_id}: {switches}")
+        if act == SwitchAction.advance:
+            self.logger.debug(f"Locking switch(es) {switches} for pallet {pallet_id} advancing")
+            if pos == InterchangeInputs.UPPER_SEGMENT:
+                self.belt_status[switches[0]] = False
+                return 0
+            elif pos == InterchangeInputs.LOWER_SEGMENT:
+                self.belt_status[switches[1]] = False
+                return 0
+            elif pos == InterchangeInputs.BAY:
+                self.belt_status[switches[0]] = False
+                return 0
+        elif act == SwitchAction.go_to_bay:
+            if pos == InterchangeInputs.UPPER_SEGMENT:
+                self.belt_status[switches[0]] = False
+                return 0
+        elif pos == InterchangeInputs.BAY:
+            if calculate_next_action(switches[0], self.pallet_destinations[pallet_id], None, pallet_id) == SwitchAction.advance:
+                self.belt_status[switches[0]] = False
+                self.logger.debug(f"Locking switch {switches[0]} for pallet {pallet_id} exits from bay")
+                return 0
+        stop[0] = True
+        for switch in switches:
+            self.belt_status[switch] = False
+    =}
+    method check_action_feasibility(switch_list, stop, action_to_perform, pos){=
+        if action_to_perform == SwitchAction.cross:
+            # Block cross if interchange is busy
+            if stop[0] == True:
+                return None
+            if not self._check_interchange_status(switch_list):
+                return None
+        elif action_to_perform == SwitchAction.advance:
+            if pos == InterchangeInputs.UPPER_SEGMENT or pos == InterchangeInputs.BAY:
+                if self.belt_status[switch_list[0]] == False:
+                    return None
+            elif pos == InterchangeInputs.LOWER_SEGMENT:
+                if self.belt_status[switch_list[1]] == False:
+                    return None
+        elif action_to_perform == SwitchAction.go_to_bay:
+            if pos == InterchangeInputs.UPPER_SEGMENT:
+                if self.belt_status[switch_list[0]] == False:
+                    return None
+            else:
+                # go_to_bay from LOWER_SEGMENT uses interchange
+                if stop[0] == True:
+                    return None
+                if not self._check_interchange_status(switch_list):
+                    return None
+
+        return 0
+    =}
+    method update_status(status, switch_list, bay_status){=
+        pallet = status[InterchangeInputs.UPPER_SEGMENT]
+        if pallet != None:
+            self.actions[pallet] = calculate_next_action(switch_list[0], self.pallet_destinations[pallet], bay_status=bay_status, pallet_id=pallet)
+        pallet = status[InterchangeInputs.LOWER_SEGMENT]
+        if pallet != None:
+            self.actions[pallet] = calculate_next_action(switch_list[1], self.pallet_destinations[pallet], bay_status=bay_status, pallet_id=pallet)
+    =}
+
+    method take_decision_over_interchange(switch_list, stop, status, bay, upper_segment, lower_segment, bay_status){=
+        for switch in switch_list:
+            if switch not in SwitchName.values():
+                raise Exception(f"Controller error: invalid switch name {switch}")
+        #Update lock on the interchange
+        self.logger.debug(f"Taking decision over interchange with switches {switch_list}, {self.belt_status}, status {status}, stop {stop}, bay {bay}, upper_segment {upper_segment}, lower_segment {lower_segment}, bay_status {bay_status}")
+        # If interchange is busy (stop[0] == True), wait for pallet to arrive from interchange
+        if stop[0] == True:
+            return None
+        if not self._check_interchange_status(switch_list):
+            return None
+        #Get the position of the pallet to be moved
+        self.update_status(status, switch_list, bay_status)
+        interchange_pos = schedule_with_priority(status, self.actions)
+        if interchange_pos == None:
+            return None
+        pos = interchange_pos[0]
+        pallet_id = status[pos]        
+        action = self.actions[pallet_id]
+        self.logger.debug(f"Determined action {switch_list} for pallet {pallet_id} at position {pos} is {action}")
+        #Check if the action can be performed
+        if None == self.check_action_feasibility(switch_list, stop, action, pos):
+            return None
+        self.logger.debug(f"Action {action} for pallet {pallet_id} at position {pos} is feasible")
+        
+        # If action is cross, mark the interchange as busy (stop[0] = True)
+        if action == SwitchAction.cross:
+            stop[0] = True
+            self.logger.debug(f"Interchange {switch_list} marked as busy")
+        #Prepare the header of the message
+        message = [[], [], []]
+        targets = []
+        for pos in interchange_pos:
+            if pos == InterchangeInputs.BAY:
+                targets.append(bay)
+                status[pos] = None
+                break
+            elif pos == InterchangeInputs.LOWER_SEGMENT:
+                targets.append(lower_segment)
+                status[pos] = None
+            elif pos == InterchangeInputs.UPPER_SEGMENT:
+                targets.append(upper_segment)
+                status[pos] = None
+        message[0] = targets
+        self.logger.debug(f"Interchange targets determined: {targets}")
+        #If both segments are involved and no stop, advance both
+        if len(interchange_pos) == 2 and stop[0] == False:
+            message[1] = [ControllerCommand.move, SegmentAction.advance]
+            for target in switch_list:                    
+                self.belt_status[target] = False
+            
+            return message
+        
+        #If only one segment is involved, perform the action
+        self.lock_positions(pos, action, switch_list, stop, pallet_id)
+        if pos == InterchangeInputs.UPPER_SEGMENT or pos == InterchangeInputs.LOWER_SEGMENT:
+            message[1] = [ControllerCommand.move, SegmentAction.advance]
+        elif pos == InterchangeInputs.BAY:
+            message[1] = [ControllerCommand.move, action]      
+
+        if message[1] == []:
+            raise Exception(f"Controller error: no action to be performed")
+        return message
+    =}
+    // @label control_af
+    reaction(control_af) -> message_to_send{=
+        switch_list = [SwitchName.F.value, SwitchName.A.value]
+        pallet_id = self.lu_bay_status[0]
+        if pallet_id == 0:
+            return None
+        if self.pallet_destinations.get(pallet_id, None) == BayName.LU.value:
+            return None
+        if not self._check_interchange_status(switch_list) or self.pallet_destinations[self.lu_bay_status[0]] != BayName.LU.value:
+            return None
+        else:
+            self.af_stop[0] = False
+        message = [[BayName.LU.value], [ControllerCommand.move, BayAction.back], [None]]
+        self.belt_status[SwitchName.F.value] = False
+        self.belt_status[SwitchName.A.value] = False
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    // @label control_bh
+    reaction(control_bh)-> message_to_send{=
+        switch_list = [SwitchName.H.value, SwitchName.B.value]
+        message = self.take_decision_over_interchange(switch_list, self.bh_stop, self.bh_status, BayName.Bay4_1.value, SegmentName.Segment_3.value, SegmentName.Segment_5.value, self.bay4_status)
+        if message == None:
+            self.logger.debug("No message generated in control_bh")
+            return 0
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    // @label control_ci
+    reaction(control_ci)-> message_to_send{=
+        switch_list = [SwitchName.I.value, SwitchName.C.value]
+        message = self.take_decision_over_interchange(switch_list, self.ci_stop, self.ci_status, BayName.Bay3_1.value, SegmentName.Segment_2.value, SegmentName.Segment_6.value, self.bay3_status)
+        if message == None:
+            self.logger.debug("No message generated in control_ci")
+            return 0
+
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    // @label control_dl
+    reaction(control_dl)-> message_to_send{=
+        switch_list = [SwitchName.L.value, SwitchName.D.value]
+        message = self.take_decision_over_interchange(switch_list, self.dl_stop, self.dl_status, BayName.Bay2_1.value, SegmentName.Segment_1.value, SegmentName.Segment_7.value, self.bay2_status)
+        if message == None:
+            self.logger.debug("No message generated in control_dl")
+            return 0
+        self.logger.debug(f"Controller generated message from control dl: {message}")
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    // @label control_em
+    reaction(control_em)-> message_to_send{=
+        switch_list = [SwitchName.M.value, SwitchName.E.value]
+        message = self.take_decision_over_interchange(switch_list, self.em_stop, self.em_status, BayName.Bay1_1.value, None, SegmentName.Segment_8.value, self.bay1_status)
+        if message == None:
+            self.logger.debug("No message generated in control_em")
+            return 0
+
+        self.logger.debug(f"Controller generated message from control em: {message}")
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))   
+    =}
+    // @label control_lu
+    reaction(control_lu) -> message_to_send{=
+        switch_list = BayName.LU.value
+        message = None
+        pallet = self.lu_bay_status[0]
+        message = [[], [], []]
+        if pallet != 0:
+            if self.pallet_destinations[pallet] == BayName.LU.value:
+                return 0
+            else:
+                message[0] = [BayName.LU.value]
+                message[1] = [ControllerCommand.move, BayAction.back]
+                self.belt_status[BayName.LU.value] = False
+        else:
+            if self.lu_status[InterchangeInputs.UPPER_SEGMENT] == None:
+                return 0
+            message[0] = [SegmentName.Segment_4.value]
+            message[1] = [ControllerCommand.move, SegmentAction.advance]
+            self.belt_status[BayName.LU.value] = False
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    
     ############################## SEGMENT REACTIONS ##################################
-    reaction (SEG_AB) -> control_AF, control_BH{=
-        self.conveyor["A"] = True
-        self.conveyor["F"] = True
-        temp = SEG_AB.value
-        if temp.looping == True:
-            temp.action = "OUT"             
-        else:
-            temp.action = Routing("B", temp.destination)
-            if temp.action == "BAY" and Bay_Control(self.N_, int(temp.destination[1])):
-                temp.action = "OUT"
-        self.BH_buffers["IN_DOWN"].append(temp)
-        out = "SEGMENT_AB", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
-        control_BH.schedule(0)
-        control_AF.schedule(1)        
+    method handle_segment_event(value, switch_name, status, position, bay_status){=
+        if not isinstance(value, (list, tuple)) or len(value) != 2:
+            raise Exception(f"Controller error: invalid request format {value}")
+        
+        self.logger.debug(f"Controller received segment event {value}")
+        event = value[0]
+        pallet_id = value[1]
+        if not isinstance(event, Events):
+            raise Exception(f"Controller error: invalid event {event}")
+        if pallet_id != None and pallet_id not in self.pallet_names:
+            self.new_pallet_created(pallet_id)
+        
+        status[position] = pallet_id
     =}
-    reaction(SEG_BC)->control_BH, control_CI{=
-        self.conveyor["B"] = True
-        self.conveyor["H"] = True
-        temp = SEG_BC.value
-        if temp.looping == True:
-            temp.action = "OUT"             
-        else:
-            temp.action = Routing("C", temp.destination)
-            if temp.action == "BAY" and Bay_Control(self.O_, int(temp.destination[1])):
-                temp.action = "OUT"
-        self.CI_buffers["IN_DOWN"].append(temp)
-        out = "SEGMENT_BC", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
-        control_CI.schedule(0)
-        control_BH.schedule(1)
+    input segment_5
+    // @label segment_ab
+    reaction(segment_5) -> control_bh{=
+        value = segment_5.value
+        self.handle_segment_event(value, SwitchName.B, self.bh_status, InterchangeInputs.LOWER_SEGMENT, self.bay4_status)
+        control_bh.schedule(0)        
     =}
-    reaction(SEG_CD) -> control_CI, control_DL{=
-        self.conveyor["C"] = True
-        self.conveyor["I"] = True
-        temp = SEG_CD.value
-        if temp.looping == True:
-            temp.action = "OUT"             
-        else:
-            temp.action = Routing("D", temp.destination)
-            if temp.action == "BAY" and Bay_Control(self.P_, int(temp.destination[1])):
-                temp.action = "OUT"
-                self.P_buffers.append(temp)
-        self.DL_buffers["IN_DOWN"].append(temp)
-        out = "SEGMENT_CD", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
-        control_DL.schedule(0)
-        control_CI.schedule(1)
+    input segment_6
+    // @label segment_bc
+    reaction(segment_6) -> control_ci{=
+        value = segment_6.value
+        self.handle_segment_event(value, SwitchName.C, self.ci_status, InterchangeInputs.LOWER_SEGMENT, self.bay3_status)
+        control_ci.schedule(0)
     =}
-    reaction(SEG_DE) -> control_DL, control_EM{=
-        self.conveyor["D"] = True
-        self.conveyor["L"] = True
-        temp = SEG_DE.value
-        if temp.looping == True:
-            temp.action = "OUT"             
-        else:
-            temp.action = Routing("E", temp.destination)
-            if temp.action == "BAY" and self.Z:
-                temp.action = "OUT"
-        self.DE_buffers.append(temp)
-        control_EM.schedule(0)
-        control_DL.schedule(1)
+    input segment_7
+    // @label segment_cd
+    reaction(segment_7) -> control_dl{=
+        value = segment_7.value
+        self.handle_segment_event(value, SwitchName.D, self.dl_status, InterchangeInputs.LOWER_SEGMENT, self.bay2_status)
+        control_dl.schedule(0)
     =}
-    reaction(SEG_ML) -> control_EM, control_DL{=
-        self.conveyor["M"] = True
-        self.conveyor["E"] = True
-        temp = SEG_ML.value
-        if temp.looping == True:
-            temp.action = "OUT"             
-        else:
-            temp.action = Routing("L", temp.destination) 
-            if temp.action == "BAY" and not Bay_Control(self.P_, int(temp.destination[1])):
-                temp.action = "OUT"
-                self.P_buffers.append(temp)
-        self.DL_buffers["IN_UP"].append(temp)
-        control_DL.schedule(0)
-        control_EM.schedule(1)
+    input segment_8
+    // @label segment_de
+    reaction(segment_8) -> control_em{=
+        value = segment_8.value
+        self.handle_segment_event(value, SwitchName.E, self.em_status, InterchangeInputs.LOWER_SEGMENT, self.bay1_status)
+        control_em.schedule(0)
     =}
-    reaction(SEG_LI) -> control_DL, control_CI{=
-        self.conveyor["L"] = True
-        self.conveyor["D"] = True
-        temp = SEG_LI.value
-        if temp.looping == True:
-            temp.action = "OUT"             
-        else:
-            temp.action = Routing("I", temp.destination)
-            if temp.action == "BAY" and not Bay_Control(self.O_, int(temp.destination[1])):
-                temp.action = "OUT"
-                self.O_buffers.append(temp)
-        self.CI_buffers["IN_UP"].append(temp)   
-        out = "SEGMENT_LI", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
-        control_CI.schedule(0)
-        control_DL.schedule(1)
+    input segment_1
+    // @label segment_ml
+    reaction(segment_1) -> control_dl{=
+        value = segment_1.value
+        self.handle_segment_event(value, SwitchName.L, self.dl_status, InterchangeInputs.UPPER_SEGMENT, self.bay2_status)
+        control_dl.schedule(0)
     =}
-    reaction(SEG_IH) -> control_BH, control_CI{=
-        self.conveyor["I"] = True
-        self.conveyor["C"] = True
-        temp = SEG_IH.value
-        if temp.looping == True:
-            temp.action = "CROSS"             
-        else:
-            temp.action = Routing("H", temp.destination)
-            if temp.action =="BAY" and not Bay_Control(self.N_, int(temp.destination[1])):
-                temp.action = "OUT"
-                self.N_buffers.append(temp)            
-        self.BH_buffers["IN_UP"].append(temp)
-        out = "SEGMENT_IH", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
-        control_CI.schedule(0)
-        control_BH.schedule(1)
+    input segment_2
+    // @label segment_li
+    reaction(segment_2) -> control_ci{=
+        value = segment_2.value
+        self.handle_segment_event(value, SwitchName.I, self.ci_status, InterchangeInputs.UPPER_SEGMENT, self.bay3_status)
+        control_ci.schedule(0)
     =}
-    reaction(SEG_HG) -> control_BH, control_G{=
-        self.conveyor["H"] = True
-        self.conveyor["B"] = True
-        temp = SEG_HG.value
-        temp.action = "OUT"
-        self.HG_buffers.append(temp)
-        out = "SEGMENT_HG", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
-        control_G.schedule(0)
-        control_BH.schedule(1)
+    input segment_3
+    // @label segment_ih
+    reaction(segment_3) -> control_bh{=
+        value = segment_3.value
+        self.handle_segment_event(value, SwitchName.H, self.bh_status, InterchangeInputs.UPPER_SEGMENT, self.bay4_status)
+        control_bh.schedule(0)
     =}
-    reaction(SEG_GF) -> control_AF, control_G{=
-        self.conveyor["G"] = True
-        temp = SEG_GF.value
-        temp.action = "OUT"
-        self.GF_buffers.append(temp)
-        out = "SEGMENT_GF", temp.pallet_id, temp.position, temp.destination, temp.action, temp.object1
-        control_G.schedule(0)
-        control_AF.schedule(1)
+    input segment_4
+    // @label segment_hg
+    reaction(segment_4) -> control_lu{=
+        value = segment_4.value
+        event = value[0]
+        pallet_id = value[1]
+        
+        if pallet_id != None and pallet_id not in self.pallet_names:
+            self.new_pallet_created(pallet_id)
+        self.lu_status[InterchangeInputs.UPPER_SEGMENT] = pallet_id
+        if event == Events.pallet_released:            
+            if pallet_id == None:                
+                return 0            
+            
+        elif event == Events.pallet_arrived:
+            if pallet_id == None:
+                raise Exception(f"Controller error: invalid pallet id {pallet_id} for event {event}")
+
+        self.actions[pallet_id] = calculate_next_action(BayName.LU.value, self.pallet_destinations[pallet_id], self.lu_bay_status, pallet_id)
+        control_lu.schedule(0)
     =}
 
     ############################## BAY REACTIONS ##############################
-    reaction(BAY_P_IN) -> BAY_OUT, control_DL{=
-        if BAY_P_IN.value[0] == "Move":
-            s = "P" + BAY_P_IN.value[1]
-            ctrl = int(BAY_P_IN.value[3]) if (BAY_P_IN.value[2]) == None else int(BAY_P_IN.value[2][1])
-            route =  Bay_Routing(s, BAY_P_IN.value[2], "P")
-            n = int(BAY_P_IN.value[1])
-            Update_Bay(self.P_, n, route[0])
-            y = "Move", s, route[0]
-            BAY_OUT.set(y)
-
-        elif BAY_P_IN.value[0] == "Move_in_bay":
-            s = "P" + BAY_P_IN.value[1]
-            ctrl = int(BAY_P_IN.value[1]) - 1
-            if not Bay_Control(self.P_, ctrl):
-                return None  
-            route =  Bay_Routing(s, BAY_P_IN.value[2], "P")
-            n = int(BAY_P_IN.value[1])
-            Update_Bay(self.P_, n, route[0])
-            y = "Move", s, route[0]
-            BAY_OUT.set(y)
-
-        elif BAY_P_IN.value[0] == "_pallet_arrived":
-            n = int(BAY_P_IN.value[2]) - 1
-            self.P_[n] = False            
-            if n == 1:
-                self.P_[2] = True
-            elif n == 0:
-                self.P_[2] = True
-                self.P_[1] = True
-
-        elif BAY_P_IN.value == "Free":
-            self.conveyor["L"] = True
-            self.conveyor["D"] = True
-
-        elif BAY_P_IN.value[0] == "Pallet_incoming":
-            self.DL_buffers["BAY"] = BAY_P_IN.value[1]
-            control_DL.schedule(0)
-    =}
-
-    reaction(BAY_O_IN) -> BAY_OUT, control_CI{=
-        if BAY_O_IN.value[0] == "Move_in_bay":
-            s = "O" + BAY_O_IN.value[1]
-            ctrl = int(BAY_O_IN.value[1]) - 1
-            if not Bay_Control(self.O_, ctrl):
-                return None            
-            route =  Bay_Routing(s, BAY_O_IN.value[2], "O")
-            n = int(BAY_O_IN.value[1])
-            Update_Bay(self.O_, n, route[0])
-            y = "Move", s, route[0]
-            BAY_OUT.set(y)
-    
-        elif BAY_O_IN.value[0] == "Move":
-            s = "O" + BAY_O_IN.value[1]
-            route =  Bay_Routing(s, BAY_O_IN.value[2], "O")
-            n = int(BAY_O_IN.value[1])
-            Update_Bay(self.O_, n, route[0])
-
-            y = "Move", s, route[0]
-            BAY_OUT.set(y)
-
-        elif BAY_O_IN.value[0] == "_pallet_arrived":
-            n = int(BAY_O_IN.value[2]) - 1
-            self.O_[n] = False            
-            if n == 1:
-                self.O_[2] = True
-            elif n == 0:
-                self.O_[2] = True
-                self.O_[1] = True
-
-        elif BAY_O_IN.value == "Free":
-            self.conveyor["I"] = True
-            self.conveyor["C"] = True
+    method _single_switch_bay_event(bay_status, event, pallet_id, bay, status){=
+        if event not in Events:
+            raise Exception(f"Controller error: invalid event {event} from bay")
+        if pallet_id == None:
+            raise Exception(f"Controller error: invalid pallet id {pallet_id} from bay")
         
-        elif BAY_O_IN.value[0] == "Pallet_incoming":
-            self.CI_buffers["BAY"] = BAY_O_IN.value[1]
-            control_CI.schedule(0)        
+        if pallet_id not in self.pallet_names:
+            self.new_pallet_created(pallet_id)        
+        
+        if event == Events.pallet_arrived:
+            if self.pallet_destinations[pallet_id] != bay:
+                raise Exception(f"Controller error: pallet {pallet_id} has no destination")
+            bay_status[0] = pallet_id  
+        elif event == Events.pallet_released:
+            bay_status[0] = 0
+            status[InterchangeInputs.BAY] = None 
+            self.logger.debug(f"Controller received bay event {event} from bay {bay}, pallet {pallet_id} released, action {self.actions[pallet_id]} completed") 
+
+        elif event == Events.pallet_pending:
+            status[InterchangeInputs.BAY] = pallet_id
+            self.actions[pallet_id] = calculate_next_action(bay, self.pallet_destinations[pallet_id], bay_status, pallet_id)
+    =}
+    input bay1_request
+    // @label message_from_bay_1
+    reaction(bay1_request) -> message_to_send, control_em{=
+        value = bay1_request.value
+        self._single_switch_bay_event(self.bay1_status, value[0], value[1], BayName.Bay1_1.value, self.em_status)
+        control_em.schedule(0)
+    =}
+    input bay5_request
+    // @label message_from_bay_5
+    reaction(bay5_request) -> message_to_send, control_af, control_lu{=
+        value = bay5_request.value
+        self._single_switch_bay_event(self.lu_bay_status, value[0], value[1], BayName.LU.value, self.lu_status)
+        control_af.schedule(0)
+        control_lu.schedule(0)
     =}
 
-    reaction(BAY_N_IN) -> BAY_OUT, control_BH{=
-        if BAY_N_IN.value[0] == "Move":
-            s = "N" + BAY_N_IN.value[1]
-            route =  Bay_Routing(s, BAY_N_IN.value[2], "N")
-            n = int(BAY_N_IN.value[1])
-            Update_Bay(self.N_, n, route[0])
+    #Multiple switch bay
+    method prepare_bay_message(pallet_id, bay_status, bay_name){=
+        pos = bay_status.index(pallet_id)
+        dest = self.pallet_destinations[pallet_id]
+        self.actions[pallet_id] = calculate_next_action(bay_name, self.pallet_destinations[pallet_id], bay_status, pallet_id)
+        action = self.actions[pallet_id]
+        if pos == 3 and action == BayAction.forward:
+            raise Exception(f"Controller error: pallet {pallet_id} at position {pos} cannot move forward from bay {bay_name}")
 
-            y = "Move", s, route[0]
-            BAY_OUT.set(y)
+        if pos == 0 and action == BayAction.back:
+            raise Exception(f"Controller error: pallet {pallet_id} at position {pos} cannot move back from bay {bay_name}")
 
-        elif BAY_N_IN.value[0] == "Move_in_bay":
-            s = "N" + BAY_N_IN.value[1]
-            ctrl = int(BAY_N_IN.value[1]) - 1
-            if not Bay_Control(self.N_, ctrl):
+        assert action in BayAction, f"Controller error: invalid action {action} for pallet {pallet_id} at bay {bay_name}"
+        self.logger.debug(f"Controller preparing bay message for pallet {pallet_id} at bay {bay_name}, action {action}, bay status: {bay_status}, pallet destinations: {self.pallet_destinations}")
+        return [[bay_name], [ControllerCommand.move, action], [pallet_id]]
+    =}
+    method _multiple_switch_bay_event(bay_status, event, pallet_id, bay_name, status, control){=
+        if event not in Events:
+            raise Exception(f"Controller error: invalid event {event} from bay")
+        if pallet_id == None:
+            raise Exception(f"Controller error: invalid pallet id {pallet_id} from bay") 
+        if pallet_id not in self.pallet_names:
+            self.new_pallet_created(pallet_id)
+        if bay_name not in BayName.values():
+            raise Exception(f"Controller error: invalid bay name {bay_name}")
+
+        bay_pos = int(bay_name[-1])
+        bay_status[bay_pos - 1] = pallet_id if event == Events.pallet_arrived or event == Events.pallet_pending else 0
+        if event == Events.pallet_arrived:
+            #Check if the pallet has the correct destination
+            self.logger.debug(f"Controller received bay event {event} from bay {bay_name},")
+            if self.pallet_destinations[pallet_id] == bay_name:
                 return None
-            route =  Bay_Routing(s, BAY_N_IN.value[2], "N")
-            n = int(BAY_N_IN.value[1])
-            Update_Bay(self.N_, n, route[0])
-            y = "Move", s, route[0]
-            BAY_OUT.set(y)
-
-        elif BAY_N_IN.value[0] == "_pallet_arrived":
-            n = int(BAY_N_IN.value[2]) - 1
-            self.N_[n] = False            
-            if n == 1:
-                self.N_[2] = True
-            elif n == 0:
-                self.N_[2] = True
-                self.N_[1] = True
-
-        elif BAY_N_IN.value == "Free":
-            self.conveyor["B"] = True
-            self.conveyor["H"] = True
-
-        elif BAY_N_IN.value[0] == "Pallet_incoming":
-            self.BH_buffers["BAY"] = BAY_N_IN.value[1]
-            control_BH.schedule(0)
-
-    =}
-
-    reaction(BAY_Z_IN) -> BAY_Z_OUT, SEG_OUT, control_EM{=
-        temp = BAY_Z_IN.value
-        if temp[0] == "Move":
-            SEG_OUT.set(["DE", "STOP"])
-            self.M_buffers.append(temp[2])
-            BAY_Z_OUT.set(["Move", "OUT"])
-        elif temp[0] == "_pallet_arrived":
-            self.conveyor["E"] = True 
-            self.conveyor["M"] = True
-            SEG_OUT.set(["DE", "CONTINUE"])
-            self.Z = True
             
-            control_EM.schedule(0)
-    =}
-
-    ############################## SWITCH REACTIONS ##############################
-    reaction (A_IN)-> OUT{=
-        if A_IN.value is not None and A_IN.value[0] == "Move":
-            route = Routing(A_IN.value[1], A_IN.value[2])  
-            y = "Move", "A", route
-            OUT.set(y)
-    =}
-    reaction (B_IN) -> OUT{=
-        if B_IN.value is not None and B_IN.value[0] == "Move":
-            route = Routing(B_IN.value[1], B_IN.value[2])  
-            y = "Move", "B", route
-            OUT.set(y)
-    =}
-    reaction (C_IN) -> OUT{=
-        if C_IN.value is not None and C_IN.value[0] == "Move":
-            route = Routing(C_IN.value[1], C_IN.value[2])  
-            y = "Move", "C", route
-            OUT.set(y)
-    =}
-    reaction (D_IN) -> OUT{=
-        if D_IN.value is not None and D_IN.value[0] == "Move":
-            route = Routing(D_IN.value[1], D_IN.value[2])  
-            if route == "BAY":
-                if Bay_Control( self.P_, int(D_IN.value[2][1])):
-                    route = "OUT"
-
-            y = "Move", "D", route                       
-            OUT.set(y)
-    =}
-    reaction (E_IN) -> OUT{=
-        if E_IN.value is not None and E_IN.value[0] == "Move":
-            y = "Move", "E", "OUT"
-            OUT.set(y)
-    =}
-    reaction (F_IN) -> OUT{=
-        if F_IN.value is not None and F_IN.value[0] == "Move":
-            y = "Move", "F", "OUT"
-            OUT.set(y)
-    =}
-    reaction (H_IN) -> OUT{=
-        if H_IN.value is not None and H_IN.value[0] == "Move":
-            route = "OUT"
-            route = Routing(H_IN.value[1], H_IN.value[2])
-            y = "Move", "H", route
-
-            if route == "BAY":
-                if Bay_Control(self.N_, int(H_IN.value[2][1])):
-                    Update_Truth_Table(self.N_, int(H_IN.value[2][1]))
-                    y = "Move", "H", route,                       
+            self.actions[pallet_id] = calculate_next_action(bay_name, self.pallet_destinations[pallet_id], bay_status, pallet_id)
+            self.logger.debug(f"Controller determined action {self.actions[pallet_id]} for pallet {pallet_id} at bay {bay_name}, bay status: {bay_status}, pallet destinations: {self.pallet_destinations}")
+            control.schedule(0)
+            return [[bay_name], [ControllerCommand.move, BayAction.none], [pallet_id]]
+        elif event == Events.pallet_pending:
+            self.actions[pallet_id] = calculate_next_action(bay_name, self.pallet_destinations[pallet_id], bay_status, pallet_id)
+            self.logger.debug(f"Controller received bay event {event} from bay {bay_name}, pallet {pallet_id} pending")
+            if bay_pos == 1:
+                if self.pallet_destinations[pallet_id] == "0":
+                    status[InterchangeInputs.BAY] = pallet_id
+                    control.schedule(0)
+                    self.logger.debug(f"Controller scheduling pallet {pallet_id} at bay {bay_name} with main destination")
+                    return None
+                elif self.pallet_destinations[pallet_id][:4] == bay_name[:4]:
+                    status[InterchangeInputs.BAY] = None
+                    return self.prepare_bay_message(pallet_id, bay_status, bay_name)
                 else:
-                    y = "Move", "H", "OUT"
-                
-            OUT.set(y)
-    =}
-    reaction (I_IN) -> OUT{=
-        if I_IN.value is not None and I_IN.value[0] == "Move":
-            route = Routing(I_IN.value[1], I_IN.value[2])
-            y = "Move", "I", route
-            if route == "BAY":
-                if Bay_Control(self.O_, int(I_IN.value[2][1])):   
-                        Update_Truth_Table(self.O_, int(I_IN.value[2][1]))
-                        y = "Move", "I", route,                      
-                else:
-                    y = "Move", "I","OUT"
-            OUT.set(y)
-    =}
-    reaction (L_IN) -> OUT{=
-        if L_IN.value is not None and L_IN.value[0] == "Move":
-            route = Routing(L_IN.value[1], L_IN.value[2])
-            y = "Move", "L", route
-            if route == "BAY":
-                if Bay_Control( self.P_, int(L_IN.value[2][1])):
-                    Update_Truth_Table(self.P_, int(L_IN.value[2][1]))
-                    y = "Move", "L", "BAY"
-                else:
-                    y = "Move", "L", "OUT"
-
-            OUT.set(y)
-    =}
-    reaction (M_IN) -> OUT{=
-        if M_IN.value is not None and M_IN.value[0] == "Move":
-            route = "OUT"
-            temp = self.pallets[M_IN.value[3]]
-            y = None
-            if temp.looping:
-                y = "Move", "M", "OUT"
+                    status[InterchangeInputs.BAY] = pallet_id
+                    control.schedule(0)
+                    self.logger.debug(f"Controller scheduling pallet {pallet_id} at bay {bay_name} with no destination")
+                    return None
             else:
-                route = Routing("M", temp.destination)
-                y = "Move", "M", route
-                
-                if route == "BAY":
-                    if self.Z:
-                        y = "Move", "M", route
-                    else:
-                        y = "Move", "M", "OUT"
+                return self.prepare_bay_message(pallet_id, bay_status, bay_name)
             
-            OUT.set(y)
+
+        elif event == Events.pallet_released:
+            self.logger.debug(f"Controller received bay event {event} from bay {bay_name}, pallet {pallet_id} released")
+            if bay_pos == 1:
+                status[InterchangeInputs.BAY] = None
+        self.logger.debug(f"Controller updated bay status: {bay_status}")
+        return None
     =}
-    ############################## FROST ##############################
-    reaction(FROST_IN)-> OUT, BAY_OUT, BAY_Z_OUT, to_G{=
-        command = FROST_IN.value[0]
-        args = FROST_IN.value[1]
-        if FROST_IN.value[0] == 1:
-            temp = self.pallets[FROST_IN.value[1][0]]
-            length_pos = len(temp.position)
-            dest = FROST_IN.value[1][1]
-            route = New_Destination(temp.position, dest, length_pos)
-            temp.looping = route[0]
-            temp.bay = route[1]
-            temp.destination = route[2]
-            if length_pos == 2:
-                if temp.position == "Z1":
-                    y = ["Move", "OUT"]
-                    BAY_Z_OUT.set(y)
-                else:
-                    y = "Move", temp.position, Bay_Routing(temp.position, dest, temp.position[0])[0]
-                    BAY_OUT.set(y)
-            elif temp.position == "G":
-                y = "Move", "OUT"
-                to_G.set(y)
+    input bay2_request
+    // @label message_from_bay_2
+    reaction(bay2_request) -> message_to_send, control_dl{=
+        value = bay2_request.value
+        message = self._multiple_switch_bay_event(self.bay2_status, value[0], value[1], value[2], self.dl_status, control_dl)
+        if message == None:
+            return 0
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    input bay3_request
+    // @label message_from_bay_3
+    reaction(bay3_request) -> message_to_send, control_ci{=
+        value = bay3_request.value
+        message = self._multiple_switch_bay_event(self.bay3_status, value[0], value[1], value[2], self.ci_status, control_ci)
+        if message == None:
+            return 0
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    input bay4_request
+    // @label message_from_bay_4
+    reaction(bay4_request) -> message_to_send, control_bh{=
+        value = bay4_request.value
+        message = self._multiple_switch_bay_event(self.bay4_status, value[0], value[1], value[2], self.bh_status, control_bh)
+        if message == None:
+            return 0
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    
+    ############################## SWITCH REACTIONS ##############################
+    method _prepare_message_for_switch(value, switch, control, stop, bay_status){=
+        event = value[0]
+        if event not in Events:
+            raise Exception(f"Controller error: invalid event {event} from switch {switch}")
+        pallet_id = value[1]
+        message = None
+        self.logger.debug(f"Controller handling switch {switch} event {value}, current belt status: {control}")
+        if event == Events.pallet_arrived:
+            if pallet_id not in self.pallet_names:
+                self.new_pallet_created(pallet_id)
+
+            self.logger.debug(f"Switch {switch} received pallet {pallet_id}")
+            self.logger.debug(f"{self.belt_status}, {self.ci_stop}")
+            self.belt_status[switch] = False
+            port = value[2]
             
-        elif command == 7:
-            temp = self.pallets[args[0]]
-            temp.looping = True
-            temp.bay = None
-            if temp.destination == None:
-                return 0
-            temp.destination = None
-            pos = temp.position
-            out_data = []
-            if pos == "G":
-                self.pallet_on_G = False
-                y = "Move", "OUT"
-                to_G.set(y)
-            elif len(pos) == 2:
-                i = 2
-                if pos == "Z1":
-                    BAY_Z_OUT.set(["Move", "OUT"])
+            #Handle the case where pallet receives a new destination while on the switch
+            if port not in SwitchPort:
+                raise Exception(f"Controller error: invalid port {port} from switch {switch}")
+            if port == SwitchPort.Interchange:
+                # Pallet arrived from interchange, mark it as free
+                if stop is not None:
+                    stop[0] = False
+                    self.logger.debug(f"Interchange for switch {switch} marked as free")
+                if switch in [SwitchName.E.value, SwitchName.D.value, SwitchName.C.value, SwitchName.B.value, SwitchName.A.value]:
+                    self.actions[pallet_id] = SwitchAction.advance
+                elif switch in [SwitchName.M.value, SwitchName.L.value, SwitchName.I.value, SwitchName.H.value, SwitchName.F.value]:
+                    if self.pallet_destinations[pallet_id] == "0":
+                        self.actions[pallet_id] = SwitchAction.advance
+                    else:
+                        self.actions[pallet_id] =  calculate_next_action(switch, self.pallet_destinations[pallet_id], bay_status, pallet_id)
+
+                    if self.actions[pallet_id] == SwitchAction.cross:
+                        self.actions[pallet_id] = SwitchAction.advance
+            elif port == SwitchPort.Bay:                
+                if stop is not None and stop[0] == True:
+                    self.actions[pallet_id] = SwitchAction.cross
+                elif switch == SwitchName.M.value:
+                    self.actions[pallet_id] = SwitchAction.advance
+                    if stop is not None:
+                        stop[0] = False
                 else:
-                    if pos[0] == "N":
-                        BAY_OUT.set(["Move_in_bay", pos])
-                        i = 4
-                    elif pos[0] == "O":
-                        BAY_OUT.set(["Move_in_bay", pos])
-                        i = 3
-                    elif pos[0] == "P":
-                        BAY_OUT.set(["Move_in_bay", pos])
-                        i = 2
+                    self.actions[pallet_id] = SwitchAction.advance
+            
+            self.logger.debug(f"{self.pallet_destinations}, {self.actions}")
+            message = [[switch], [ControllerCommand.move, self.actions[pallet_id]], [None]]
+
+        elif event == Events.pallet_released:
+            self.logger.debug(f"Switch {switch} released pallet {pallet_id}")
+            self.belt_status[switch] = True
+            if control != None:
+                control.schedule(0)
+
+        return message
+    =}
+    input switch_a_request
+    // @label switch_a
+    reaction (switch_a_request)-> message_to_send, control_af{=
+        value = switch_a_request.value
+        message = self._prepare_message_for_switch(value, SwitchName.A.value, control_af, self.af_stop, None)
+        if message == None:
+            return 0
+        self.logger.debug(f"Controller generated message from switch a: {message}")
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    input switch_b_request
+    // @label switch_b
+    reaction (switch_b_request) -> message_to_send, control_bh{=
+        value = switch_b_request.value
+        message = self._prepare_message_for_switch(value, SwitchName.B.value, control_bh, self.bh_stop, self.bay4_status)
+        if message == None:
+            return 0
+        self.logger.debug(f"Controller generated message from switch b: {message}")
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    input switch_c_request
+    // @label switch_c
+    reaction (switch_c_request) -> message_to_send, control_ci{=
+        value = switch_c_request.value
+        message = self._prepare_message_for_switch(value, SwitchName.C.value, control_ci, self.ci_stop, self.bay3_status)
+        if message == None:
+            return 0
+        self.logger.debug(f"Controller generated message from switch c: {message}")
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    input switch_d_request
+    // @label switch_d
+    reaction (switch_d_request) -> message_to_send, control_dl{=
+        value = switch_d_request.value
+        message = self._prepare_message_for_switch(value, SwitchName.D.value, control_dl, self.dl_stop, self.bay2_status)
+        if message == None:
+            return 0
+        self.logger.debug(f"Controller generated message from switch d: {message}")
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    input switch_e_request
+    // @label switch_e
+    reaction (switch_e_request) -> message_to_send, control_em{=
+        value = switch_e_request.value
+        message = self._prepare_message_for_switch(value, SwitchName.E.value, control_em, self.em_stop, self.bay1_status)
+        if message == None:
+            return 0
+        self.logger.debug(f"Controller generated message from switch e: {message}")
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    input switch_f_request
+    // @label switch_f
+    reaction (switch_f_request) -> message_to_send, control_af{=
+        value = switch_f_request.value
+        message = self._prepare_message_for_switch(value, SwitchName.F.value, None, self.af_stop, None)
+        if message == None:
+            return 0
+        self.logger.debug(f"Controller generated message from switch f: {message}")
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    input switch_h_request
+    // @label switch_h
+    reaction (switch_h_request) -> message_to_send, control_bh{=
+        value = switch_h_request.value
+        message = self._prepare_message_for_switch(value, SwitchName.H.value, control_bh, self.bh_stop, self.bay4_status)
+        self.logger.debug(f"Controller handling switch h event: {value}, generated message: {message}")
+        if message == None:
+            return 0
+        self.logger.debug(f"Controller generated message from switch h: {message}")
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    input switch_i_request
+    // @label switch_i
+    reaction (switch_i_request) -> message_to_send, control_ci{=
+        value = switch_i_request.value
+        message = self._prepare_message_for_switch(value, SwitchName.I.value, control_ci, self.ci_stop, self.bay3_status)
+        if message == None:
+            return 0
+        self.logger.debug(f"Controller generated message from switch i: {message}")
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    input switch_l_request
+    // @label switch_l
+    reaction (switch_l_request) -> message_to_send, control_dl{=
+        value = switch_l_request.value
+        message = self._prepare_message_for_switch(value, SwitchName.L.value, control_dl, self.dl_stop, self.bay2_status)
+        if message == None:
+            return 0
+        self.logger.debug(f"Controller generated message from switch l: {message}")
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    input switch_m_request
+    // @label switch_m
+    reaction (switch_m_request) -> message_to_send, control_em{=
+        value = switch_m_request.value
+        message = self._prepare_message_for_switch(value, SwitchName.M.value, control_em, self.em_stop, self.bay1_status)
+        if message == None:
+            return 0
+        self.logger.debug(f"Controller generated message from switch m: {message}")
+        self.messages.append(message)
+        message_to_send.schedule(int(len(self.messages) + 1))
+    =}
+    
+    ############################## FROST ##############################
+    method _prepare_message(position){= 
+        if position == "0":
+            return 0
+        return [[position], [ControllerCommand.move, BayAction.none], [None]]
+    =}
+    method _get_pallet_position(palletNum){=
+        if palletNum == self.bay1_status[0]:
+            return BayName.Bay1_1.value
+        elif palletNum == self.lu_bay_status[0]:
+            return BayName.LU.value
+        for i, pallet in enumerate(self.bay2_status):
+            if pallet == palletNum:
+                return getattr(BayName, f"Bay2_{i+1}").value
+        for i, pallet in enumerate(self.bay3_status):
+            if pallet == palletNum:
+                return getattr(BayName, f"Bay3_{i+1}").value
+        for i, pallet in enumerate(self.bay4_status):
+            if pallet == palletNum:
+                return getattr(BayName, f"Bay4_{i+1}").value
+        return "0"
+    =}
+    // @label from_frost
+    reaction(from_frost)-> message_to_send{=
+        palletNum = from_frost.value[0]
+        destination = from_frost.value[1]
+        # Validate palletNum and destination
+        if palletNum not in self.pallet_names:
+            raise Exception(f"Controller error: pallet {palletNum} not recognized")       
+        if destination not in BayName.values() and destination != "0":
+            raise Exception(f"Controller error: invalid destination {destination} for pallet {palletNum}")
+
+        self.pallet_destinations[palletNum] = destination  
+        position = self._get_pallet_position(palletNum)
+        self.logger.debug(f"Controller received from FROST: pallet {palletNum} at position {position} with new destination {destination}")
+        if position == "0":
+            self.logger.debug(f"Pallet {palletNum} destination updated to {destination}")
+            return 0
+        else:
+            if position != "0":  
+                self.messages.append(self._prepare_message(position))
+                message_to_send.schedule(int(len(self.messages) + 1))
     =}
 
-    reaction(from_G){=
-        if from_G.value[0] == self.Events.pallet_arrived.value:
-            self.pallet_on_G = True           
-    =}
 }

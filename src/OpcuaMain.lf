@@ -1,0 +1,45 @@
+target Python{
+    files: [
+        "../frost/src/python_lib/frost.py",
+        "../frost/src/python_lib/l_formatter.py",
+        "../frost/src/python_lib/time_utils.py",
+        "python_utils/handle_recipe.py",
+        "MetaConveyor_utils/pallet_distance.py",
+    ],
+    logging: warn,
+    single-threaded: false,
+}
+
+import FrostBus from "../frost/src/lib/FrostBus.lf"
+import FrostMachine from "../frost/src/lib/FrostMachine.lf"
+import OpcuaConveyor from "OpcuaConveyor.lf"
+import FrostScheduler from "../frost/src/lib/scheduler/FrostScheduler.lf"
+
+preamble{= 
+
+import uuid
+from frost import *
+
+from frost_planner.generator.instance_generator import load_instance_from_json
+from frost_planner.solver.genetic_solver import GeneticAlgorithmSolver
+from frost_planner.executor.static_executor import StaticExecutor
+from frost_planner.solver.dummy_solver import DummySolver
+from frost_planner.executor.dynamic_executor import DynamicExecutor
+from frost_planner.core.base import TaskStatus, Task, Job, SchedulingInstance, Machine
+from pallet_distance import _get_pallet_metric
+from pallet_distance import *
+RECIPE_PATH = os.environ.get("RECIPE_PATH")
+CONDITIONS_PATH = os.environ.get("CONDITIONS_PATH")
+=}
+
+
+main reactor {
+    conveyor = new OpcuaConveyor(name="conveyor", _update_step= 1 msec)
+    scheduler = new FrostScheduler(name="scheduler")
+    bus = new FrostBus(name="frost_bus", width = 4)
+    cell4 = new FrostMachine(name="cell4")
+    cell5 = new FrostMachine(name="cell5")
+
+    conveyor.channel_out, scheduler.channel_out, cell4.channel_out, cell5.channel_out -> bus.channel_in after 0
+    bus.channel_out -> conveyor.channel_in, scheduler.channel_in, cell4.channel_in, cell5.channel_in after 0
+}

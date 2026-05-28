@@ -1,0 +1,110 @@
+target Python
+
+import FrostBase from "../../frost/src/lib/FrostBase.lf"
+
+
+reactor SingleSwitchBay extends FrostBase{
+    state conveyor_name = {=self.name.split(".")[-1]=}
+    input from_belt
+    output to_belt 
+
+    output to_frost
+
+    input controller_command
+    output ask_to_controller
+
+    state pallet = {=None=}
+    state outgoing = False
+    logical action delay
+    state incoming_time = 2000
+    state outgoing_time = 2000
+    logical action pallet_arrived
+
+    reaction(pallet_arrived)-> ask_to_controller, to_frost{=
+        if self.pallet == None:
+            raise Exception(f"Switch {self.conveyor_name} error: no pallet to handle")
+        self._set_output_port([Events.pallet_arrived.value, self.pallet.id], to_frost)
+        self.logger.debug(f"Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
+        self._set_output_port([Events.pallet_arrived, self.pallet.id], ask_to_controller)
+    =}
+    method pallet_in(value){=
+        if not isinstance(value, Pallet):
+            raise Exception(f"Error: Switch {self.conveyor_name} received non-pallet value: {value}")
+
+        if self.pallet is not None:
+            raise Exception(f"Error: Switch {self.conveyor_name} received {value.id} but already has a pallet.")
+
+        self.logger.debug(f"Switch {self.conveyor_name} received pallet {value.id}")
+            
+        self.pallet = value
+    =}
+    reaction(from_belt)-> pallet_arrived, ask_to_controller, to_frost{=
+        self.pallet_in(from_belt.value[0])
+        pallet_arrived.schedule(MSEC(self.incoming_time))
+    =}
+
+    logical action pending_pallet
+    reaction(pending_pallet) -> pending_pallet, ask_to_controller{=
+        if self.pallet == None or self.outgoing:
+            return 0
+        self.logger.debug(f"Bay Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
+        self._set_output_port([Events.pallet_pending, self.pallet.id, self.conveyor_name], ask_to_controller)
+        pending_pallet.schedule(MSEC(self.outgoing_time))
+    =}
+
+    reaction(controller_command) -> delay, ask_to_controller, to_belt, to_frost, pending_pallet{=
+        '''
+        controller_command format: [[header], [command], [args]]
+            header = list of str with Segment names involved in the command
+            command = [ControllerCommand, BayAction]
+            args = additional arguments (if any)
+        '''
+        value = controller_command.value
+        header = value[0]
+        if self.conveyor_name not in header:
+            return 0
+    
+        cmd = value[1][0]
+        if not isinstance(cmd, ControllerCommand):
+            raise Exception(f"Switch {self.conveyor_name} error: unknown command {cmd}")
+
+        action_to_be_performed = value[1][1]
+        if not isinstance(action_to_be_performed, BayAction):
+            raise Exception(f"Switch {self.conveyor_name} error: unknown command {cmd}")
+
+        if cmd == ControllerCommand.move: 
+            if self.outgoing:
+                return 0              
+            if self.pallet is None:
+                raise Exception(f"Switch {self.conveyor_name} error: no pallet to move")
+            
+            if action_to_be_performed == BayAction.back:
+                self.logger.debug(f"Switch {self.conveyor_name} moving pallet {self.pallet.id} to segment")
+                delay.schedule(MSEC(self.outgoing_time))
+                self.outgoing = True
+                # self._set_output_port(self.pallet, to_belt)
+                # self._set_output_port([Events.pallet_released.value, 0], to_frost)
+                # self._set_output_port([Events.pallet_released, self.pallet.id], ask_to_controller)
+
+            elif action_to_be_performed == BayAction.none:
+                self.logger.debug(f"Switch {self.conveyor_name} keeping pallet {self.pallet.id} in the bay")
+                self._set_output_port([Events.pallet_pending, self.pallet.id], ask_to_controller)
+                pending_pallet.schedule(SEC(2))
+                return 0
+
+            else:
+                raise Exception(f"Switch {self.conveyor_name} error: unknown BayAction {action_to_be_performed}")
+            
+        else:
+            raise Exception(f"Switch {self.conveyor_name} error: unknown command {cmd}")
+    =}
+
+    reaction(delay) -> to_belt, to_frost, ask_to_controller{=
+        self._set_output_port(self.pallet, to_belt)
+        self._set_output_port([Events.pallet_released.value, 0], to_frost)
+        self._set_output_port([Events.pallet_released, self.pallet.id], ask_to_controller)
+        
+        self.pallet = None
+        self.outgoing = False
+    =}
+}
