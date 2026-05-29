@@ -34,7 +34,7 @@ CONDITIONS_PATH = os.environ.get("CONDITIONS_PATH")
 
 
 main reactor {
-    conveyor = new OpcuaConveyor(name="conveyor", _update_step= 1 msec)
+    conveyor = new OpcuaConveyor(name="conveyor")
     scheduler = new FrostScheduler(name="scheduler")
     bus = new FrostBus(name="frost_bus", width = 4)
     cell4 = new FrostMachine(name="cell4")

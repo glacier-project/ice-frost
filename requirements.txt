@@ -6,4 +6,4 @@ asyncio==4.0.0
 aiokafka==0.12.0
 aio-pika==9.5.7
 fmpy==0.3.26
-git+https://github.com/glacier-project/frost-planner.git@develop
+networkx==3.1

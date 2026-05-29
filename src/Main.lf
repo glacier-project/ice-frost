@@ -17,7 +17,6 @@ import MetaConveyor from "MetaConveyor.lf"
 import FrostScheduler from "../frost/src/lib/scheduler/FrostScheduler.lf"
 import FrostMachine from "../frost/src/lib/FrostMachine.lf"
 import FrostBus from "../frost/src/lib/FrostBus.lf"
-<<<<<<< HEAD
 import Cell4 from "Cell4.lf"
 import Cell5 from "Cell5.lf"
 
@@ -36,12 +35,6 @@ from pallet_distance import _get_pallet_metric
 from pallet_distance import *
 RECIPE_PATH = os.environ.get("RECIPE_PATH")
 CONDITIONS_PATH = os.environ.get("CONDITIONS_PATH")
-=======
-import Scheduler from "Scheduler.lf"
-preamble{= 
-import uuid
-from frost import *
->>>>>>> origin/dev
 =}
 
 
@@ -54,7 +47,7 @@ main reactor{
     cell4 = new Cell4(name="cell4")
     
     cell5 = new Cell5(name="cell5")
-    conveyor = new CellConveyor(name="conveyor", _update_step= 1 msec)
+    conveyor = new CellConveyor(name="conveyor")
     scheduler = new FrostScheduler(name = "scheduler")
     bus = new FrostBus(name="frost_bus", width = 4)
 
