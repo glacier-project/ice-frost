@@ -1,9 +1,9 @@
 target Python
 
-import FrostMachine from "../frost/src/lib/FrostMachine.lf"
+import FrostReactor from "../frost/src/lib/FrostReactor.lf"
 
 
-reactor Warehouse extends FrostMachine{
+reactor Warehouse extends FrostReactor{
     
     //Extract and send back need COMPOSITE
     state extract_tray = {= self.data_model.get_node("Warehouse/SocketLink/extractTray") =}

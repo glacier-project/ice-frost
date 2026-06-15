@@ -15,8 +15,7 @@ target Python{
 import CellConveyor from "CellConveyor.lf"
 import MetaConveyor from "MetaConveyor.lf"
 import FrostScheduler from "../frost/src/lib/scheduler/FrostScheduler.lf"
-import FrostMachine from "../frost/src/lib/FrostMachine.lf"
-import FrostBus from "../frost/src/lib/FrostBus.lf"
+import FrostLink from "../frost/src/lib/FrostLink.lf"
 import Cell4 from "Cell4.lf"
 import Cell5 from "Cell5.lf"
 
@@ -49,8 +48,8 @@ main reactor{
     cell5 = new Cell5(name="cell5")
     conveyor = new CellConveyor(name="conveyor")
     scheduler = new FrostScheduler(name = "scheduler")
-    bus = new FrostBus(name="frost_bus", width = 4)
+    link = new FrostLink(name="frost_link", width = 4)
 
-    conveyor.channel_out, scheduler.channel_out, cell5.channel_out, cell4.channel_out -> bus.channel_in after 0
-    bus.channel_out -> conveyor.channel_in, scheduler.channel_in, cell5.channel_in, cell4.channel_in after 0
+    conveyor.channel_out, scheduler.channel_out, cell5.channel_out, cell4.channel_out -> link.channel_in after 0
+    link.channel_out -> conveyor.channel_in, scheduler.channel_in, cell5.channel_in, cell4.channel_in after 0
 }

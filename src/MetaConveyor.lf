@@ -4,9 +4,9 @@ target Python{
     ],
 }
 
-import FrostMachine from "../frost/src/lib/FrostMachine.lf"
+import FrostReactor from "../frost/src/lib/FrostReactor.lf"
 
-reactor MetaConveyor extends FrostMachine{
+reactor MetaConveyor extends FrostReactor{
     preamble{=
         from pallet_distance import SAVE_PUPDATES
         from conveyor_utils import (

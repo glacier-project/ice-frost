@@ -1,0 +1,18 @@
+name: "frost_link" # name of the link
+machine_category: "unknown" # category of the link
+machine_type: "unknown" # type of the link
+machine_model: "unknown" # model of the link
+description: "" # description of the link
+root:
+  !!FolderNode
+  name: "FrostLink"
+  description: ""
+  children:
+    - !!NumericalVariableNode
+      name: "#Nodes"
+      description: ""
+      measure_unit: "NoneMeasureUnits.NONE"
+      initial_value: 0
+    - !!FolderNode
+      name: "NodeInfo"
+      description: ""

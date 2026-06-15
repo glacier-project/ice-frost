@@ -1,8 +1,8 @@
 target Python 
 
-import FrostMachine from "../frost/src/lib/FrostMachine.lf"
+import FrostReactor from "../frost/src/lib/FrostReactor.lf"
 
-reactor Cell2 extends FrostMachine{
+reactor Cell2 extends FrostReactor{
     //METHOD
     state start_mission = {= self.data_model.get_node("OPCUA/MES/Methods/StartMission")=}
     state engrave_text = {= self.data_model.get_node("OPCUA/MES/Methods/engraveText")=}

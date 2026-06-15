@@ -1,8 +1,8 @@
 target Python 
 
-import FrostMachine from "../frost/src/lib/FrostMachine.lf"
+import FrostReactor from "../frost/src/lib/FrostReactor.lf"
 
-reactor Cell4 extends FrostMachine{
+reactor Cell4 extends FrostReactor{
     //VARIABLES
     state operation_running
     state operation_done 
