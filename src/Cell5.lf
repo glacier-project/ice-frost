@@ -27,6 +27,7 @@ reactor Cell5 extends FrostReactor, FrostFmu{
     state vrs_pallet1
     state vrs_pallet2
     state vrs_pallet3
+    state res
 
     logical action do_step
 
@@ -69,23 +70,28 @@ reactor Cell5 extends FrostReactor, FrostFmu{
             return 0
         self.simulate(None)
         self.logger.debug(f"values: input={self.fmu.getString([self.vrs_input])}, output={self.fmu.getString([self.vrs_result])}")
-        if self.busy.value:
-            if do_step.value == "success":               
-                self.result.value = True
-                self.result_ready.value = True
-                self.busy.value = False
-                self.fmu.setString([self.vrs_input], [""])
-            elif do_step.value == "failed":                
-                self.result.value = False
-                self.result_ready.value = True
-                self.busy.value = False
-                self.fmu.setString([self.vrs_input], [""])
-            else:
-                self.result_ready.value = False
-        elif self.result_ready.value:
-            self.result_ready.value = False
-        
-        do_step.schedule(MSEC(self.time_step), self.fmu.getString([self.vrs_result])[0])
+        # if self.busy.value:
+        #     if do_step.value == "success":               
+        #         self.result.value = True
+        #         self.result_ready.value = True
+        #         self.busy.value = False
+        #         self.fmu.setString([self.vrs_input], [""])
+        #     elif do_step.value == "failed":                
+        #         self.result.value = False
+        #         self.result_ready.value = True
+        #         self.busy.value = False
+        #         self.fmu.setString([self.vrs_input], [""])
+        #     else:
+        #         self.result_ready.value = False
+        # elif self.result_ready.value:
+        #     self.result_ready.value = False
+        if self.fmu.getString([self.vrs_result])[0] == "success" or self.fmu.getString([self.vrs_result])[0] == "failed":
+            self.res = self.fmu.getString([self.vrs_result])[0]
+            self.result.value = False
+            self.result_ready.value = True
+            self.busy.value = False
+            self.fmu.setString([self.vrs_input], [""])
+        do_step.schedule(MSEC(self.time_step))
     =}
 
     // @label startup_reaction

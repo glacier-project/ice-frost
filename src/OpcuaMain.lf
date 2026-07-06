@@ -32,7 +32,6 @@ RECIPE_PATH = os.environ.get("RECIPE_PATH")
 CONDITIONS_PATH = os.environ.get("CONDITIONS_PATH")
 =}
 
-
 main reactor {
     conveyor = new OpcuaConveyor(name="conveyor", _update_step= 1 msec)
     scheduler = new FrostScheduler(name="scheduler", _scheduling_interval=20)
