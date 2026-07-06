@@ -1,9 +1,9 @@
 target Python;
 
-import FrostMachine from "../frost/src/lib/FrostMachine.lf"
+import FrostReactor from "../frost/src/lib/FrostReactor.lf"
 
 
-reactor OpcuaVirtualConveyor extends FrostMachine {
+reactor OpcuaVirtualConveyor extends FrostReactor {
 
     # data model nodes
     state callFreePalletToWithReservation

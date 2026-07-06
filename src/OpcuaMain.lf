@@ -10,8 +10,8 @@ target Python{
     single-threaded: false,
 }
 
-import FrostBus from "../frost/src/lib/FrostBus.lf"
-import FrostMachine from "../frost/src/lib/FrostMachine.lf"
+import FrostLink from "../frost/src/lib/FrostLink.lf"
+import FrostReactor from "../frost/src/lib/FrostReactor.lf"
 import OpcuaConveyor from "OpcuaConveyor.lf"
 import FrostScheduler from "../frost/src/lib/scheduler/FrostScheduler.lf"
 
@@ -35,11 +35,11 @@ CONDITIONS_PATH = os.environ.get("CONDITIONS_PATH")
 
 main reactor {
     conveyor = new OpcuaConveyor(name="conveyor", _update_step= 1 msec)
-    scheduler = new FrostScheduler(name="scheduler")
-    bus = new FrostBus(name="frost_bus", width = 4)
-    cell4 = new FrostMachine(name="cell4")
-    cell5 = new FrostMachine(name="cell5")
+    scheduler = new FrostScheduler(name="scheduler", _scheduling_interval=20)
+    link = new FrostLink(name="frost_link", width = 4)
+    cell4 = new FrostReactor(name="cell4")
+    cell5 = new FrostReactor(name="cell5")
 
-    conveyor.channel_out, scheduler.channel_out, cell4.channel_out, cell5.channel_out -> bus.channel_in after 0
-    bus.channel_out -> conveyor.channel_in, scheduler.channel_in, cell4.channel_in, cell5.channel_in after 0
+    conveyor.channel_out, scheduler.channel_out, cell4.channel_out, cell5.channel_out -> link.channel_in after 0
+    link.channel_out -> conveyor.channel_in, scheduler.channel_in, cell4.channel_in, cell5.channel_in after 0
 }

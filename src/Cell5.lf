@@ -1,9 +1,9 @@
 target Python 
 
-import FrostMachine from "../frost/src/lib/FrostMachine.lf"
-import FMUWrapper from "../frost/src/lib/simulation/FMUWrapper.lf"
+import FrostReactor from "../frost/src/lib/FrostReactor.lf"
+import FrostFmu from "../frost/src/lib/simulation/FrostFmu.lf"
 
-reactor Cell5 extends FrostMachine, FMUWrapper{
+reactor Cell5 extends FrostReactor, FrostFmu{
 
     state check_quality_covers
     state check_quality_lego

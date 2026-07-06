@@ -1,9 +1,9 @@
 target Python
 
-import FrostMachine from "../frost/src/lib/FrostMachine.lf"
+import FrostReactor from "../frost/src/lib/FrostReactor.lf"
 
 
-reactor Kairos extends FrostMachine{
+reactor Kairos extends FrostReactor{
 
     state start_mission = {= self.data_model.get_node("RBKairos/Mission_Methods/start_mission") =}
     state preempt_running_mission = {= self.data_model.get_node("RBKairos/Mission_Methods/preemptRunningMission") =}

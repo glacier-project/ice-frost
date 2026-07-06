@@ -46,7 +46,7 @@ reactor CellConveyor extends MetaConveyor{
 
     reaction(channel_in){=
         msg = channel_in[0].value
-        self.logger.warning(f"Received message from FrostBus: {msg}")
+        self.logger.warning(f"Received message from FrostLink: {msg}")
     =}
 
     method _update_model_pallet_destination(pallet, value){=
