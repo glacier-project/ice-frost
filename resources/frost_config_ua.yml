@@ -163,7 +163,7 @@ reactors:
       message_filter:
         logging_level: ERROR
   cell5:
-    logging_level: ERROR
+    logging_level: DEBUG
     parameters:
       data_model_path: "resources/data_model/opcua_cell5.yml"
       path: "src/fmu/QualityCell.fmu"
