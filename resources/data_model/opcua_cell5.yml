@@ -37,7 +37,7 @@ root:
           name: "CheckQualityLego"
           remote_resource_spec:
             !!OpcuaRemoteResourceSpec
-            node_id: "ns=2;s=Cell5.Methods.CheckQualityLego"
+            node_id: ns=2;s=Cell5.Methods.CheckQualityLego
           description: "Checks shape"
           parameters:
             - !!NumericalVariableNode

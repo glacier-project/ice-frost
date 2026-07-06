@@ -46,7 +46,7 @@ main reactor{
     cell4 = new Cell4(name="cell4")
     
     cell5 = new Cell5(name="cell5")
-    conveyor = new CellConveyor(name="conveyor")
+    conveyor = new CellConveyor(name="conveyor", _update_step= 1 msec)
     scheduler = new FrostScheduler(name = "scheduler")
     link = new FrostLink(name="frost_link", width = 4)
 
