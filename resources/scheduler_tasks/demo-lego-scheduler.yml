@@ -133,7 +133,7 @@ root:
           operator: "=="  
         - !!CallRemoteMethodNode
           remote_id: "cell5"
-          method: "/Cell5/Utils/CheckQualityLego"
+          method: "/Cell5/Methods/CheckQualityLego"
           args: ["${shape1}", 0, "${shape2}"]  # shape1, shape2, shape3
         - !!CallRemoteMethodNode
           remote_id: "conveyor"

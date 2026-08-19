@@ -102,12 +102,7 @@ reactor Controller extends FrostBase{
 
     method random_init(){=
         import random
-        segments = [
-            SegmentName.Segment_1, SegmentName.Segment_2, SegmentName.Segment_3, 
-            SegmentName.Segment_5, SegmentName.Segment_6, SegmentName.Segment_7, 
-            SegmentName.Segment_8
-        ]
-
+        segments = [SegmentName.Segment_1, SegmentName.Segment_2, SegmentName.Segment_3, SegmentName.Segment_6, SegmentName.Segment_7, SegmentName.Segment_8]
         for i in range(1, 11):
             segment = random.choice(segments)
             self.pallets_to_be_created.append([segment, i])

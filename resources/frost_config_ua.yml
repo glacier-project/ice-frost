@@ -13,6 +13,7 @@ reactors:
     parameters:
       data_model_path: "resources/data_model/opcua_conveyor_full.yml"
       conveyor_graph: "resources/conveyor_graph/conveyor_graph.gml"
+      pallet_metric: "DISTANCE"
     reactors:
      message_filter:
        logging_level: ERROR
@@ -151,7 +152,7 @@ reactors:
     parameters:
       data_model_path: "resources/scheduler_tasks/demo-lego-scheduler.yml"
       scheduling_instance: "resources/schedules/simulation-lego-demo.json"
-      task_mapping: 
+      task_mapping:
         LD: /Scheduler/LD
         RBTC: /Scheduler/RBTC
         QC: /Scheduler/QC
@@ -162,7 +163,7 @@ reactors:
       message_filter:
         logging_level: ERROR
   cell5:
-    logging_level: ERROR
+    logging_level: DEBUG
     parameters:
       data_model_path: "resources/data_model/opcua_cell5.yml"
       path: "src/fmu/QualityCell.fmu"
