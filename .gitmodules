@@ -1,4 +1,4 @@
-[submodule "frost"]
-	path = frost
-	url = https://github.com/esd-univr/frost
-	branch = feature/registration-fix
+[submodule "lf-packages/frost"]
+	path = lf-packages/frost
+	url = https://github.com/glacier-project/frost.git
+	branch = dev

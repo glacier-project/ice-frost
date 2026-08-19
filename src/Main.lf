@@ -1,9 +1,9 @@
 target Python{
     fast: True,
     files: [
-        "../frost/src/python_lib/frost.py",
-        "../frost/src/python_lib/l_formatter.py",
-        "../frost/src/python_lib/time_utils.py",
+        "../lf-packages/frost/src/python_lib/frost.py",
+        "../lf-packages/frost/src/python_lib/l_formatter.py",
+        "../lf-packages/frost/src/python_lib/time_utils.py",
         "python_utils/ice_proxy.py",
         "python_utils/handle_recipe.py",
         "MetaConveyor_utils/pallet_distance.py"
@@ -14,8 +14,8 @@ target Python{
 
 import CellConveyor from "CellConveyor.lf"
 import MetaConveyor from "MetaConveyor.lf"
-import FrostScheduler from "../frost/src/lib/scheduler/FrostScheduler.lf"
-import FrostLink from "../frost/src/lib/FrostLink.lf"
+import FrostScheduler from <frost/scheduler/FrostScheduler.lf>
+import FrostLink from <frost/FrostLink.lf>
 import Cell4 from "Cell4.lf"
 import Cell5 from "Cell5.lf"
 

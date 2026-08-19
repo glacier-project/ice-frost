@@ -8,7 +8,7 @@ target Python{
     ]
 };
 
-import FrostBase from "../../frost/src/lib/FrostBase.lf"
+import FrostBase from <frost/FrostBase.lf>
 
 preamble{=
     from pallet import Pallet
