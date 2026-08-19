@@ -4,7 +4,7 @@ target Python{
     ],
 }
 
-import FrostReactor from "../frost/src/lib/FrostReactor.lf"
+import FrostReactor from <frost/FrostReactor.lf>
 
 reactor MetaConveyor extends FrostReactor{
     preamble{=

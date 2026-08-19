@@ -1,6 +1,6 @@
 target Python 
 
-import FrostReactor from "../frost/src/lib/FrostReactor.lf"
+import FrostReactor from <frost/FrostReactor.lf>
 
 reactor Cell1 extends FrostReactor{
     //METHOD

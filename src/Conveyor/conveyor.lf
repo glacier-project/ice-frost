@@ -7,7 +7,7 @@ import Bay from "bay.lf"
 import Segment from "segment.lf"
 import SingleSwitchBay from "single_switch_bay.lf"
 
-import FrostBase from "../../frost/src/lib/FrostBase.lf"
+import FrostBase from <frost/FrostBase.lf>
 
 
 reactor Conveyor extends FrostBase{

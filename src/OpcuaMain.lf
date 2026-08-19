@@ -1,8 +1,8 @@
 target Python{
     files: [
-        "../frost/src/python_lib/frost.py",
-        "../frost/src/python_lib/l_formatter.py",
-        "../frost/src/python_lib/time_utils.py",
+        "../lf-packages/frost/src/python_lib/frost.py",
+        "../lf-packages/frost/src/python_lib/l_formatter.py",
+        "../lf-packages/frost/src/python_lib/time_utils.py",
         "python_utils/handle_recipe.py",
         "MetaConveyor_utils/pallet_distance.py",
     ],
@@ -10,10 +10,10 @@ target Python{
     single-threaded: false,
 }
 
-import FrostLink from "../frost/src/lib/FrostLink.lf"
-import FrostReactor from "../frost/src/lib/FrostReactor.lf"
+import FrostLink from <frost/FrostLink.lf>
+import FrostReactor from <frost/FrostReactor.lf>
 import OpcuaConveyor from "OpcuaConveyor.lf"
-import FrostScheduler from "../frost/src/lib/scheduler/FrostScheduler.lf"
+import FrostScheduler from <frost/scheduler/FrostScheduler.lf>
 
 preamble{= 
 
