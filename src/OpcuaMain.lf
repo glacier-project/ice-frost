@@ -1,23 +1,19 @@
 target Python{
-    fast: True,
     files: [
         "../lf-packages/frost/src/python_lib/frost.py",
         "../lf-packages/frost/src/python_lib/l_formatter.py",
         "../lf-packages/frost/src/python_lib/time_utils.py",
-        "python_utils/ice_proxy.py",
         "python_utils/handle_recipe.py",
-        "MetaConveyor_utils/pallet_distance.py"
+        "MetaConveyor_utils/pallet_distance.py",
     ],
-    logging: error,
+    logging: warn,
     single-threaded: false,
 }
 
-import CellConveyor from "CellConveyor.lf"
-import MetaConveyor from "MetaConveyor.lf"
-import FrostScheduler from <frost/scheduler/FrostScheduler.lf>
 import FrostLink from <frost/FrostLink.lf>
-import Cell4 from "Cell4.lf"
-import Cell5 from "Cell5.lf"
+import FrostReactor from <frost/FrostReactor.lf>
+import OpcuaConveyor from "OpcuaConveyor.lf"
+import FrostScheduler from <frost/scheduler/FrostScheduler.lf>
 
 preamble{= 
 
@@ -36,20 +32,13 @@ RECIPE_PATH = os.environ.get("RECIPE_PATH")
 CONDITIONS_PATH = os.environ.get("CONDITIONS_PATH")
 =}
 
-
-main reactor{
-    preamble{=
-        recipe_path = os.environ.get("RECIPE_PATH")
-        conditions_path = os.environ.get("CONDITIONS_PATH")
-    =}
-    
-    cell4 = new Cell4(name="cell4")
-    
-    cell5 = new Cell5(name="cell5")
-    conveyor = new CellConveyor(name="conveyor", _update_step= 1 msec)
-    scheduler = new FrostScheduler(name = "scheduler")
+main reactor {
+    conveyor = new OpcuaConveyor(name="conveyor", _update_step= 1 msec)
+    scheduler = new FrostScheduler(name="scheduler", _scheduling_interval=20)
     link = new FrostLink(name="frost_link", width = 4)
+    cell4 = new FrostReactor(name="cell4")
+    cell5 = new FrostReactor(name="cell5")
 
-    conveyor.channel_out, scheduler.channel_out, cell5.channel_out, cell4.channel_out -> link.channel_in after 0
-    link.channel_out -> conveyor.channel_in, scheduler.channel_in, cell5.channel_in, cell4.channel_in after 0
+    conveyor.channel_out, scheduler.channel_out, cell4.channel_out, cell5.channel_out -> link.channel_in after 0
+    link.channel_out -> conveyor.channel_in, scheduler.channel_in, cell4.channel_in, cell5.channel_in after 0
 }

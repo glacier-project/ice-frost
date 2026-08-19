@@ -1,0 +1,115 @@
+name: "cell5" # name of the machine
+machine_category: "unknown" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "Checks Lego on the Conveyor Belt" # description of the machine
+connectors:
+  - !!OpcuaConnector
+    name: "OpcuaConnector5"
+    ip_env_var: "ICE_CELL5_IP"
+    port_env_var: "ICE_CELL5_PORT"
+root:
+  !!FolderNode
+  name: "Cell5"
+  description: "OPCUA"
+  children:
+    - !!FolderNode
+      name: "Methods"
+      connector_name: "OpcuaConnector5"
+      remote_resource_spec:
+        !!OpcuaRemoteResourceSpec
+        namespace: ns=2;s=Cell5.Methods
+      description: "Variables"
+      children:
+        - !!AsyncMethodNode
+          name: "CheckQualityCovers"
+          description: "Checks color"
+          parameters:
+            - !!NumericalVariableNode
+              name: "color"
+              description: "Color to check"
+              default_value: 0
+          returns:
+            - !!NumericalVariableNode
+              name: "is_correct"
+              description: "Indicates if the color is correct"
+        - !!AsyncMethodNode
+          name: "CheckQualityLego"
+          remote_resource_spec:
+            !!OpcuaRemoteResourceSpec
+            node_id: ns=2;s=Cell5.Methods.CheckQualityLego
+          description: "Checks shape"
+          parameters:
+            - !!NumericalVariableNode
+              name: "shape1"
+              description: ""
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+            - !!NumericalVariableNode
+              name: "shape2"
+              description: ""
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+            - !!NumericalVariableNode
+              name: "shape3"
+              description: ""
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+          returns:
+            - !!NumericalVariableNode
+              name: "result"
+              description: "Indicates if the shape is correct"
+    - !!FolderNode
+      name: "Utils"
+      description: ""
+      children: 
+        - !!CompositeMethodNode
+          name: "CheckQualityLego"
+          description: "Checks quality"
+          parameters:
+            - !!NumericalVariableNode
+              name: "shape1"
+              description: ""
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+            - !!NumericalVariableNode
+              name: "shape2"
+              description: ""
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+            - !!NumericalVariableNode
+              name: "shape3"
+              description: ""
+              measure_unit: "NoneMeasureUnits.NONE"
+              default_value: 0
+          returns:
+            - !!NumericalVariableNode
+              name: "result"
+              description: "Quality of the Lego"
+          cfg:
+            - !!CallMethodNode
+              method: "Cell5/Methods/CheckQualityLego"
+              args:
+                - "${shape1}"
+                - "${shape2}"
+                - "${shape3}"
+            - !!WaitConditionNode
+              variable: "Cell5/Status/Busy"
+              operator: "=="
+              rhs: False
+    - !!FolderNode
+      name: "Status"
+      connector_name: "OpcuaConnector5"
+      remote_resource_spec:
+        !!OpcuaRemoteResourceSpec
+        namespace: ns=2;s=Cell5.Status
+      description: "Variables"
+      children:
+        - !!BooleanVariableNode
+          name: "Busy"
+          remote_resource_spec:
+            !!OpcuaRemoteResourceSpec
+            node_id: ns=2;s=Cell5.Status.Busy
+          description: "Lego image"
+          initial_value: False
+    

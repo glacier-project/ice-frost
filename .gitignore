@@ -170,9 +170,19 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 bin/
-Lingo.lock
+lf-packages/*/build/
 *.csv
 *.tex
 .env
 .envrc
 .vscode
+
+# Certificates
+*.der
+*.pem
+
+resources/discover_cell4_methods.py
+resources/schedules/recipe.json
+resources/schedules/service,json
+resources/test.py
+resources/test_cell5_methods.py

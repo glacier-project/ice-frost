@@ -1,113 +1,125 @@
-target Python{
-    files: [source_folder/pallet.py, source_folder/material.py]
-};
+target Python
 
-preamble{=
-    from pallet import Pallet 
-    from material import Material
-=}
+import FrostBase from <frost/FrostBase.lf>
 
-reactor Bay_Switch(param = "default"){
-    //Internal variables
-    state name = param   
 
-    //Physical links
-    input IN
-    output OUT
-    input CROSS_IN
-    output CROSS   
-    output FROST_OUT
-    //Controller Links
-    input command
-    output ask
+reactor BaySwitch extends FrostBase{
+    state conveyor_name
+    state forward_time = 2000
+    state backward_time = 2000
+    logical action delay
 
-    //Current Pallet
-    state pallet
-    
     reaction(startup){=
-        self.pallet = None
+        temp = self.name.split(".")
+        self.conveyor_name = temp[len(temp)-2] + "_" + temp[len(temp)-1]
+    =}
+    input from_back
+    output to_back
+    input from_forward
+    output to_forward
+
+    output to_frost
+
+    input controller_command
+    output ask_to_controller
+
+    state pallet = {=None=}
+    state outgoing = False
+
+    logical action unhandled_pallet
+
+    reaction(unhandled_pallet) ->ask_to_controller, to_frost, pending_pallet{=
+        if self.pallet == None:
+            raise Exception(f"Bay Switch {self.conveyor_name} error: no pallet to handle")
+        to_frost.set([self.pallet.id, self.conveyor_name])
+        self.logger.debug(f"Bay Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
+        ask_to_controller.set([Events.pallet_arrived, self.pallet.id, self.conveyor_name])
     =}
 
-    logical action pallet_to_be_moved
-
-    reaction(pallet_to_be_moved) ->ask, pallet_to_be_moved, CROSS, FROST_OUT{=
-        if not self.pallet:
-            return
-        if self.pallet.destination == None or self.pallet.destination[0] != self.pallet.position[0]:
-            if self.name == "1":
-                FROST_OUT.set([self.pallet.pallet_id, self.name, 0])
-                CROSS.set(self.pallet)
-                self.pallet = None
-            else:
-                ask.set(["Move_in_bay", self.name, self.pallet.destination, self.pallet.pallet_id])
-        else:
-            if self.pallet.destination[1] != self.name:
-                ask.set(["Move_in_bay", self.name, self.pallet.destination, self.pallet.pallet_id])
-        pallet_to_be_moved.schedule(SEC(2))
+    logical action pending_pallet
+    reaction(pending_pallet) -> pending_pallet, ask_to_controller{=
+        if self.pallet == None or self.outgoing:
+            return 0
+        self.logger.debug(f"Bay Switch {self.conveyor_name} waiting for controller to know what to do with {self.pallet.id}")
+        self._set_output_port([Events.pallet_pending, self.pallet.id, self.conveyor_name], ask_to_controller)
+        pending_pallet.schedule(SEC(2))
     =}
 
-    '''This reaction is triggered when a pallet arrives at the bay switch.
-    Similarly to the switch it checks the pallet has reached its destination.
-    If so, it sends a message to the main reactor to inform the pallet has arrived.
-    Otherwise, it asks the controller for the pallet route.
-    '''
-    reaction(IN)-> ask, FROST_OUT, pallet_to_be_moved{=
-        if IN.value is not None:
-            self.pallet = IN.value
-            position_list = list(self.pallet.position)
-            position_list[1] = self.name
-            self.pallet.position = "".join(position_list)
-            FROST_OUT.set([self.pallet.pallet_id, self.name, self.pallet.pallet_id])
-            if self.pallet.looping:
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
-            elif self.pallet.destination[0] == self.pallet.position[0] and self.pallet.destination[1] == self.name:
-                ask.set(["_pallet_arrived", self.pallet.pallet_id, self.name])
-            else:
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
-    =}
+    method pallet_in(value){=
+        if not isinstance(value, Pallet):
+            raise Exception(f"Error: Bay Switch {self.conveyor_name} received non-pallet value: {value}")
 
-    '''This reaction is triggered when the controller sends a command to the bay switch.
-    If the command is to create a pallet, the bay switch stores the pallet 
-    and asks the controller for the pallet route.
-    If the command is to move a pallet, the bay switch sends the pallet to appropriate port.
-    '''
-    reaction(command) -> ask, OUT, CROSS, FROST_OUT, pallet_to_be_moved{=
-        if command.value[0] == "Create":
-            self.pallet = command.value[1]
-            ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+        if self.pallet is not None:
+            raise Exception(f"Error: Bay Switch {self.conveyor_name} received {value.id} but already has a pallet.")
+
+        self.logger.debug(f"Bay Switch {self.conveyor_name} received pallet {value.id}")
         
-        elif command.value[0] == "Move" and self.pallet is not None:
-            if command.value[2] == "CROSS":
-                FROST_OUT.set([self.pallet.pallet_id, self.name, 0])
-                CROSS.set(self.pallet)      
-                
-            elif command.value[2] == "OUT":
-                FROST_OUT.set([self.pallet.pallet_id, self.name, 0])
-                OUT.set(self.pallet)
-
-            self.pallet = None
-        elif command.value[0] == "Move_in_bay":
-            pallet_to_be_moved.schedule(SEC(0))
+        self.pallet = value
     =}
 
-    '''This reaction is triggered when a pallet arrives at the cross switch.
-    As before, it checks if the pallet has reached its destination, and if not,
-    it asks the controller for the pallet route.
-    '''
-    reaction(CROSS_IN)-> ask, FROST_OUT, pallet_to_be_moved{=
-        if CROSS_IN.value is not None:
-            self.pallet = CROSS_IN.value
+    reaction(from_back)-> unhandled_pallet{=
+        self.pallet_in(from_back.value[0])
+        unhandled_pallet.schedule(0)
+    =}
 
-            position_list = list(self.pallet.position)
-            position_list[1] = self.name
-            self.pallet.position = "".join(position_list)
+    reaction(from_forward)-> unhandled_pallet{=
+        self.pallet_in(from_forward.value[0])
+        unhandled_pallet.schedule(0)
+    =}
+
+    reaction(controller_command) -> ask_to_controller, delay, pending_pallet, to_back, to_forward{=
+        '''
+        controller_command format: [[header], [command], [args]]
+            header = list of str with Segment names involved in the command
+            command = [ControllerCommand, BayAction]
+            args = additional arguments (if any)
+        '''
+        value = controller_command.value
+        header = value[0]
+        if self.conveyor_name not in header:
+            return 0
+    
+        cmd = value[1][0]
+        if not isinstance(cmd, ControllerCommand):
+            raise Exception(f"Bay Switch {self.conveyor_name} error: unknown command {cmd}")
+        
+        action_to_be_performed = value[1][1]
+        if not isinstance(action_to_be_performed, BayAction):
+            raise Exception(f"Bay Switch {self.conveyor_name} error: unknown command {cmd}")
+
+        if cmd == ControllerCommand.move:        
+            if self.outgoing:
+                return 0
+            if self.pallet is None:
+                self.logger.error(f"Bay Switch {self.conveyor_name} error: {value}")
+                # raise Exception(f"Bay Switch {self.conveyor_name} error: no pallet to move")
             
-            FROST_OUT.set([self.pallet.pallet_id, self.name, self.pallet.pallet_id])
-            if self.pallet.looping:
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
-            elif self.pallet.destination[0] == self.pallet.position[0] and self.pallet.destination[1] == self.name:
-                ask.set(["_pallet_arrived", self.pallet.pallet_id, self.name])
-            else:
-                ask.set(["Move", self.name, self.pallet.destination, self.pallet.pallet_id])
+            if action_to_be_performed == BayAction.back:
+                #self.logger.debug(f"Bay Switch {self.conveyor_name} moving pallet {self.pallet.id}")
+                delay.schedule(MSEC(self.backward_time), [self.pallet, to_back])
+                self.outgoing = True
+                #self._set_output_port(self.pallet, to_back)
+            elif action_to_be_performed == BayAction.forward:
+                #self.logger.debug(f"Bay Switch {self.conveyor_name} moving pallet {self.pallet.id} to next Bay Switch")
+                delay.schedule(MSEC(self.forward_time), [self.pallet, to_forward])
+                self.outgoing = True
+                #self._set_output_port(self.pallet, to_forward)
+            elif action_to_be_performed == BayAction.none:
+                pending_pallet.schedule(SEC(0))
+                return 0
+            
+        else:
+            raise Exception(f"Bay Switch {self.conveyor_name} error: unknown command {cmd}")
+    =}
+
+    reaction(delay) -> to_forward, to_back, to_frost, pending_pallet, ask_to_controller{=
+        pallet, port = delay.value
+        self._set_output_port(pallet, port)
+
+        self._set_output_port([0, self.conveyor_name], to_frost)
+        self._set_output_port([Events.pallet_released, self.pallet.id, self.conveyor_name], ask_to_controller)
+
+        self.pallet = None
+        self.outgoing = False
     =}
 }
