@@ -1,0 +1,22 @@
+# Debian e non Alpine: la FMU di cell5 ha binari Linux compilati per glibc
+FROM python:3.13-slim-bookworm
+
+# git per installare da GitHub; gcc, g++, make e cmake per compilare l'estensione C che lfc genera
+# per il target Python; Java 17 per lfc
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git gcc g++ make cmake curl openjdk-17-jre-headless \
+    && rm -rf /var/lib/apt/lists/*
+
+# compilatore Lingua Franca
+RUN curl -Ls https://install.lf-lang.org | bash -s cli
+ENV PATH="/root/.local/bin:${PATH}" PYTHONUNBUFFERED=1
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# tutto il progetto: cell5 cerca la FMU in src/fmu/QualityCell.fmu
+COPY . .
+RUN lfc src/MainMqtt.lf
+
+ENTRYPOINT ["python", "src-gen/MainMqtt/MainMqtt.py"]
