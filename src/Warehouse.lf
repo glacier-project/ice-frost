@@ -6,23 +6,34 @@ import FrostReactor from <frost/FrostReactor.lf>
 reactor Warehouse extends FrostReactor{
     
     //Extract and send back need COMPOSITE
-    state extract_tray = {= self.data_model.get_node("Warehouse/SocketLink/extractTray") =}
-    state send_back_tray = {= self.data_model.get_node("Warehouse/SocketLink/sendBackTray") =}
-    state show_message = {= self.data_model.get_node("Warehouse/showMessage") =}
+    state extract_tray
+    state send_back_tray
+    state show_message
+    state warehouse_info
+    state bay_info
+    state tray_in_bay
+    state bay_queue_size
+    state bay_busy
+    state bay_ready_for_pickplace
+    state tray_calls_count
 
-    state warehouse_info = {= self.data_model.get_node("Warehouse/Status/warehouseInfo") =}
-    state bay_info = {= self.data_model.get_node("Warehouse/Status/bayInfo") =}
-    state tray_in_bay = {= self.data_model.get_node("Warehouse/Status/trayInBay") =}
-    state bay_queue_size = {= self.data_model.get_node("Warehouse/Status/bayQueueSize") =}
-    state bay_busy = {= self.data_model.get_node("Warehouse/Status/bayBusy") =}
-    state bay_ready_for_pickplace = {= self.data_model.get_node("Warehouse/Status/bayReadyForPickPlace") =}
-    state tray_calls_count = {= self.data_model.get_node("Warehouse/Statistics/TrayCallsCount") =}
     state tray_to_extract
     state tray_to_sendback
     timer work(0ms, 1000ms)
     logical action delay
     
     reaction(startup){=
+        self.extract_tray = self.data_model.get_node("Warehouse/SocketLink/extractTray")
+        self.send_back_tray = self.data_model.get_node("Warehouse/SocketLink/sendBackTray")
+        self.show_message = self.data_model.get_node("Warehouse/showMessage")
+        self.warehouse_info = self.data_model.get_node("Warehouse/Status/warehouseInfo")
+        self.bay_info = self.data_model.get_node("Warehouse/Status/bayInfo")
+        self.tray_in_bay = self.data_model.get_node("Warehouse/Status/trayInBay")
+        self.bay_queue_size = self.data_model.get_node("Warehouse/Status/bayQueueSize")
+        self.bay_busy = self.data_model.get_node("Warehouse/Status/bayBusy")
+        self.bay_ready_for_pickplace = self.data_model.get_node("Warehouse/Status/bayReadyForPickPlace")
+        self.tray_calls_count = self.data_model.get_node("Warehouse/Statistics/TrayCallsCount")
+
         self.data_model.get_node("Warehouse/SocketLink/extract").callback = lambda TrayNumber: self.tray_to_extract.write(TrayNumber) if 1 <= TrayNumber <= 8 else -1
         self.data_model.get_node("Warehouse/SocketLink/sendback").callback = lambda TrayNumber: self.tray_to_sendback.write(TrayNumber) if 1 <= TrayNumber <= 8 else -1
         self.show_message.callback = self.show_Message

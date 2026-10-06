@@ -2,64 +2,70 @@ target Python
 
 import FrostReactor from <frost/FrostReactor.lf>
 
-
 reactor Kairos extends FrostReactor{
-
-    state start_mission = {= self.data_model.get_node("RBKairos/Mission_Methods/start_mission") =}
-    state preempt_running_mission = {= self.data_model.get_node("RBKairos/Mission_Methods/preemptRunningMission") =}
-
-    state control_busy = {= self.data_model.get_node("RBKairos/Mission_Methods/Control_Busy") =}
-    state last_mission_result = {= self.data_model.get_node("RBKairos/Mission_Methods/Last_Mission_Result") =}
-    state missions_call_counter = {= self.data_model.get_node("RBKairos/Mission_Methods/Missions_Call_Counter") =}
-    state ongoing_mission_feedback = {= self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Feedback") =}
-    state ongoing_mission_name = {= self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Name") =}
-    timer work(0ms, 1000ms)
-    logical action delay
-    reaction (startup){=
-        assert isinstance(self.start_mission, MethodNode), "start_mission Node not found"
-        assert isinstance(self.preempt_running_mission, MethodNode), "preempt_running_mission Node not found"
-        self.preempt_running_mission.callback = self.preemptMission
+    preamble {=
+        import random
+        # durate mediane delle missioni nella cattura della ricetta, in secondi (robot a e b)
+        MISSION_TIME = {
+            "gotoWarehouse": 19.3, "pickCovertopFromWarehouse": 8.9, "pickCoverbottomFromWarehouse": 50.9,
+            "pickBoardFromWarehouse": 9.1, "gotoLoadUnloadBay": 18.0, "placeBoardToPallet": 8.5,
+            "placeCovertopToPallet": 8.6, "placeCoverbottomToPallet": 42.2, "shiftRight": 4.4, "home": 14.5,
+            "gotoCell5Bay": 33.1, "pickCovertopFromPallet": 40.7, "pickCoverbottomFromPallet": 35.0,
+            "gotoTrashBin": 40.2, "dropCoversToTrashBin": 44.7,
+        }
+        DEFAULT_TIME = 20.0     # missioni che nella cattura non compaiono
     =}
+    state control_busy
+    state last_mission_result
+    state missions_call_counter
+    state ongoing_mission_feedback
+    state ongoing_mission_name
+    state running = False
+    state mission_id = 0       # distingue la chiusura della missione in corso da quella di una annullata
+    state mission_end
+    logical action end_mission
 
-    method startMission(){=
-        """
-        Starts a mission by setting the control to busy, initializing the ongoing mission name,
-        and resetting the mission call counter. It also sets the last mission result to True.
-        """
-        self.ongoing_mission_name.value = ""
-        self.missions_call_counter.value = self.missions_call_counter.value + 1
-        self.last_mission_result.value = True
-        self.control_busy.value = False    
-    =}
-
-    method preemptMission(){=
-        """
-        Preempts the ongoing mission by setting the control to busy, updating the ongoing mission feedback,
-        and resetting the last mission result and ongoing mission name.
-        Returns True if the mission was successfully aborted, False otherwise.
-        """
-        if not self.control_busy.value:
+    method start_mission(name){=
+        if self.running:
             return False
+        self.running = True
+        self.mission_id += 1
+        self.control_busy.value = True
+        self.ongoing_mission_name.value = name
+        seconds = self.MISSION_TIME.get(name, self.DEFAULT_TIME) * self.random.uniform(0.95, 1.05)
+        self.mission_end.schedule(MSEC(int(seconds * 1000)), self.mission_id)
+        return True
+    =}
 
-        self.control_busy.value = False 
+    method preempt_mission(){=
+        if not self.running:
+            return False
+        self.running = False
+        self.control_busy.value = False
         self.ongoing_mission_feedback.value = "Mission aborted"
-        self.last_mission_result.value = False 
+        self.last_mission_result.value = False
         self.ongoing_mission_name.value = ""
         return True
     =}
 
-    reaction(work)-> delay{=
-        if self.control_busy.value:
-            delay.schedule(SEC(20), [self.startMission])
+    reaction(startup) -> end_mission {=
+        self.mission_end = end_mission
+        self.control_busy = self.data_model.get_node("RBKairos/Mission_Methods/Control_Busy")
+        self.last_mission_result = self.data_model.get_node("RBKairos/Mission_Methods/Last_Mission_Result")
+        self.missions_call_counter = self.data_model.get_node("RBKairos/Mission_Methods/Missions_Call_Counter")
+        self.ongoing_mission_feedback = self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Feedback")
+        self.ongoing_mission_name = self.data_model.get_node("RBKairos/Mission_Methods/Ongoing_Mission_Name")
+        self.data_model.get_node("RBKairos/Mission_Methods/start_mission").callback = self.start_mission
+        self.data_model.get_node("RBKairos/Mission_Methods/preemptRunningMission").callback = self.preempt_mission
     =}
 
-    reaction(delay){=
-        callback = delay.value[0]
-        if len(delay.value) > 1:
-            args = delay.value[1:]
-            callback(*args)
-        else:
-            callback()
+    reaction(end_mission){=
+        if not self.running or end_mission.value != self.mission_id:
+            return              # missione annullata nel frattempo
+        self.running = False
+        self.control_busy.value = False
+        self.missions_call_counter.value = self.missions_call_counter.value + 1
+        self.ongoing_mission_name.value = ""
+        self.last_mission_result.value = True
     =}
-
 }

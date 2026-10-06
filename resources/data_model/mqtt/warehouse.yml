@@ -3,6 +3,15 @@ machine_category: "unknown" # category of the machine
 machine_type: "unknown" # type of the machine
 machine_model: "unknown" # model of the machine
 description: "Warehouse data model" # description of the machine
+connectors:
+- !!MqttConnector
+  name: broker
+  ip: mdm-rmq-test
+  port: 1883
+  username_env_var: MQTT_USER
+  password_env_var: MQTT_PASSWORD
+  topic_prefix: ice/data/icefrost/warehouse
+  payload_codec: json
 root:
   !!FolderNode
   name: "Warehouse"
@@ -204,49 +213,60 @@ root:
           name: "activeAlarmsList"
           description: "activeAlarmsList"
           initial_value: "None"
+          connector_name: broker
         - !!StringVariableNode
           name: "warehouseInfo"
           description: "warehouseInfo"
           initial_value: ""
+          connector_name: broker
         - !!StringVariableNode
           name: "bayInfo"
           description: "bayInfo"
           initial_value: ""
+          connector_name: broker
         - !!BooleanVariableNode
           name: "warehouseAutomaticMode"
           description: "warehouseAutomaticMode"
           initial_value: false
+          connector_name: broker
         - !!BooleanVariableNode
           name: "alarmTriggered"
           description: "alarmTriggered"
           initial_value: true
+          connector_name: broker
         - !!NumericalVariableNode
           name: "trayInBay"
           description: "Index"
           measure_unit: "NoneMeasureUnits.NONE"
           initial_value: 0
+          connector_name: broker
         - !!NumericalVariableNode
           name: "bayQueueSize"
           description: "bayQueueSize"
           measure_unit: "NoneMeasureUnits.NONE"
           initial_value: 0
+          connector_name: broker
         - !!NumericalVariableNode
           name: "trayHeights"
           description: "trayHeights"
           measure_unit: "NoneMeasureUnits.NONE"
           initial_value: 0
+          connector_name: broker
         - !!BooleanVariableNode
           name: "bayBusy"
           description: "bayBusy"
           initial_value: false
+          connector_name: broker
         - !!BooleanVariableNode
           name: "bayReadyForPickPlace"
           description: "bayReadyForPickPlace"
           initial_value: false
+          connector_name: broker
         - !!BooleanVariableNode
           name: "bayClearInProgress"
           description: "bayClearInProgress"
           initial_value: false
+          connector_name: broker
     - !!FolderNode
       name: "Statistics"
       description: "Contains statistics of the Lego analyzed"
@@ -256,6 +276,7 @@ root:
           description: "TrayCallsCount"
           measure_unit: "NoneMeasureUnits.NONE"
           initial_value: 0
+          connector_name: broker
     - !!FolderNode
       name: "Stock"
       description: "Stock"
@@ -265,6 +286,7 @@ root:
           description: "Stock"
           measure_unit: "NoneMeasureUnits.NONE"
           initial_value: 0
+          connector_name: broker
     - !!MethodNode
       name: "showMessage"
       description: "showMessage"

@@ -162,6 +162,27 @@ reactors:
     reactors:
       message_filter:
         logging_level: ERROR
+  cell1:
+    logging_level: ERROR
+    parameters:
+      data_model_path: "resources/data_model/mqtt/cell1.yml"
+    reactors:
+      message_filter:
+        logging_level: ERROR
+  cell2:
+    logging_level: ERROR
+    parameters:
+      data_model_path: "resources/data_model/mqtt/cell2.yml"
+    reactors:
+      message_filter:
+        logging_level: ERROR
+  cell4:
+    logging_level: ERROR
+    parameters:
+      data_model_path: "resources/data_model/mqtt/cell4.yml"
+    reactors:
+      message_filter:
+        logging_level: ERROR
   cell5:
     logging_level: ERROR
     parameters:
@@ -171,10 +192,24 @@ reactors:
     reactors:
       message_filter:
         logging_level: ERROR
-  cell4:
+  rbkairos_a:
     logging_level: ERROR
     parameters:
-      data_model_path: "resources/data_model/mqtt/cell4.yml"
+      data_model_path: "resources/data_model/mqtt/rbkairos_a.yml"
+    reactors:
+      message_filter:
+        logging_level: ERROR
+  rbkairos_b:
+    logging_level: ERROR
+    parameters:
+      data_model_path: "resources/data_model/mqtt/rbkairos_b.yml"
+    reactors:
+      message_filter:
+        logging_level: ERROR
+  warehouse:
+    logging_level: ERROR
+    parameters:
+      data_model_path: "resources/data_model/mqtt/warehouse.yml"
     reactors:
       message_filter:
         logging_level: ERROR

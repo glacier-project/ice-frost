@@ -2,7 +2,16 @@ name: "cell2"
 machine_category: "unknown"
 machine_type: "unknown"
 machine_model: "unknown"
-description: "Cella 2 (UR5 ed EMCO): parte MES della macchina vera"
+description: "Cella 2 (UR5 ed EMCO)"
+connectors:
+- !!MqttConnector
+  name: broker
+  ip: mdm-rmq-test
+  port: 1883
+  username_env_var: MQTT_USER
+  password_env_var: MQTT_PASSWORD
+  topic_prefix: ice/data/icefrost/cell2
+  payload_codec: json
 root:
   !!FolderNode
   name: "Objects"
@@ -20,14 +29,17 @@ root:
               name: "CurrentMission"
               description: "Current mission"
               initial_value: ""
+              connector_name: broker
             - !!BooleanVariableNode
               name: "MESBusy"
               description: "Busy"
               initial_value: False
+              connector_name: broker
             - !!BooleanVariableNode
               name: "MESLastResult"
               description: ""
               initial_value: False
+              connector_name: broker
             - !!FolderNode
               name: "Methods"
               description: "Methods"

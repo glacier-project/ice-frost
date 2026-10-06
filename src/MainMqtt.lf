@@ -18,6 +18,10 @@ import FrostScheduler from <frost/scheduler/FrostScheduler.lf>
 import FrostLink from <frost/FrostLink.lf>
 import Cell4 from "Cell4.lf"
 import Cell5 from "Cell5.lf"
+import Cell1 from "Cell1.lf"
+import Cell2 from "Cell2.lf"
+import Kairos from "Kairos.lf"
+import Warehouse from "Warehouse.lf"
 
 preamble{= 
 
@@ -48,8 +52,15 @@ main reactor{
     cell5 = new Cell5(name="cell5")
     conveyor = new CellConveyor(name="conveyor", _update_step= 1 msec)
     scheduler = new FrostScheduler(name = "scheduler")
-    link = new FrostLink(name="frost_link", width = 4)
+    cell1 = new Cell1(name="cell1")
+    cell2 = new Cell2(name="cell2")
+    rbkairos_a = new Kairos(name="rbkairos_a")
+    rbkairos_b = new Kairos(name="rbkairos_b")
+    warehouse = new Warehouse(name="warehouse")
 
-    conveyor.channel_out, scheduler.channel_out, cell5.channel_out, cell4.channel_out -> link.channel_in after 0
-    link.channel_out -> conveyor.channel_in, scheduler.channel_in, cell5.channel_in, cell4.channel_in after 0
+    link = new FrostLink(name="frost_link", width = 9)
+
+    conveyor.channel_out, scheduler.channel_out, cell5.channel_out, cell4.channel_out, cell1.channel_out, cell2.channel_out, rbkairos_a.channel_out, rbkairos_b.channel_out, warehouse.channel_out -> link.channel_in after 0
+    link.channel_out -> conveyor.channel_in, scheduler.channel_in, cell5.channel_in, cell4.channel_in, cell1.channel_in, cell2.channel_in, rbkairos_a.channel_in, rbkairos_b.channel_in, warehouse.channel_in after 0
+
 }
