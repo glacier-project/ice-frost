@@ -207,19 +207,19 @@ root:
         - !!StringVariableNode
           name: "warehouseInfo"
           description: "warehouseInfo"
-          initial_value: ""
+          initial_value: "\n"
         - !!StringVariableNode
           name: "bayInfo"
           description: "bayInfo"
-          initial_value: ""
+          initial_value: "\n"
         - !!BooleanVariableNode
           name: "warehouseAutomaticMode"
           description: "warehouseAutomaticMode"
-          initial_value: false
+          initial_value: true
         - !!BooleanVariableNode
           name: "alarmTriggered"
           description: "alarmTriggered"
-          initial_value: true
+          initial_value: false
         - !!NumericalVariableNode
           name: "trayInBay"
           description: "Index"

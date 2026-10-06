@@ -217,22 +217,22 @@ root:
         - !!StringVariableNode
           name: "warehouseInfo"
           description: "warehouseInfo"
-          initial_value: ""
+          initial_value: "\n"
           connector_name: broker
         - !!StringVariableNode
           name: "bayInfo"
           description: "bayInfo"
-          initial_value: ""
+          initial_value: "\n"
           connector_name: broker
         - !!BooleanVariableNode
           name: "warehouseAutomaticMode"
           description: "warehouseAutomaticMode"
-          initial_value: false
+          initial_value: true
           connector_name: broker
         - !!BooleanVariableNode
           name: "alarmTriggered"
           description: "alarmTriggered"
-          initial_value: true
+          initial_value: false
           connector_name: broker
         - !!NumericalVariableNode
           name: "trayInBay"
