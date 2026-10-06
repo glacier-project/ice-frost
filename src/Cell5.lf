@@ -11,8 +11,6 @@ reactor Cell5 extends FrostReactor, FrostFmu{
 
     state check_quality_covers
     state check_quality_lego
-    state check_color_node
-    state check_shape_node
     state num_gadget_checks
     state num_lego_checks
     state num_total_checks
@@ -43,12 +41,13 @@ reactor Cell5 extends FrostReactor, FrostFmu{
         """
         self.check_type = "gadget"
         self.current_mission.value = "CheckObject"
+        self.result_ready.value = False
         self.checking = True
 
         self.fmu.setString([self.vrs_input], [color])
         self.busy.value = True
         self.logger.info(f"Checking cover color: {color}")
-        return False
+        return True
     =}
 
     method check_shape(shape1, shape2, shape3, pallet_content1, pallet_content2, pallet_content3){=
@@ -65,6 +64,7 @@ reactor Cell5 extends FrostReactor, FrostFmu{
         """
         self.check_type = "lego"
         self.current_mission.value = "CheckObject"
+        self.result_ready.value = False
         self.checking = True
 
         self.fmu.setInt32([self.vrs_shape1, self.vrs_shape2, self.vrs_shape3], [shape1, shape2, shape3])
@@ -123,8 +123,6 @@ reactor Cell5 extends FrostReactor, FrostFmu{
         # Initialize data model nodes
         self.check_quality_covers = self.data_model.get_node("Cell5/Methods/CheckQualityCovers")
         self.check_quality_lego = self.data_model.get_node("Cell5/Methods/CheckQualityLego")
-        self.check_color_node = self.data_model.get_node("Cell5/Utils/CheckQualityCovers")
-        self.check_shape_node = self.data_model.get_node("Cell5/Utils/CheckQualityLego")
         self.num_gadget_checks = self.data_model.get_node("Cell5/Statistics/ChecksGadget")
         self.num_lego_checks = self.data_model.get_node("Cell5/Statistics/ChecksLego")
         self.num_total_checks = self.data_model.get_node("Cell5/Statistics/ChecksTotal")
@@ -137,7 +135,7 @@ reactor Cell5 extends FrostReactor, FrostFmu{
         self.result = self.data_model.get_node("Cell5/results/result")
         
         # Set callbacks
-        self.check_color_node.callback = self.check_color
+        self.check_quality_covers.callback = self.check_color
         self.check_quality_lego.callback = self.check_shape
         
         # Value References

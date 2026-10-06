@@ -130,13 +130,13 @@ reactor CellConveyor extends MetaConveyor{
     =}
 
     method reserve_pallet(palletNumber, reservationId){=
-        for pallet in self.pallets:
-            if pallet.get_property("reserved").value != 0:
-                continue
-            pallet.get_property("reserved").value = reservationId
-            return True
-        return False
+        pallet = self.pallets[int(palletNumber) - 1]
+        if pallet.get_property("reserved").value != 0:
+            return False
+        pallet.get_property("reserved").value = reservationId
+        return True
     =}
+
 
     method update_segment(segment, value){=
         temp = segment.get_property(self.FIFO)

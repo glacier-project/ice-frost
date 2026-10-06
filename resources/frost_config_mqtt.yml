@@ -213,4 +213,10 @@ reactors:
     reactors:
       message_filter:
         logging_level: ERROR
-  
+  etensil:
+    logging_level: ERROR
+    parameters:
+      data_model_path: "resources/data_model/mqtt/etensil.yml"
+    reactors:
+      message_filter:
+        logging_level: ERROR

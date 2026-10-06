@@ -5,11 +5,11 @@ import FrostReactor from <frost/FrostReactor.lf>
 reactor Kairos extends FrostReactor{
     preamble {=
         import random
-        # durate mediane delle missioni nella cattura della ricetta, in secondi (robot a e b)
+        # durate delle missioni riuscite nella cattura della ricetta, in secondi (robot a e b)
         MISSION_TIME = {
-            "gotoWarehouse": 19.3, "pickCovertopFromWarehouse": 8.9, "pickCoverbottomFromWarehouse": 50.9,
-            "pickBoardFromWarehouse": 9.1, "gotoLoadUnloadBay": 18.0, "placeBoardToPallet": 8.5,
-            "placeCovertopToPallet": 8.6, "placeCoverbottomToPallet": 42.2, "shiftRight": 4.4, "home": 14.5,
+            "gotoWarehouse": 19.3, "pickCovertopFromWarehouse": 40.7, "pickCoverbottomFromWarehouse": 50.9,
+            "pickBoardFromWarehouse": 22.4, "gotoLoadUnloadBay": 18.0, "placeBoardToPallet": 17.9,
+            "placeCovertopToPallet": 49.2, "placeCoverbottomToPallet": 42.2, "shiftRight": 4.4, "home": 14.5,
             "gotoCell5Bay": 33.1, "pickCovertopFromPallet": 40.7, "pickCoverbottomFromPallet": 35.0,
             "gotoTrashBin": 40.2, "dropCoversToTrashBin": 44.7,
         }

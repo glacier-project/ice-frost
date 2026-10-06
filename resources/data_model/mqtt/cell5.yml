@@ -45,14 +45,14 @@ root:
           name: "CheckQualityCovers"
           description: "Checks color"
           parameters:
-            - !!NumericalVariableNode
+            - !!StringVariableNode
               name: "color"
               description: "Color to check"
-              default_value: 0
+              default_value: ""
           returns:
-            - !!NumericalVariableNode
-              name: "is_correct"
-              description: "Indicates if the color is correct"
+            - !!BooleanVariableNode
+              name: "accepted"
+              description: "The check has started"
         - !!AsyncMethodNode
           name: "CheckQualityLego"
           description: "Checks shape"

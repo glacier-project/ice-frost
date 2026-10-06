@@ -22,6 +22,7 @@ import Cell1 from "Cell1.lf"
 import Cell2 from "Cell2.lf"
 import Kairos from "Kairos.lf"
 import Warehouse from "Warehouse.lf"
+import Etensil from "Etensil.lf"
 
 preamble{= 
 
@@ -57,10 +58,11 @@ main reactor{
     rbkairos_a = new Kairos(name="rbkairos_a")
     rbkairos_b = new Kairos(name="rbkairos_b")
     warehouse = new Warehouse(name="warehouse")
+    etensil = new Etensil(name="etensil")
 
-    link = new FrostLink(name="frost_link", width = 9)
+    link = new FrostLink(name="frost_link", width = 10)
 
-    conveyor.channel_out, scheduler.channel_out, cell5.channel_out, cell4.channel_out, cell1.channel_out, cell2.channel_out, rbkairos_a.channel_out, rbkairos_b.channel_out, warehouse.channel_out -> link.channel_in after 0
-    link.channel_out -> conveyor.channel_in, scheduler.channel_in, cell5.channel_in, cell4.channel_in, cell1.channel_in, cell2.channel_in, rbkairos_a.channel_in, rbkairos_b.channel_in, warehouse.channel_in after 0
+    conveyor.channel_out, scheduler.channel_out, cell5.channel_out, cell4.channel_out, cell1.channel_out, cell2.channel_out, rbkairos_a.channel_out, rbkairos_b.channel_out, warehouse.channel_out, etensil.channel_out -> link.channel_in after 0
+    link.channel_out -> conveyor.channel_in, scheduler.channel_in, cell5.channel_in, cell4.channel_in, cell1.channel_in, cell2.channel_in, rbkairos_a.channel_in, rbkairos_b.channel_in, warehouse.channel_in, etensil.channel_in after 0
 
 }

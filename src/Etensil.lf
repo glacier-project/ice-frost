@@ -1,0 +1,85 @@
+target Python
+
+import FrostReactor from <frost/FrostReactor.lf>
+
+reactor Etensil extends FrostReactor{
+    preamble {=
+        import random
+        import datetime
+        # Avvitatura singola nella cattura (05/10, 16:59): tempi in secondi
+        MOTOR_DELAY = 0.5           # chiamata -> motore acceso
+        SCREW_TIME = (1.20, 1.32)   # rotazione del motore, uguale a last_screw_time
+        RESULT_DELAY = 0.1          # motore spento -> risultato della vite
+        BUSY_DELAY = 0.3            # risultato -> busy false
+        ANGLE = (1530, 1675)
+        TORQUE = (0.69, 0.72)
+        OFF, ON = 0, 1              # DeviceStatus sul server OPC UA
+        RESULT_OK = 1               # last_screw_result: 0 UNKNOWN, 1 OK, 2 NOK, 3 REV
+    =}
+    state busy
+    state last_operation_result
+    state motor
+    state screw_ok
+    state end_program
+    state screw_number
+    state screw_result
+    state screw_angle
+    state screw_time
+    state screw_timestamp
+    state screw_torque
+    state screwing = False
+    state duration = 0
+    state next_step
+    logical action step
+
+    method do_single_screw(){=
+        if self.screwing:
+            return False
+        self.screwing = True
+        self.busy.value = True
+        self.screw_ok.value = self.OFF
+        self.end_program.value = self.OFF
+        self.next_step.schedule(MSEC(int(self.MOTOR_DELAY * 1000)), "motor_on")
+        return True
+    =}
+
+    reaction(startup) -> step {=
+        self.next_step = step
+        self.busy = self.data_model.get_node("Objects/eTensil/MES/busy")
+        self.last_operation_result = self.data_model.get_node("Objects/eTensil/MES/last_operation_result")
+        self.motor = self.data_model.get_node("Objects/eTensil/DeviceStatus/02_motor_is_rotating")
+        self.screw_ok = self.data_model.get_node("Objects/eTensil/DeviceStatus/04_screw_ok")
+        self.end_program = self.data_model.get_node("Objects/eTensil/DeviceStatus/05_end_program")
+        self.screw_number = self.data_model.get_node("Objects/eTensil/ScrewResult/current_screw_number")
+        self.screw_result = self.data_model.get_node("Objects/eTensil/ScrewResult/last_screw_result")
+        self.screw_angle = self.data_model.get_node("Objects/eTensil/ScrewResult/last_screw_angle")
+        self.screw_time = self.data_model.get_node("Objects/eTensil/ScrewResult/last_screw_time")
+        self.screw_timestamp = self.data_model.get_node("Objects/eTensil/ScrewResult/last_screw_timestamp")
+        self.screw_torque = self.data_model.get_node("Objects/eTensil/ScrewResult/last_screw_torque")
+        self.data_model.get_node("Objects/eTensil/MES/doSingleScrew").callback = self.do_single_screw
+    =}
+
+    reaction(step) -> step {=
+        if step.value == "motor_on":
+            self.motor.value = self.ON
+            self.duration = self.random.uniform(*self.SCREW_TIME)
+            step.schedule(MSEC(int(self.duration * 1000)), "motor_off")
+        elif step.value == "motor_off":
+            self.motor.value = self.OFF
+            step.schedule(MSEC(int(self.RESULT_DELAY * 1000)), "result")
+        elif step.value == "result":
+            self.screw_number.value = 1
+            self.screw_result.value = self.RESULT_OK
+            self.screw_angle.value = self.random.randint(*self.ANGLE)
+            self.screw_time.value = round(self.duration, 2)
+            self.screw_torque.value = round(self.random.uniform(*self.TORQUE), 2)
+            self.screw_timestamp.value = self.datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+            self.screw_ok.value = self.ON
+            self.end_program.value = self.ON
+            step.schedule(MSEC(int(self.BUSY_DELAY * 1000)), "done")
+        else:
+            self.last_operation_result.value = True
+            self.busy.value = False
+            self.screwing = False
+    =}
+}

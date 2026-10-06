@@ -209,35 +209,47 @@ root:
           # - !!MethodNode
           #   name: "OPC_UA_CLEAR_BUFFER_DB"
           #   description: ""
-          # - !!MethodNode
-          #   name: "OPC_UA_ABB_PICK_BOARD_FROM_PALLET_DB"
-          #   description: ""
-          #   returns:
-          #     - !!BooleanVariableNode
-          #       name: "result"
-          #       description: ""
-          #     - !!NumericalVariableNode
-          #       name: "boardPosition"
-          #       description: ""
-          #     - !!NumericalVariableNode
-          #       name: "errorCode"
-          #       description: ""
-          # - !!MethodNode
-          #   name: "OPC_UA_GADGET_ASSEMBLY_DB"
-          #   description: ""
-          #   parameters:
-          #     - !!NumericalVariableNode
-          #       name: "phaseNumber"
-          #       description: ""
-          #       default_value: 0
-          #     - !!NumericalVariableNode
-          #       name: "boardPosition"
-          #       description: ""
-          #       default_value: 0
-          #   returns:
-          #     - !!BooleanVariableNode
-          #       name: "result"
-          #       description: ""  
+            - !!FolderNode
+              name: "OPC_UA_ABB_PICK_BOARD_FROM_PALLET_DB"
+              description: ""
+              children:
+                - !!AsyncMethodNode
+                  name: "Method"
+                  description: ""
+                  returns:
+                    - !!BooleanVariableNode
+                      name: "result"
+                      description: ""
+                    - !!NumericalVariableNode
+                      name: "boardPosition"
+                      description: ""
+                    - !!NumericalVariableNode
+                      name: "errorCode"
+                      description: ""
+            - !!FolderNode
+              name: "OPC_UA_GADGET_ASSEMBLY_DB"
+              description: ""
+              children:
+                - !!AsyncMethodNode
+                  name: "Method"
+                  description: ""
+                  parameters:
+                    - !!NumericalVariableNode
+                      name: "phaseNumber"
+                      description: ""
+                      default_value: 0
+                    - !!NumericalVariableNode
+                      name: "boardPosition"
+                      description: ""
+                      default_value: 0
+                  returns:
+                    - !!BooleanVariableNode
+                      name: "result"
+                      description: ""
+                    - !!NumericalVariableNode
+                      name: "errorCode"
+                      description: ""
+
 
         - !!FolderNode
           name: "DataBlocksGlobal"
@@ -491,15 +503,14 @@ root:
               measure_unit: "NoneMeasureUnits.NONE"
               initial_value: 0
               connector_name: "broker"
-            - !!NumericalVariableNode
+            - !!BooleanVariableNode
               name: "KUKA_appStart"
               description: ""
-              measure_unit: "NoneMeasureUnits.NONE"
-              initial_value: 0
+              initial_value: False
               connector_name: "broker"
-            - !!NumericalVariableNode
+            - !!BooleanVariableNode
               name: "KUKA_appEnable"
               description: ""
-              measure_unit: "NoneMeasureUnits.NONE"
-              initial_value: 0
+              initial_value: False
               connector_name: "broker"
+

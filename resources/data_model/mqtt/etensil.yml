@@ -1,0 +1,118 @@
+name: "etensil" # name of the machine
+machine_category: "unknown" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "eTensil electric screwdriver" # description of the machine
+connectors:
+  - !!MqttConnector
+    name: "broker"                         # il nome a cui puntano i connector_name
+    ip: "mdm-rmq-test"                     # il container del broker, visto dalla rete Docker
+    port: 1883                             # porta interna del container (da Windows è 21883)
+    username_env_var: "MQTT_USER"          # credenziali lette dalle variabili d'ambiente,
+    password_env_var: "MQTT_PASSWORD"      # mai scritte nel file
+    topic_prefix: "ice/data/icefrost/etensil"  # cambia l'ultima parte per ogni macchina
+    payload_codec: "json"
+
+root:
+  !!FolderNode
+  name: "Objects"
+  description: "OPCUA"
+  children:
+    - !!FolderNode
+      name: "eTensil"
+      description: "eTensil"
+      children:
+        - !!FolderNode
+          name: "MES"
+          description: "MES"
+          children:
+            - !!BooleanVariableNode
+              name: "busy"
+              description: "ice_data_etensil_control"
+              initial_value: False
+              connector_name: "broker"
+            - !!BooleanVariableNode
+              name: "last_operation_result"
+              description: "ice_data_etensil_control"
+              initial_value: True
+              connector_name: "broker"
+            - !!AsyncMethodNode
+              name: "doSingleScrew"
+              description: "Single screw with the current program"
+              returns:
+                - !!BooleanVariableNode
+                  name: "accepted"
+                  description: ""
+        - !!FolderNode
+          name: "DeviceStatus"
+          description: "0 OFF, 1 ON, 2 NOT_MAPPED"
+          children:
+            - !!NumericalVariableNode
+              name: "01_ready"
+              description: "ice_data_etensil_state"
+              measure_unit: "NoneMeasureUnits.NONE"
+              initial_value: 1
+              connector_name: "broker"
+            - !!NumericalVariableNode
+              name: "02_motor_is_rotating"
+              description: "ice_data_etensil_state"
+              measure_unit: "NoneMeasureUnits.NONE"
+              initial_value: 0
+              connector_name: "broker"
+            - !!NumericalVariableNode
+              name: "04_screw_ok"
+              description: "ice_data_etensil_state"
+              measure_unit: "NoneMeasureUnits.NONE"
+              initial_value: 0
+              connector_name: "broker"
+            - !!NumericalVariableNode
+              name: "05_end_program"
+              description: "ice_data_etensil_state"
+              measure_unit: "NoneMeasureUnits.NONE"
+              initial_value: 0
+              connector_name: "broker"
+        - !!FolderNode
+          name: "ScrewResult"
+          description: "ice_data_etensil_state"
+          children:
+            - !!NumericalVariableNode
+              name: "current_program_errors"
+              description: "tight_result"
+              measure_unit: "NoneMeasureUnits.NONE"
+              initial_value: 0
+              connector_name: "broker"
+            - !!NumericalVariableNode
+              name: "current_screw_number"
+              description: "tight_result"
+              measure_unit: "NoneMeasureUnits.NONE"
+              initial_value: 0
+              connector_name: "broker"
+            - !!NumericalVariableNode
+              name: "last_screw_angle"
+              description: "tight_result"
+              measure_unit: "NoneMeasureUnits.NONE"
+              initial_value: 0
+              connector_name: "broker"
+            - !!NumericalVariableNode
+              name: "last_screw_result"
+              description: "0 UNKNOWN, 1 OK, 2 NOK, 3 REV"
+              measure_unit: "NoneMeasureUnits.NONE"
+              initial_value: 0
+              connector_name: "broker"
+            - !!NumericalVariableNode
+              name: "last_screw_time"
+              description: "tight_result"
+              measure_unit: "NoneMeasureUnits.NONE"
+              initial_value: 0
+              connector_name: "broker"
+            - !!StringVariableNode
+              name: "last_screw_timestamp"
+              description: "tight_result"
+              initial_value: ""
+              connector_name: "broker"
+            - !!NumericalVariableNode
+              name: "last_screw_torque"
+              description: "tight_result"
+              measure_unit: "NoneMeasureUnits.NONE"
+              initial_value: 0
+              connector_name: "broker"

@@ -7,15 +7,34 @@ reactor Cell4 extends FrostReactor{
         import random
         # Tempi della cattura da ricetta in secondi: (mediana, minimo, massimo)
         ROBOT_TIME = {"ABB": (16.0, 3.8, 27.0), "KUKA": (26.8, 9.5, 36.5)} 
+        # Operazioni del gadget nell'ultimo ciclo della cattura (05/10, 16:55-17:00):
+        # per ogni lavoro (robot, secondi, Outputs scritti all'inizio)
+        BOARD_PICK = [("ABB", 17.0, {})]
+        GADGET_PHASES = {
+            1: [("ABB", 12.5, {"ABB_pickAreaID": 2, "ABB_pickPosX": 2, "ABB_pickPosY": 21}),
+                ("ABB", 27.0, {"ABB_pickAreaID": 1, "ABB_pickPosX": 1, "ABB_pickPosY": 22})],
+            2: [("KUKA", 12.0, {"KUKA_pickPosY": 7}),
+                ("KUKA", 14.75, {"KUKA_pickPosY": 8})],
+            3: [("KUKA", 9.0, {"KUKA_pickPosY": 6}),
+                ("KUKA", 12.5, {"KUKA_pickPosY": 7}),
+                ("KUKA", 15.0, {"KUKA_pickPosY": 8, "KUKA_pickAreaID": 2})],
+            4: [("KUKA", 9.5, {"KUKA_pickPosY": 6}),
+                ("ABB", 3.75, {"ABB_pickPosY": 5})],
+        }
+        BOARD_BUFFER_POS = 2    # BufferABBRight[2] sul PLC, cioè DB_BUFFER/ABBRightPositions/1
     =}
     state cell_initialized
     state abb_task_count
     state kuka_task_count
-    state robot = "ABB"
+    state tasks
     state robot_start
-    state robot_end
+    state outputs_folder
+    state abb_right_positions
+    state kuka_app_start
+    state kuka_app_enable
     logical action start_robot
     logical action end_robot
+    logical action app_start_off
     //VARIABLES
     state operation_running
     state operation_done 
@@ -34,17 +53,32 @@ reactor Cell4 extends FrostReactor{
     state abb_pick_board 
     state gadget_assembly 
     
-    state finish_job 
     logical action check_status
 
     state invoked = False
-    method begin_job(robot){=
-        self.robot = robot
+    method begin_job(tasks){=
+        self.tasks = list(tasks)
         self.operation_done.value = False
         self.operation_running.value = True
-        self.cell_initialized.value = False
         self.invoked = True
+        self.begin_task()
+    =}
+
+    method begin_task(){=
+        robot, seconds, outputs = self.tasks[0]
+        for name, value in outputs.items():
+            self.outputs_folder.children[name].value = value
+        if robot == "ABB":
+            self.cell_initialized.value = False
+        else:
+            self.kuka_prog_running.value = True
+            self.kuka_app_enable.value = True
         self.robot_start.schedule(MSEC(250))
+    =}
+
+    method lego_task(robot){=
+        median, low, high = self.ROBOT_TIME[robot]
+        return (robot, self.random.triangular(low, high, median), {})
     =}
 
     method call_move_and_place(posPickOnPallet, posPlaceOnPallet, posPickOnBuffer, posPlaceFromBufferToPallet){=
@@ -56,14 +90,14 @@ reactor Cell4 extends FrostReactor{
             posPickOnBuffer (int): Position to pick from the buffer.
             posPlaceFromBufferToPallet (int): Position to place from buffer to pallet.
         '''
-        self.begin_job("ABB")
+        self.begin_job([self.lego_task("ABB")])
         return (True, 0)
     =}
     method call_submit_operation(programID, robotID, srcAreaId, srcAreaPosX, srcAreaPosY, dstAreaId, dstAreaPosX, dstAreaPosY, argExtra){=
         '''
         Method to submit the robot operation.
         '''
-        self.begin_job("KUKA" if robotID == 2 else "ABB")
+        self.begin_job([self.lego_task("KUKA" if robotID == 2 else "ABB")])
         return (True, 0)
     =}
     method call_move_over_pallet(posPick, posPlace){=
@@ -73,7 +107,7 @@ reactor Cell4 extends FrostReactor{
             posPick (int): Position to pick from.
             posPlace (int): Position to place to.
         '''
-        self.begin_job("ABB")
+        self.begin_job([self.lego_task("ABB")])
         return (True, 0)
     =}
     method call_pick_from_pallet(posPick, itemShape){=
@@ -91,7 +125,7 @@ reactor Cell4 extends FrostReactor{
                 node.value = 2
                 pos = int(node.name)
                 break
-        self.begin_job("ABB")
+        self.begin_job([self.lego_task("ABB")])
         return (True, pos, 0)
     =}
     method call_place_to_pallet(posPickOnBuffer, posPlaceOnPallet){=
@@ -101,22 +135,44 @@ reactor Cell4 extends FrostReactor{
             posPlace (int): Position to place to the pallet.
             itemShape (int): Shape of the item to place.
         '''
-        self.begin_job("ABB")
+        self.begin_job([self.lego_task("ABB")])
+        return (True, 0)
+    =}
+    method call_abb_pick_board(){=
+        '''
+        Method to pick the board from the pallet and store it in the ABB buffer.
+        '''
+        self.abb_right_positions.children[str(self.BOARD_BUFFER_POS - 1)].value = 1
+        self.begin_job(self.BOARD_PICK)
+        return (True, self.BOARD_BUFFER_POS, 0)
+    =}
+    method call_gadget_assembly(phaseNumber, boardPosition){=
+        '''
+        Method to run one phase of the gadget assembly.
+        Args:
+            phaseNumber (int): Phase of the assembly, from 1 to 4.
+            boardPosition (int): Buffer position of the board, used in phase 1.
+        '''
+        phase = int(phaseNumber)
+        if phase == 1:
+            self.abb_right_positions.children[str(int(boardPosition) - 1)].value = 0
+        self.begin_job(self.GADGET_PHASES[phase])
         return (True, 0)
     =}
 
-    reaction(startup) -> check_status, start_robot, end_robot{=
+    reaction(startup) -> start_robot{=
         '''
         Initialize the Cell4 reactor, setting up the initial state and scheduling the first routine.
         It also sends a registration message to the communication channel.
         '''
-        self.finish_job = check_status
         self.robot_start = start_robot
-        self.robot_end = end_robot
 
         self.cell_initialized = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_OPCUA/CellControl/cellInitialized")
         self.abb_task_count = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_STATISTICS/ABB_TASK_COUNT")
         self.kuka_task_count = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_STATISTICS/KUKA_TASK_COUNT")
+        self.outputs_folder = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/Outputs")
+        self.kuka_app_start = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/Outputs/KUKA_appStart")
+        self.kuka_app_enable = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/Outputs/KUKA_appEnable")
 
         self.operation_running = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationRunning")
         self.operation_done = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone")
@@ -124,6 +180,7 @@ reactor Cell4 extends FrostReactor{
         self.abb_prog_running = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/ABB/programRunning")
         self.kuka_prog_running = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/Kuka/programRunning")
         self.abb_positions = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_BUFFER/ABBPositions")
+        self.abb_right_positions = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_BUFFER/ABBRightPositions")
         self.kuka_positions = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_BUFFER/KUKAPositions")
         #Methods
         self.clear_buffer = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_CLEAR_BUFFER_DB/Method")
@@ -140,31 +197,49 @@ reactor Cell4 extends FrostReactor{
         self.move_over.callback = self.call_move_over_pallet
         self.pick_from_pallet.callback = self.call_pick_from_pallet
         self.place_to_pallet.callback = self.call_place_to_pallet
+        self.abb_pick_board.callback = self.call_abb_pick_board
+        self.gadget_assembly.callback = self.call_gadget_assembly
     =}
 
-    reaction(start_robot) -> end_robot {=
-        prog = self.abb_prog_running if self.robot == "ABB" else self.kuka_prog_running
-        prog.value = True
-        median, low, high = self.ROBOT_TIME[self.robot]
-        end_robot.schedule(MSEC(int(self.random.triangular(low, high, median) * 1000)))
+    reaction(start_robot) -> end_robot, app_start_off {=
+        robot, seconds, _ = self.tasks[0]
+        if robot == "ABB":
+            self.abb_prog_running.value = True
+        else:
+            self.kuka_app_start.value = True
+            app_start_off.schedule(MSEC(250))
+        end_robot.schedule(MSEC(int(seconds * self.random.uniform(0.95, 1.05) * 1000)))
+    =}
+
+    reaction(app_start_off){=
+        self.kuka_app_start.value = False
     =}
 
     reaction(end_robot) -> check_status {=
-        prog = self.abb_prog_running if self.robot == "ABB" else self.kuka_prog_running
-        prog.value = False
-        self.cell_initialized.value = True
+        robot = self.tasks[0][0]
+        next_robot = self.tasks[1][0] if len(self.tasks) > 1 else ""
+        if robot == "ABB":
+            self.abb_prog_running.value = False
+            self.cell_initialized.value = True
+        elif next_robot != "KUKA":
+            self.kuka_prog_running.value = False
+            self.kuka_app_enable.value = False
         check_status.schedule(MSEC(500))
     =}
 
-    reaction(check_status){=
-        if self.invoked:
+    reaction(check_status) -> start_robot {=
+        if not self.invoked:
+            return
+        robot = self.tasks.pop(0)[0]
+        counter = self.abb_task_count if robot == "ABB" else self.kuka_task_count
+        counter.value = counter.value + 1
+        if self.tasks:
+            self.begin_task()
+        else:
             self.logger.info("Operation completed.")
-            counter = self.abb_task_count if self.robot == "ABB" else self.kuka_task_count
-            counter.value = counter.value + 1
             self.operation_running.value = False
             self.operation_done.value = True
             self.invoked = False
     =}
-
 
 }
