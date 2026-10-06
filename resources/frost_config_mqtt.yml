@@ -25,7 +25,7 @@ reactors:
           Segment_1:
             logging_level: ERROR
             parameters:
-              segment_time: 12700
+              segment_time: 16300
           Segment_2:
               logging_level: ERROR
               parameters:
@@ -45,7 +45,7 @@ reactors:
           Segment_6:
             logging_level: ERROR
             parameters:
-              segment_time: 14500
+              segment_time: 17500
           Segment_7:
             logging_level: ERROR
             parameters:

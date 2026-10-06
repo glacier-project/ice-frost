@@ -5,6 +5,10 @@ import FrostFmu from <frost/simulation/FrostFmu.lf>
 
 reactor Cell5 extends FrostReactor, FrostFmu{
 
+    state current_mission
+    state check_type = "lego"
+    state checking = False
+
     state check_quality_covers
     state check_quality_lego
     state check_color_node
@@ -37,7 +41,10 @@ reactor Cell5 extends FrostReactor, FrostFmu{
         Args:
             color (str): The color of the cover to check.
         """
-        self.num_total_checks.value = self.num_total_checks.value + 1
+        self.check_type = "gadget"
+        self.current_mission.value = "CheckObject"
+        self.checking = True
+
         self.fmu.setString([self.vrs_input], [color])
         self.busy.value = True
         self.logger.info(f"Checking cover color: {color}")
@@ -56,7 +63,10 @@ reactor Cell5 extends FrostReactor, FrostFmu{
             pallet_content2 (int): The content of the second pallet position.
             pallet_content3 (int): The content of the third pallet position.
         """
-        self.num_total_checks.value = self.num_total_checks.value + 1
+        self.check_type = "lego"
+        self.current_mission.value = "CheckObject"
+        self.checking = True
+
         self.fmu.setInt32([self.vrs_shape1, self.vrs_shape2, self.vrs_shape3], [shape1, shape2, shape3])
         self.fmu.setInt32([self.vrs_pallet1, self.vrs_pallet2, self.vrs_pallet3], [pallet_content1, pallet_content2, pallet_content3])
         self.busy.value = True
@@ -85,17 +95,31 @@ reactor Cell5 extends FrostReactor, FrostFmu{
         #         self.result_ready.value = False
         # elif self.result_ready.value:
         #     self.result_ready.value = False
-        if self.fmu.getString([self.vrs_result])[0] == "success" or self.fmu.getString([self.vrs_result])[0] == "failed":
-            self.res = self.fmu.getString([self.vrs_result])[0]
-            self.result.value = False
-            self.result_ready.value = True
+        res = self.fmu.getString([self.vrs_result])[0]
+        if self.checking and res in ("success", "failed"):
+            self.checking = False
+            self.res = res
+            ok = res == "success"
+            checks = self.num_gadget_checks if self.check_type == "gadget" else self.num_lego_checks
+            faults = self.num_gadget_failures if self.check_type == "gadget" else self.num_lego_failures
+            self.num_total_checks.value = self.num_total_checks.value + 1
+            checks.value = checks.value + 1
+            if not ok:
+                self.num_total_failures.value = self.num_total_failures.value + 1
+                faults.value = faults.value + 1
             self.busy.value = False
+            self.current_mission.value = ""
+            self.last_result.value = ok
+            self.result.value = ok
+            self.result_ready.value = True
             self.fmu.setString([self.vrs_input], [""])
+
         do_step.schedule(MSEC(self.time_step))
     =}
 
     // @label startup_reaction
     reaction(startup) -> do_step{=
+        self.current_mission = self.data_model.get_node("Cell5/Status/CurrentMission")
         # Initialize data model nodes
         self.check_quality_covers = self.data_model.get_node("Cell5/Methods/CheckQualityCovers")
         self.check_quality_lego = self.data_model.get_node("Cell5/Methods/CheckQualityLego")

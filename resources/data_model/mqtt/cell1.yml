@@ -3,7 +3,15 @@ machine_category: unknown
 machine_type: unknown
 machine_model: unknown
 description: Cella 1 (SPEA Flying Probe Tester)
-
+connectors:
+- !!MqttConnector
+  name: broker
+  ip: mdm-rmq-test
+  port: 1883
+  username_env_var: MQTT_USER
+  password_env_var: MQTT_PASSWORD
+  topic_prefix: ice/data/icefrost/cell1
+  payload_codec: json
 root: 
   !!FolderNode
   name: Objects
@@ -44,10 +52,12 @@ root:
       name: Busy
       description: Is the machine busy with an operation?
       initial_value: false
+      connector_name: broker
     - !!StringVariableNode
       name: CurrentMission
       description: Operation in progress.
       initial_value: ''
+      connector_name: broker
     - !!AsyncMethodNode
       name: DownloadFirmware
       description: Download a customized firmware from the dedicated server.
@@ -66,6 +76,7 @@ root:
       name: LastResult
       description: Result of the last operation.
       initial_value: ''
+      connector_name: broker
     - !!AsyncMethodNode
       name: StartTest
       description: Start testing the current board.

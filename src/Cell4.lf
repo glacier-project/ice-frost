@@ -3,6 +3,19 @@ target Python
 import FrostReactor from <frost/FrostReactor.lf>
 
 reactor Cell4 extends FrostReactor{
+    preamble {=
+        import random
+        # Tempi della cattura da ricetta in secondi: (mediana, minimo, massimo)
+        ROBOT_TIME = {"ABB": (16.0, 3.8, 27.0), "KUKA": (26.8, 9.5, 36.5)} 
+    =}
+    state cell_initialized
+    state abb_task_count
+    state kuka_task_count
+    state robot = "ABB"
+    state robot_start
+    state robot_end
+    logical action start_robot
+    logical action end_robot
     //VARIABLES
     state operation_running
     state operation_done 
@@ -25,6 +38,15 @@ reactor Cell4 extends FrostReactor{
     logical action check_status
 
     state invoked = False
+    method begin_job(robot){=
+        self.robot = robot
+        self.operation_done.value = False
+        self.operation_running.value = True
+        self.cell_initialized.value = False
+        self.invoked = True
+        self.robot_start.schedule(MSEC(250))
+    =}
+
     method call_move_and_place(posPickOnPallet, posPlaceOnPallet, posPickOnBuffer, posPlaceFromBufferToPallet){=
         '''
         Method to move and place an item using the robot.
@@ -34,20 +56,14 @@ reactor Cell4 extends FrostReactor{
             posPickOnBuffer (int): Position to pick from the buffer.
             posPlaceFromBufferToPallet (int): Position to place from buffer to pallet.
         '''
-        self.operation_done.value = False
-        self.operation_running.value = True
-        self.invoked = True
-        self.finish_job.schedule(SEC(10))
+        self.begin_job("ABB")
         return (True, 0)
     =}
     method call_submit_operation(programID, robotID, srcAreaId, srcAreaPosX, srcAreaPosY, dstAreaId, dstAreaPosX, dstAreaPosY, argExtra){=
         '''
         Method to submit the robot operation.
         '''
-        self.operation_done.value = False
-        self.operation_running.value = True
-        self.invoked = True
-        self.finish_job.schedule(SEC(10))
+        self.begin_job("KUKA" if robotID == 2 else "ABB")
         return (True, 0)
     =}
     method call_move_over_pallet(posPick, posPlace){=
@@ -57,10 +73,7 @@ reactor Cell4 extends FrostReactor{
             posPick (int): Position to pick from.
             posPlace (int): Position to place to.
         '''
-        self.operation_done.value = False
-        self.operation_running.value = True
-        self.invoked = True
-        self.finish_job.schedule(SEC(10))
+        self.begin_job("ABB")
         return (True, 0)
     =}
     method call_pick_from_pallet(posPick, itemShape){=
@@ -70,8 +83,6 @@ reactor Cell4 extends FrostReactor{
             posPick (int): Position to pick from the pallet.
             posPlace (int): Position to place to.
         '''
-        self.operation_done.value = False
-        self.operation_running.value = True
         pos = 0
         children = self.abb_positions.children
         for pos in children:
@@ -80,8 +91,7 @@ reactor Cell4 extends FrostReactor{
                 node.value = 2
                 pos = int(node.name)
                 break
-        self.invoked = True
-        self.finish_job.schedule(SEC(10))
+        self.begin_job("ABB")
         return (True, pos, 0)
     =}
     method call_place_to_pallet(posPickOnBuffer, posPlaceOnPallet){=
@@ -91,24 +101,28 @@ reactor Cell4 extends FrostReactor{
             posPlace (int): Position to place to the pallet.
             itemShape (int): Shape of the item to place.
         '''
-        self.operation_done.value = False
-        self.operation_running.value = True
-        self.invoked = True
-        self.finish_job.schedule(SEC(10))
+        self.begin_job("ABB")
         return (True, 0)
     =}
 
-    reaction(startup) -> check_status{=
+    reaction(startup) -> check_status, start_robot, end_robot{=
         '''
         Initialize the Cell4 reactor, setting up the initial state and scheduling the first routine.
         It also sends a registration message to the communication channel.
         '''
         self.finish_job = check_status
+        self.robot_start = start_robot
+        self.robot_end = end_robot
+
+        self.cell_initialized = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_OPCUA/CellControl/cellInitialized")
+        self.abb_task_count = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_STATISTICS/ABB_TASK_COUNT")
+        self.kuka_task_count = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_STATISTICS/KUKA_TASK_COUNT")
+
         self.operation_running = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationRunning")
         self.operation_done = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone")
         self.operation_error = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationError")
         self.abb_prog_running = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/ABB/programRunning")
-        self.kuka_prog_running = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/KUKA/programRunning")
+        self.kuka_prog_running = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/Kuka/programRunning")
         self.abb_positions = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_BUFFER/ABBPositions")
         self.kuka_positions = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_BUFFER/KUKAPositions")
         #Methods
@@ -128,12 +142,29 @@ reactor Cell4 extends FrostReactor{
         self.place_to_pallet.callback = self.call_place_to_pallet
     =}
 
+    reaction(start_robot) -> end_robot {=
+        prog = self.abb_prog_running if self.robot == "ABB" else self.kuka_prog_running
+        prog.value = True
+        median, low, high = self.ROBOT_TIME[self.robot]
+        end_robot.schedule(MSEC(int(self.random.triangular(low, high, median) * 1000)))
+    =}
+
+    reaction(end_robot) -> check_status {=
+        prog = self.abb_prog_running if self.robot == "ABB" else self.kuka_prog_running
+        prog.value = False
+        self.cell_initialized.value = True
+        check_status.schedule(MSEC(500))
+    =}
+
     reaction(check_status){=
         if self.invoked:
             self.logger.info("Operation completed.")
+            counter = self.abb_task_count if self.robot == "ABB" else self.kuka_task_count
+            counter.value = counter.value + 1
             self.operation_running.value = False
             self.operation_done.value = True
             self.invoked = False
     =}
+
 
 }
