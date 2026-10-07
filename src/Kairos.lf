@@ -7,11 +7,11 @@ reactor Kairos extends FrostReactor{
         import random
         # durate delle missioni riuscite nella cattura della ricetta, in secondi (robot a e b)
         MISSION_TIME = {
-            "gotoWarehouse": 19.3, "pickCovertopFromWarehouse": 40.7, "pickCoverbottomFromWarehouse": 50.9,
-            "pickBoardFromWarehouse": 22.4, "gotoLoadUnloadBay": 18.0, "placeBoardToPallet": 17.9,
-            "placeCovertopToPallet": 49.2, "placeCoverbottomToPallet": 42.2, "shiftRight": 4.4, "home": 14.5,
-            "gotoCell5Bay": 33.1, "pickCovertopFromPallet": 40.7, "pickCoverbottomFromPallet": 35.0,
-            "gotoTrashBin": 40.2, "dropCoversToTrashBin": 44.7,
+            "gotoWarehouse": 19.8, "pickCovertopFromWarehouse": 41.9, "pickCoverbottomFromWarehouse": 34.1,
+            "pickBoardFromWarehouse": 21.9, "gotoLoadUnloadBay": 18.8, "placeBoardToPallet": 17.8,
+            "placeCovertopToPallet": 47.2, "placeCoverbottomToPallet": 41.2, "shiftRight": 4.5, "home": 14.6,
+            "gotoCell5Bay": 33.7, "pickCovertopFromPallet": 40.7, "pickCoverbottomFromPallet": 35.8,
+            "gotoTrashBin": 38.8, "dropCoversToTrashBin": 44.7,
         }
         DEFAULT_TIME = 20.0     # missioni che nella cattura non compaiono
     =}

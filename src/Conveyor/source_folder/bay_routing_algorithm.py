@@ -11,11 +11,11 @@ def compute_intra_bay_route(position, destination, bay_status, pallet_id):
             bay_status[bay_row] = 0  # Free the current bay
             return BayAction.back
     elif bay_row - dest_row < 0:
-        if check_availability_from_to(buffer=bay_status, from_value=bay_row, to_value=dest_row, pallet_id=pallet_id):
-            bay_status[dest_row - 1] = pallet_id  # Mark bay as occupied
-            bay_status[bay_row] = 0  # Free the current bay
+        # Moving forward: the bay moves the pallet one position at a time
+        if check_availability_from_to(buffer=bay_status, from_value=bay_row + 1, to_value=dest_row + 1, pallet_id=pallet_id):
+            bay_status[bay_row + 1] = pallet_id  # Mark next position as occupied
+            bay_status[bay_row] = 0  # Free the current position
             return BayAction.forward
-
     return BayAction.none  # Bay is occupied
 
 def check_availability_from_to(buffer:list, from_value:int, to_value:int, pallet_id:int):

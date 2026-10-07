@@ -150,8 +150,12 @@ reactors:
   scheduler:
     logging_level: DEBUG
     parameters:
-      data_model_path: "resources/scheduler_tasks/demo-lego-scheduler.yml"
-      scheduling_instance: "resources/schedules/simulation-lego-demo.json"
+      # DEMO GADGET
+      data_model_path: "resources/scheduler_tasks/demo-gadget-scheduler.yml"
+      scheduling_instance: "resources/schedules/simulation-gadget-demo.json"
+      # DEMO LEGO
+      # data_model_path: "resources/scheduler_tasks/demo-lego-scheduler.yml"
+      # scheduling_instance: "resources/schedules/simulation-lego-demo.json"
       task_mapping: 
         LD: /Scheduler/LD
         RBTC: /Scheduler/RBTC
@@ -159,6 +163,32 @@ reactors:
         DISASSEMBLE: /Scheduler/DISASSEMBLE
         RESERVE: /Scheduler/RESERVE
         PUT_BACK: /Scheduler/PUT_BACK
+        RESERVE_PALLET: /Scheduler/RESERVE_PALLET
+        GOTO_WAREHOUSE: /Scheduler/GOTO_WAREHOUSE
+        EXTRACT_TRAY: /Scheduler/EXTRACT_TRAY
+        PICK_PARTS: /Scheduler/PICK_PARTS
+        KAIROS_TO_BAY: /Scheduler/KAIROS_TO_BAY
+        BOARD_PALLET_TO_BAY: /Scheduler/BOARD_PALLET_TO_BAY
+        LOAD_BOARD: /Scheduler/LOAD_BOARD
+        LOAD_COVERS: /Scheduler/LOAD_COVERS
+        RESET_MOBILE: /Scheduler/RESET_MOBILE
+        QC_BOARD: /Scheduler/QC_BOARD
+        BUFFER_BOARD: /Scheduler/BUFFER_BOARD
+        QC_COVERS: /Scheduler/QC_COVERS
+        BIN_COVERS: /Scheduler/BIN_COVERS
+        RESERVE_AFTER_FAIL: /Scheduler/RESERVE_AFTER_FAIL
+        GOTO_WAREHOUSE_2: /Scheduler/GOTO_WAREHOUSE_2
+        PICK_COVERS_2: /Scheduler/PICK_COVERS_2
+        KAIROS_TO_BAY_2: /Scheduler/KAIROS_TO_BAY_2
+        COVER_PALLET_TO_BAY_2: /Scheduler/COVER_PALLET_TO_BAY_2
+        LOAD_COVERS_2: /Scheduler/LOAD_COVERS_2
+        RESET_MOBILE_2: /Scheduler/RESET_MOBILE_2
+        QC_COVERS_2: /Scheduler/QC_COVERS_2
+        ASSEMBLE_GADGET: /Scheduler/ASSEMBLE_GADGET
+        ENGRAVE_GADGET: /Scheduler/ENGRAVE_GADGET
+        MILLING_POST: /Scheduler/MILLING_POST
+        GADGET_TO_BAY: /Scheduler/GADGET_TO_BAY
+
     reactors:
       message_filter:
         logging_level: ERROR

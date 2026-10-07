@@ -7,7 +7,7 @@ reactor Warehouse extends FrostReactor{
     preamble {=
         import random
         # tempi di cattura in secondi
-        EXTRACT_TIME = (12.4, 12.2, 17.3)    # (mediana, minimo, massimo): baia vuota -> cassetto in baia, 3 casi
+        EXTRACT_TIME = 28.3
         SENDBACK_TIME = 14.6                 # 1 caso, interpretazione incerta
         IDLE_TEXT = "\n"
         WEIGHING_TEXT = "In attesa acquisizione peso cassetto\n"
@@ -50,10 +50,7 @@ reactor Warehouse extends FrostReactor{
     =}
 
     method extract_Tray(TrayNumber){=
-        if self.bay_busy.value == True:
-            return False
         self.tray_in_bay.value = TrayNumber
-        self.bay_busy.value = True
         self.bay_ready_for_pickplace.value = True
         return True
     =}
@@ -71,8 +68,13 @@ reactor Warehouse extends FrostReactor{
 
     reaction(work)-> delay{=
         if self.tray_to_extract and self.tray_to_extract.value > 0:
-            median, low, high = self.EXTRACT_TIME
-            delay.schedule(MSEC(int(self.random.triangular(low, high, median) * 1000)), [self.extract_Tray, self.tray_to_extract.value])
+            if not self.bay_busy.value:
+                # alla chiamata il magazzino conta la chiamata e occupa subito la baia
+                self.tray_calls_count.value = self.tray_calls_count.value + 1
+                self.bay_queue_size.value = 1
+                self.bay_busy.value = True
+                seconds = self.EXTRACT_TIME * self.random.uniform(0.95, 1.05)
+                delay.schedule(MSEC(int(seconds * 1000)), [self.extract_Tray, self.tray_to_extract.value])
             self.tray_to_extract.value = 0
         elif self.tray_to_sendback and self.tray_to_sendback.value > 0:
             delay.schedule(MSEC(int(self.SENDBACK_TIME * 1000)), [self.sendback_Tray, self.tray_to_sendback.value])

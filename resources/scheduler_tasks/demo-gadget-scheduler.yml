@@ -1,0 +1,238 @@
+name: "scheduler"
+# Ricetta DEMO_GADGET_AB (93a_automation_controller_recipes_demoV4.yml), percorso nominale:
+# tutte le missioni del Kairos riescono, il primo pallet dei coperchi viene scartato da cell5.
+# Pallet come nella cattura del 05/10: 7 coperchi, 9 scheda, 8 coperchi dopo lo scarto.
+# Contenuti: 10 scheda, 11 covertop, 12 coverbottom, 13 gadget assemblato, 14 gadget inciso.
+# Ogni attesa segue la chiamata che la provoca: le attività in parallelo sono task separati.
+root:
+  !!FolderNode
+  name: "Scheduler"
+  description: ""
+  children:
+    # RESERVE_PALLET
+    - !!CompositeMethodNode
+      name: "RESERVE_PALLET"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/reservePallet", args: [7, 2]}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/reservePallet", args: [9, 2]}
+
+    # LOAD_PARTS1: il Kairos va al magazzino mentre esce il cassetto 8, prende i pezzi e carica la scheda
+    - !!CompositeMethodNode
+      name: "GOTO_WAREHOUSE"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["gotoWarehouse"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+    - !!CompositeMethodNode
+      name: "EXTRACT_TRAY"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "warehouse", method: "/Warehouse/SocketLink/extract", args: [8]}
+        - !!WaitRemoteEventNode {remote_id: "warehouse", variable: "/Warehouse/Status/bayReadyForPickPlace", operator: "==", rhs: True}
+    - !!CompositeMethodNode
+      name: "PICK_PARTS"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["pickCovertopFromWarehouse"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["pickCoverbottomFromWarehouse"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["pickBoardFromWarehouse"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+    - !!CompositeMethodNode
+      name: "KAIROS_TO_BAY"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["gotoLoadUnloadBay"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+    - !!CompositeMethodNode
+      name: "BOARD_PALLET_TO_BAY"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [9, 40]}
+        - !!WaitRemoteEventNode {remote_id: "conveyor", variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_5", operator: "==", rhs: 9}
+    - !!CompositeMethodNode
+      name: "LOAD_BOARD"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["placeBoardToPallet"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet", args: [9, 1, 10]}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [9, 0]}
+
+    # LOAD_PARTS2: il pallet dei coperchi arriva in baia 5 e il Kairos li carica
+    - !!CompositeMethodNode
+      name: "LOAD_COVERS"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [7, 40]}
+        - !!WaitRemoteEventNode {remote_id: "conveyor", variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_5", operator: "==", rhs: 7}
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["placeCovertopToPallet"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["placeCoverbottomToPallet"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet", args: [7, 2, 11]}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet", args: [7, 3, 12]}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [7, 0]}
+
+    # RESET_MOBILE
+    - !!CompositeMethodNode
+      name: "RESET_MOBILE"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["home"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+
+    # QC_BOARD: collaudo della scheda in cell1 (DownloadFirmware saltato, nella cattura è istantaneo)
+    - !!CompositeMethodNode
+      name: "QC_BOARD"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [9, 9]}
+        - !!WaitRemoteEventNode {remote_id: "conveyor", variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_1_1", operator: "==", rhs: 9}
+        - !!CallRemoteMethodNode {remote_id: "cell1", method: "/Objects/FlyingProbeTester/BoardIn", args: []}
+        - !!WaitRemoteEventNode {remote_id: "cell1", variable: "/Objects/FlyingProbeTester/Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "cell1", method: "/Objects/FlyingProbeTester/StartTest", args: ["003"]}
+        - !!WaitRemoteEventNode {remote_id: "cell1", variable: "/Objects/FlyingProbeTester/Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "cell1", method: "/Objects/FlyingProbeTester/BoardOut", args: []}
+        - !!WaitRemoteEventNode {remote_id: "cell1", variable: "/Objects/FlyingProbeTester/Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [9, 0]}
+
+    # BUFFER_BOARD: l'ABB mette la scheda nel buffer, il pallet della scheda viene liberato
+    - !!CompositeMethodNode
+      name: "BUFFER_BOARD"
+      returns:
+        - !!NumericalVariableNode
+          name: "boardPosition"
+          default_value: 0
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [9, 25]}
+        - !!WaitRemoteEventNode {remote_id: "conveyor", variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_3_1", operator: "==", rhs: 9}
+        - !!CallRemoteMethodNode {remote_id: "cell4", method: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_ABB_PICK_BOARD_FROM_PALLET_DB/Method", args: []}
+        - !!WaitRemoteEventNode {remote_id: "cell4", variable: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone", operator: "==", rhs: True}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet", args: [9, 1]}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [9, 0]}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet", args: [9]}
+
+    # QC_COVERS: primo controllo dei coperchi, scartato ("yellow"); il pallet va in 4_3
+    - !!CompositeMethodNode
+      name: "QC_COVERS"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [7, 34]}
+        - !!WaitRemoteEventNode {remote_id: "conveyor", variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_4_2", operator: "==", rhs: 7}
+        - !!CallRemoteMethodNode {remote_id: "cell5", method: "/Cell5/Methods/CheckQualityCovers", args: ["yellow"]}
+        - !!WaitRemoteEventNode {remote_id: "cell5", variable: "/Cell5/Status/Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [7, 35]}
+        - !!WaitRemoteEventNode {remote_id: "conveyor", variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_4_3", operator: "==", rhs: 7}
+
+    # BIN_COVERS: il Kairos B butta i coperchi scartati
+    - !!CompositeMethodNode
+      name: "BIN_COVERS"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_b", method: "/RBKairos/Mission_Methods/start_mission", args: ["gotoCell5Bay"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_b", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_b", method: "/RBKairos/Mission_Methods/start_mission", args: ["pickCovertopFromPallet"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_b", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_b", method: "/RBKairos/Mission_Methods/start_mission", args: ["pickCoverbottomFromPallet"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_b", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet", args: [7, 2]}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet", args: [7, 3]}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [7, 0]}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/releasePallet", args: [7]}
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_b", method: "/RBKairos/Mission_Methods/start_mission", args: ["gotoTrashBin"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_b", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_b", method: "/RBKairos/Mission_Methods/start_mission", args: ["dropCoversToTrashBin"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_b", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_b", method: "/RBKairos/Mission_Methods/start_mission", args: ["home"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_b", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+
+    # RESERVE_AFTER_FAIL + LOAD_PARTS2_AFTER_FAIL: nuovi coperchi sul pallet 8 (il cassetto 8 è già fuori)
+    - !!CompositeMethodNode
+      name: "RESERVE_AFTER_FAIL"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/reservePallet", args: [8, 2]}
+    - !!CompositeMethodNode
+      name: "GOTO_WAREHOUSE_2"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["gotoWarehouse"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+    - !!CompositeMethodNode
+      name: "PICK_COVERS_2"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["pickCovertopFromWarehouse"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["pickCoverbottomFromWarehouse"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+    - !!CompositeMethodNode
+      name: "KAIROS_TO_BAY_2"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["gotoLoadUnloadBay"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+    - !!CompositeMethodNode
+      name: "COVER_PALLET_TO_BAY_2"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [8, 40]}
+        - !!WaitRemoteEventNode {remote_id: "conveyor", variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_5", operator: "==", rhs: 8}
+    - !!CompositeMethodNode
+      name: "LOAD_COVERS_2"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["placeCovertopToPallet"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["placeCoverbottomToPallet"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet", args: [8, 2, 11]}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet", args: [8, 3, 12]}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [8, 0]}
+    - !!CompositeMethodNode
+      name: "RESET_MOBILE_2"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "rbkairos_a", method: "/RBKairos/Mission_Methods/start_mission", args: ["home"]}
+        - !!WaitRemoteEventNode {remote_id: "rbkairos_a", variable: "/RBKairos/Mission_Methods/Control_Busy", operator: "==", rhs: False}
+
+    # QC_COVERS ripetuto dopo lo scarto: questa volta passa ("red")
+    - !!CompositeMethodNode
+      name: "QC_COVERS_2"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [8, 34]}
+        - !!WaitRemoteEventNode {remote_id: "conveyor", variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_4_2", operator: "==", rhs: 8}
+        - !!CallRemoteMethodNode {remote_id: "cell5", method: "/Cell5/Methods/CheckQualityCovers", args: ["red"]}
+        - !!WaitRemoteEventNode {remote_id: "cell5", variable: "/Cell5/Status/Busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [8, 0]}
+
+    # ASSEMBLE_GADGET: quattro fasi in cell4, con due viti dell'eTensil dopo le fasi 2 e 3
+    - !!CompositeMethodNode
+      name: "ASSEMBLE_GADGET"
+      parameters:
+        - !!NumericalVariableNode
+          name: "boardPosition"
+          default_value: 0
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [8, 25]}
+        - !!WaitRemoteEventNode {remote_id: "conveyor", variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_3_1", operator: "==", rhs: 8}
+        - !!CallRemoteMethodNode {remote_id: "cell4", method: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_GADGET_ASSEMBLY_DB/Method", args: [1, "${boardPosition}"]}
+        - !!WaitRemoteEventNode {remote_id: "cell4", variable: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone", operator: "==", rhs: True}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet", args: [8, 2]}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet", args: [8, 3]}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet", args: [8, 3, 13]}
+        - !!CallRemoteMethodNode {remote_id: "cell4", method: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_GADGET_ASSEMBLY_DB/Method", args: [2, 1]}
+        - !!WaitRemoteEventNode {remote_id: "cell4", variable: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone", operator: "==", rhs: True}
+        - !!CallRemoteMethodNode {remote_id: "etensil", method: "/Objects/eTensil/MES/doSingleScrew", args: []}
+        - !!WaitRemoteEventNode {remote_id: "etensil", variable: "/Objects/eTensil/MES/busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "cell4", method: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_GADGET_ASSEMBLY_DB/Method", args: [3, 1]}
+        - !!WaitRemoteEventNode {remote_id: "cell4", variable: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone", operator: "==", rhs: True}
+        - !!CallRemoteMethodNode {remote_id: "etensil", method: "/Objects/eTensil/MES/doSingleScrew", args: []}
+        - !!WaitRemoteEventNode {remote_id: "etensil", variable: "/Objects/eTensil/MES/busy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "cell4", method: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksInstance/OPC_UA_GADGET_ASSEMBLY_DB/Method", args: [4, 1]}
+        - !!WaitRemoteEventNode {remote_id: "cell4", variable: "/Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone", operator: "==", rhs: True}
+
+    # ENGRAVE_GADGET: incisione in cell2; poi in parallelo la missione finale della fresa e il pallet in baia 5
+    - !!CompositeMethodNode
+      name: "ENGRAVE_GADGET"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [8, 19]}
+        - !!WaitRemoteEventNode {remote_id: "conveyor", variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_2_3", operator: "==", rhs: 8}
+        - !!CallRemoteMethodNode {remote_id: "cell2", method: "/Objects/OPCUA/MES/Methods/EngraveText/EngraveText", args: ["ICELAB"]}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/clearPartOnPallet", args: [8, 3]}
+        - !!WaitRemoteEventNode {remote_id: "cell2", variable: "/Objects/OPCUA/MES/MESBusy", operator: "==", rhs: False}
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPartOnPallet", args: [8, 3, 14]}
+    - !!CompositeMethodNode
+      name: "MILLING_POST"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "cell2", method: "/Objects/OPCUA/MES/Methods/StartMission/StartMission", args: ["demo_gadget_post"]}
+        - !!WaitRemoteEventNode {remote_id: "cell2", variable: "/Objects/OPCUA/MES/MESBusy", operator: "==", rhs: False}
+    - !!CompositeMethodNode
+      name: "GADGET_TO_BAY"
+      cfg:
+        - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [8, 40]}
+        - !!WaitRemoteEventNode {remote_id: "conveyor", variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_5", operator: "==", rhs: 8}

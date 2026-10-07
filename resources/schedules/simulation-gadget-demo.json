@@ -1,0 +1,373 @@
+{
+    "jobs": [
+        {
+            "id": "2001",
+            "name": "Demo Gadget AB",
+            "priority": 1,
+            "due_date": null,
+            "tasks": [
+                {
+                    "id": "01",
+                    "name": "RESERVE_PALLET",
+                    "processing_time": 2,
+                    "dependencies": [],
+                    "requires": [
+                        "pallets"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "02",
+                    "name": "GOTO_WAREHOUSE",
+                    "processing_time": 20,
+                    "dependencies": [
+                        "01"
+                    ],
+                    "requires": [
+                        "kairos_a"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "03",
+                    "name": "EXTRACT_TRAY",
+                    "processing_time": 15,
+                    "dependencies": [
+                        "01"
+                    ],
+                    "requires": [
+                        "tray"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "04",
+                    "name": "PICK_PARTS",
+                    "processing_time": 115,
+                    "dependencies": [
+                        "02",
+                        "03"
+                    ],
+                    "requires": [
+                        "kairos_a"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "05",
+                    "name": "KAIROS_TO_BAY",
+                    "processing_time": 18,
+                    "dependencies": [
+                        "04"
+                    ],
+                    "requires": [
+                        "kairos_a"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "06",
+                    "name": "BOARD_PALLET_TO_BAY",
+                    "processing_time": 60,
+                    "dependencies": [
+                        "04"
+                    ],
+                    "requires": [
+                        "pallets"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "07",
+                    "name": "LOAD_BOARD",
+                    "processing_time": 20,
+                    "dependencies": [
+                        "05",
+                        "06"
+                    ],
+                    "requires": [
+                        "kairos_a"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "08",
+                    "name": "LOAD_COVERS",
+                    "processing_time": 150,
+                    "dependencies": [
+                        "07"
+                    ],
+                    "requires": [
+                        "kairos_a"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "09",
+                    "name": "RESET_MOBILE",
+                    "processing_time": 15,
+                    "dependencies": [
+                        "08"
+                    ],
+                    "requires": [
+                        "kairos_a"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "10",
+                    "name": "QC_BOARD",
+                    "processing_time": 130,
+                    "dependencies": [
+                        "07"
+                    ],
+                    "requires": [
+                        "board_test"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "11",
+                    "name": "BUFFER_BOARD",
+                    "processing_time": 80,
+                    "dependencies": [
+                        "10"
+                    ],
+                    "requires": [
+                        "assemble"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "12",
+                    "name": "QC_COVERS",
+                    "processing_time": 60,
+                    "dependencies": [
+                        "08"
+                    ],
+                    "requires": [
+                        "quality_check"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "13",
+                    "name": "BIN_COVERS",
+                    "processing_time": 240,
+                    "dependencies": [
+                        "12"
+                    ],
+                    "requires": [
+                        "kairos_b"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "14",
+                    "name": "RESERVE_AFTER_FAIL",
+                    "processing_time": 2,
+                    "dependencies": [
+                        "12"
+                    ],
+                    "requires": [
+                        "pallets"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "15",
+                    "name": "GOTO_WAREHOUSE_2",
+                    "processing_time": 20,
+                    "dependencies": [
+                        "09",
+                        "14"
+                    ],
+                    "requires": [
+                        "kairos_a"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "16",
+                    "name": "PICK_COVERS_2",
+                    "processing_time": 92,
+                    "dependencies": [
+                        "15"
+                    ],
+                    "requires": [
+                        "kairos_a"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "17",
+                    "name": "KAIROS_TO_BAY_2",
+                    "processing_time": 18,
+                    "dependencies": [
+                        "16"
+                    ],
+                    "requires": [
+                        "kairos_a"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "18",
+                    "name": "COVER_PALLET_TO_BAY_2",
+                    "processing_time": 60,
+                    "dependencies": [
+                        "16"
+                    ],
+                    "requires": [
+                        "pallets"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "19",
+                    "name": "LOAD_COVERS_2",
+                    "processing_time": 95,
+                    "dependencies": [
+                        "17",
+                        "18"
+                    ],
+                    "requires": [
+                        "kairos_a"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "20",
+                    "name": "RESET_MOBILE_2",
+                    "processing_time": 15,
+                    "dependencies": [
+                        "19"
+                    ],
+                    "requires": [
+                        "kairos_a"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "21",
+                    "name": "QC_COVERS_2",
+                    "processing_time": 60,
+                    "dependencies": [
+                        "19"
+                    ],
+                    "requires": [
+                        "quality_check"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "22",
+                    "name": "ASSEMBLE_GADGET",
+                    "processing_time": 190,
+                    "dependencies": [
+                        "11",
+                        "21"
+                    ],
+                    "requires": [
+                        "assemble"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "23",
+                    "name": "ENGRAVE_GADGET",
+                    "processing_time": 180,
+                    "dependencies": [
+                        "22"
+                    ],
+                    "requires": [
+                        "engrave"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "24",
+                    "name": "MILLING_POST",
+                    "processing_time": 10,
+                    "dependencies": [
+                        "23"
+                    ],
+                    "requires": [
+                        "engrave"
+                    ],
+                    "priority": 1
+                },
+                {
+                    "id": "25",
+                    "name": "GADGET_TO_BAY",
+                    "processing_time": 60,
+                    "dependencies": [
+                        "23"
+                    ],
+                    "requires": [
+                        "pallets"
+                    ],
+                    "priority": 1
+                }
+            ]
+        }
+    ],
+    "machines": [
+        {
+            "id": "Conveyor",
+            "name": "conveyor",
+            "capabilities": [
+                "pallets"
+            ]
+        },
+        {
+            "id": "KairosA",
+            "name": "rbkairos_a",
+            "capabilities": [
+                "kairos_a"
+            ]
+        },
+        {
+            "id": "KairosB",
+            "name": "rbkairos_b",
+            "capabilities": [
+                "kairos_b"
+            ]
+        },
+        {
+            "id": "Warehouse",
+            "name": "warehouse",
+            "capabilities": [
+                "tray"
+            ]
+        },
+        {
+            "id": "FuncTesting",
+            "name": "cell1",
+            "capabilities": [
+                "board_test"
+            ]
+        },
+        {
+            "id": "QualityCell",
+            "name": "cell5",
+            "capabilities": [
+                "quality_check"
+            ]
+        },
+        {
+            "id": "RoboticCell",
+            "name": "cell4",
+            "capabilities": [
+                "assemble"
+            ]
+        },
+        {
+            "id": "Milling",
+            "name": "cell2",
+            "capabilities": [
+                "engrave"
+            ]
+        }
+    ]
+}
