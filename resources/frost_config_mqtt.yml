@@ -218,7 +218,7 @@ reactors:
     parameters:
       data_model_path: "resources/data_model/mqtt/cell5.yml"
       path: "src/fmu/QualityCell.fmu"
-      time_step: 1000
+      time_step: 100
     reactors:
       message_filter:
         logging_level: ERROR
@@ -250,3 +250,11 @@ reactors:
     reactors:
       message_filter:
         logging_level: ERROR
+  recipe_timer:
+    logging_level: ERROR
+    parameters:
+      data_model_path: "resources/data_model/recipe_timer.yml"
+    reactors:
+      message_filter:
+        logging_level: ERROR
+

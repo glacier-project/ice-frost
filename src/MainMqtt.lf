@@ -23,6 +23,7 @@ import Cell2 from "Cell2.lf"
 import Kairos from "Kairos.lf"
 import Warehouse from "Warehouse.lf"
 import Etensil from "Etensil.lf"
+import RecipeTimer from "RecipeTimer.lf"
 
 preamble{= 
 
@@ -48,21 +49,22 @@ main reactor{
         conditions_path = os.environ.get("CONDITIONS_PATH")
     =}
     
-    cell4 = new Cell4(name="cell4")
-    
-    cell5 = new Cell5(name="cell5")
-    conveyor = new CellConveyor(name="conveyor", _update_step= 1 msec)
-    scheduler = new FrostScheduler(name = "scheduler")
-    cell1 = new Cell1(name="cell1")
-    cell2 = new Cell2(name="cell2")
-    rbkairos_a = new Kairos(name="rbkairos_a")
-    rbkairos_b = new Kairos(name="rbkairos_b")
-    warehouse = new Warehouse(name="warehouse")
-    etensil = new Etensil(name="etensil")
+    cell4 = new Cell4(name="cell4", update_interval = 100 msec)
+    cell5 = new Cell5(name="cell5", update_interval = 100 msec)
+    conveyor = new CellConveyor(name="conveyor", _update_step= 1 msec, update_interval = 100 msec)
+    scheduler = new FrostScheduler(name = "scheduler", update_interval = 100 msec)
+    cell1 = new Cell1(name="cell1", update_interval = 100 msec)
+    cell2 = new Cell2(name="cell2", update_interval = 100 msec)
+    rbkairos_a = new Kairos(name="rbkairos_a", update_interval = 100 msec)
+    rbkairos_b = new Kairos(name="rbkairos_b", update_interval = 100 msec)
+    warehouse = new Warehouse(name="warehouse", update_interval = 100 msec)
+    etensil = new Etensil(name="etensil", update_interval = 100 msec)
 
-    link = new FrostLink(name="frost_link", width = 10)
+    recipe_timer = new RecipeTimer(name="recipe_timer", update_interval = 100 msec)
 
-    conveyor.channel_out, scheduler.channel_out, cell5.channel_out, cell4.channel_out, cell1.channel_out, cell2.channel_out, rbkairos_a.channel_out, rbkairos_b.channel_out, warehouse.channel_out, etensil.channel_out -> link.channel_in after 0
-    link.channel_out -> conveyor.channel_in, scheduler.channel_in, cell5.channel_in, cell4.channel_in, cell1.channel_in, cell2.channel_in, rbkairos_a.channel_in, rbkairos_b.channel_in, warehouse.channel_in, etensil.channel_in after 0
+    link = new FrostLink(name="frost_link", width = 11)
+
+    conveyor.channel_out, scheduler.channel_out, cell5.channel_out, cell4.channel_out, cell1.channel_out, cell2.channel_out, rbkairos_a.channel_out, rbkairos_b.channel_out, warehouse.channel_out, etensil.channel_out, recipe_timer.channel_out -> link.channel_in after 0
+    link.channel_out -> conveyor.channel_in, scheduler.channel_in, cell5.channel_in, cell4.channel_in, cell1.channel_in, cell2.channel_in, rbkairos_a.channel_in, rbkairos_b.channel_in, warehouse.channel_in, etensil.channel_in, recipe_timer.channel_in after 0
 
 }

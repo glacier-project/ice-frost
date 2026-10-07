@@ -78,7 +78,11 @@ reactor Cell5 extends FrostReactor, FrostFmu{
     reaction(do_step) -> do_step{=
         if self.fmu == None:
             return 0
-        self.simulate(None)
+        # FrostFmu.simulate passa time_step (millisecondi) come secondi: la FMU ragiona in secondi
+        step = self.time_step / 1000
+        self.fmu.doStep(currentCommunicationPoint=self.fmu_time, communicationStepSize=step)
+        self.fmu_time += step
+
         self.logger.debug(f"values: input={self.fmu.getString([self.vrs_input])}, output={self.fmu.getString([self.vrs_result])}")
         # if self.busy.value:
         #     if do_step.value == "success":               

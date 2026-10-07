@@ -27,7 +27,7 @@ reactor Warehouse extends FrostReactor{
 
     state tray_to_extract
     state tray_to_sendback
-    timer work(0ms, 1000ms)
+    timer work(0ms, 100ms)
     logical action delay
     
     reaction(startup){=

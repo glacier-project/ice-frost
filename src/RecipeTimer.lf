@@ -1,0 +1,28 @@
+target Python
+
+import FrostReactor from <frost/FrostReactor.lf>
+
+reactor RecipeTimer extends FrostReactor{
+    state busy
+    state wake_up
+    state sleep_id = 0      # distingue la fine dell'attesa in corso da quella di una sostituita
+    logical action done
+
+    method start_sleep(seconds){=
+        self.sleep_id += 1
+        self.busy.value = True
+        self.wake_up.schedule(MSEC(int(seconds * 1000)), self.sleep_id)
+        return True
+    =}
+
+    reaction(startup) -> done {=
+        self.wake_up = done
+        self.busy = self.data_model.get_node("RecipeTimer/busy")
+        self.data_model.get_node("RecipeTimer/sleep").callback = self.start_sleep
+    =}
+
+    reaction(done){=
+        if done.value == self.sleep_id:
+            self.busy.value = False
+    =}
+}

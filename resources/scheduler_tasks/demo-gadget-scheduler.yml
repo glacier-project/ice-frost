@@ -111,6 +111,8 @@ root:
       cfg:
         - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [7, 34]}
         - !!WaitRemoteEventNode {remote_id: "conveyor", variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_4_2", operator: "==", rhs: 7}
+        - !!CallRemoteMethodNode {remote_id: "recipe_timer", method: "/RecipeTimer/sleep", args: [2]}
+        - !!WaitRemoteEventNode {remote_id: "recipe_timer", variable: "/RecipeTimer/busy", operator: "==", rhs: False}
         - !!CallRemoteMethodNode {remote_id: "cell5", method: "/Cell5/Methods/CheckQualityCovers", args: ["yellow"]}
         - !!WaitRemoteEventNode {remote_id: "cell5", variable: "/Cell5/Status/Busy", operator: "==", rhs: False}
         - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [7, 35]}
@@ -186,6 +188,8 @@ root:
       cfg:
         - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [8, 34]}
         - !!WaitRemoteEventNode {remote_id: "conveyor", variable: "/Objects/ConveyorHMI/ConveyorDataExchange/Destinations/destination_palletid_4_2", operator: "==", rhs: 8}
+        - !!CallRemoteMethodNode {remote_id: "recipe_timer", method: "/RecipeTimer/sleep", args: [2]}
+        - !!WaitRemoteEventNode {remote_id: "recipe_timer", variable: "/RecipeTimer/busy", operator: "==", rhs: False}
         - !!CallRemoteMethodNode {remote_id: "cell5", method: "/Cell5/Methods/CheckQualityCovers", args: ["red"]}
         - !!WaitRemoteEventNode {remote_id: "cell5", variable: "/Cell5/Status/Busy", operator: "==", rhs: False}
         - !!CallRemoteMethodNode {remote_id: "conveyor", method: "/Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination", args: [8, 0]}

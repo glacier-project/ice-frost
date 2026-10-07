@@ -1,0 +1,27 @@
+name: "recipe_timer" # name of the machine
+machine_category: "unknown" # category of the machine
+machine_type: "unknown" # type of the machine
+machine_model: "unknown" # model of the machine
+description: "Attese a tempo delle ricette (il passo sleep del Kraken)" # description of the machine
+root:
+  !!FolderNode
+  name: "RecipeTimer"
+  description: "RecipeTimer"
+  children:
+    - !!AsyncMethodNode
+      name: "sleep"
+      description: "Wait the given number of seconds"
+      parameters:
+        - !!NumericalVariableNode
+          name: "seconds"
+          description: ""
+          measure_unit: "NoneMeasureUnits.NONE"
+          default_value: 0
+      returns:
+        - !!BooleanVariableNode
+          name: "accepted"
+          description: ""
+    - !!BooleanVariableNode
+      name: "busy"
+      description: "True while waiting"
+      initial_value: False
