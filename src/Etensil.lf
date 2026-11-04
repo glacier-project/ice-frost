@@ -1,0 +1,9 @@
+target Python
+
+import MissionMachine from "base/MissionMachine.lf"
+
+reactor Etensil extends MissionMachine{
+    method mission_nodes(){=
+        return ("eTensil/MES/busy", "", "eTensil/MES/last_operation_result", "")
+    =}
+}

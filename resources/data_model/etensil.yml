@@ -1,0 +1,40 @@
+name: "etensil"
+machine_category: "screwdriver"
+machine_type: "eTensil"
+machine_model: "unknown"
+description: "eTensil screwdriver, MES interface"
+root:
+  !!FolderNode
+  name: "eTensil"
+  description: "eTensil"
+  children:
+    - !!FolderNode
+      name: "MES"
+      description: "MES"
+      children:
+        - !!BooleanVariableNode
+          name: "busy"
+          description: "Screwing in progress"
+          initial_value: False
+        - !!BooleanVariableNode
+          name: "last_operation_result"
+          description: "Result of the last screwing"
+          initial_value: False
+        - !!CompositeMethodNode
+          name: "do_single_screw"
+          description: "Run one screwing with the configured program"
+          returns:
+            - !!BooleanVariableNode
+              name: "accepted"
+              description: ""
+          cfg:
+            - !!WriteVariableNode
+              variable: "eTensil/MES/busy"
+              value: True
+            - !!WaitConditionNode
+              variable: "eTensil/MES/busy"
+              operator: "=="
+              rhs: False
+            - !!ReadVariableNode
+              variable: "eTensil/MES/last_operation_result"
+              store_as: "accepted"
