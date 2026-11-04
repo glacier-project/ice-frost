@@ -4,7 +4,6 @@ target Python{
         "../lf-packages/frost/src/python_lib/frost.py",
         "../lf-packages/frost/src/python_lib/l_formatter.py",
         "../lf-packages/frost/src/python_lib/time_utils.py",
-        "python_utils/ice_proxy.py",
         "python_utils/handle_recipe.py",
         "MetaConveyor_utils/pallet_distance.py"
     ],
