@@ -24,7 +24,29 @@ reactor Cell4 extends FrostReactor{
     state finish_job 
     logical action check_status
 
+    state abb_slot = -1
+    state submit_robot = {= None =}
+    state abb_task_count
+    state abb_finish
+    logical action abb_done
+
     state invoked = False
+    state durations = {= {} =}     # method -> seconds, or a list (one per call)
+    state default_duration = 10.0
+    state calls = {= {} =}
+
+    method _duration(name){=
+        d = self.durations.get(name, self.default_duration)
+        if isinstance(d, list):
+            d = d[min(self.calls.get(name, 0), len(d) - 1)]
+        self.calls[name] = self.calls.get(name, 0) + 1
+        return int(float(d) * 1e9)
+    =}
+    method _take_from_left_buffer(slot){=
+        node = self.abb_positions.children.get(str(slot))
+        if node is not None:
+            node.value = 0
+    =}
     method call_move_and_place(posPickOnPallet, posPlaceOnPallet, posPickOnBuffer, posPlaceFromBufferToPallet){=
         '''
         Method to move and place an item using the robot.
@@ -34,20 +56,28 @@ reactor Cell4 extends FrostReactor{
             posPickOnBuffer (int): Position to pick from the buffer.
             posPlaceFromBufferToPallet (int): Position to place from buffer to pallet.
         '''
+        self._take_from_left_buffer(posPickOnBuffer)
         self.operation_done.value = False
         self.operation_running.value = True
         self.invoked = True
-        self.finish_job.schedule(SEC(10))
+        self.finish_job.schedule(self._duration("move_and_place"))
         return (True, 0)
     =}
     method call_submit_operation(programID, robotID, srcAreaId, srcAreaPosX, srcAreaPosY, dstAreaId, dstAreaPosX, dstAreaPosY, argExtra){=
         '''
         Method to submit the robot operation.
         '''
+        if self.abb_slot >= 0 and robotID == 1:
+            self.logger.error("Submit robot operation rejected: ABB busy with a pick from pallet")
+            return (False, 0)
+        robot = "ABB" if robotID == 1 else "KUKA"
+        self.data_model.get_node(f"Objects/Cell_4_Robot_Coordinator_PLC/Outputs/{robot}_programID").value = programID
+        self.submit_robot = self.abb_prog_running if robotID == 1 else self.kuka_prog_running
+        self.submit_robot.value = True
         self.operation_done.value = False
         self.operation_running.value = True
         self.invoked = True
-        self.finish_job.schedule(SEC(10))
+        self.finish_job.schedule(self._duration("submit_operation"))
         return (True, 0)
     =}
     method call_move_over_pallet(posPick, posPlace){=
@@ -60,7 +90,7 @@ reactor Cell4 extends FrostReactor{
         self.operation_done.value = False
         self.operation_running.value = True
         self.invoked = True
-        self.finish_job.schedule(SEC(10))
+        self.finish_job.schedule(self._duration("move_over_pallet"))
         return (True, 0)
     =}
     method call_pick_from_pallet(posPick, itemShape){=
@@ -68,21 +98,23 @@ reactor Cell4 extends FrostReactor{
         Method to pick an item from the pallet using the robot.
         Args:
             posPick (int): Position to pick from the pallet.
-            posPlace (int): Position to place to.
+            itemShape (int): Shape of the item.
         '''
+        free = [int(name) for name, node in self.abb_positions.children.items() if node.value == 0]
+        if self.abb_slot >= 0 or not free:
+            self.logger.error(f"ABB pick from pallet rejected: {'robot busy' if self.abb_slot >= 0 else 'left buffer full'}")
+            return (False, 0, 1)
+        self.abb_slot = min(free)
+        outputs = "Objects/Cell_4_Robot_Coordinator_PLC/Outputs/"
+        self.data_model.get_node(outputs + "ABB_pickAreaID").value = 1  # pallet
+        self.data_model.get_node(outputs + "ABB_pickPosX").value = posPick
+        self.data_model.get_node(outputs + "ABB_itemColorID").value = itemShape
         self.operation_done.value = False
         self.operation_running.value = True
-        pos = 0
-        children = self.abb_positions.children
-        for pos in children:
-            node = children[pos]
-            if node.value == 0:
-                node.value = 2
-                pos = int(node.name)
-                break
+        self.abb_prog_running.value = True
         self.invoked = True
-        self.finish_job.schedule(SEC(10))
-        return (True, pos, 0)
+        self.abb_finish.schedule(self._duration("pick_from_pallet"))
+        return (True, self.abb_slot, 0)
     =}
     method call_place_to_pallet(posPickOnBuffer, posPlaceOnPallet){=
         '''
@@ -91,24 +123,26 @@ reactor Cell4 extends FrostReactor{
             posPlace (int): Position to place to the pallet.
             itemShape (int): Shape of the item to place.
         '''
+        self._take_from_left_buffer(posPickOnBuffer)
         self.operation_done.value = False
         self.operation_running.value = True
         self.invoked = True
-        self.finish_job.schedule(SEC(10))
+        self.finish_job.schedule(self._duration("place_to_pallet"))
         return (True, 0)
     =}
 
-    reaction(startup) -> check_status{=
+    reaction(startup) -> check_status, abb_done{=
         '''
         Initialize the Cell4 reactor, setting up the initial state and scheduling the first routine.
         It also sends a registration message to the communication channel.
         '''
         self.finish_job = check_status
+        self.abb_finish = abb_done
         self.operation_running = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationRunning")
         self.operation_done = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationDone")
         self.operation_error = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/plcOperationError")
         self.abb_prog_running = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/ABB/programRunning")
-        self.kuka_prog_running = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/KUKA/programRunning")
+        self.kuka_prog_running = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_ROBOTS/Kuka/programRunning")
         self.abb_positions = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_BUFFER/ABBPositions")
         self.kuka_positions = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_BUFFER/KUKAPositions")
         #Methods
@@ -126,9 +160,21 @@ reactor Cell4 extends FrostReactor{
         self.move_over.callback = self.call_move_over_pallet
         self.pick_from_pallet.callback = self.call_pick_from_pallet
         self.place_to_pallet.callback = self.call_place_to_pallet
+        self.abb_task_count = self.data_model.get_node("Objects/Cell_4_Robot_Coordinator_PLC/DataBlocksGlobal/DB_STATISTICS/ABB_TASK_COUNT")
+    =}
+
+    reaction(abb_done) -> check_status{=
+        self.abb_positions.children[str(self.abb_slot)].value = 2 
+        self.abb_slot = -1
+        self.abb_prog_running.value = False
+        self.abb_task_count.value = self.abb_task_count.value + 1
+        check_status.schedule(0)
     =}
 
     reaction(check_status){=
+        if self.submit_robot is not None:
+            self.submit_robot.value = False
+            self.submit_robot = None
         if self.invoked:
             self.logger.info("Operation completed.")
             self.operation_running.value = False

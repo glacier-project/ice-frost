@@ -2,68 +2,84 @@ target Python
 
 import FrostReactor from <frost/FrostReactor.lf>
 
+preamble{=
+from vertical_warehouse import VerticalWarehouse, WarehouseController
+=}
 
-reactor Warehouse extends FrostReactor{
-    
-    //Extract and send back need COMPOSITE
-    state extract_tray = {= self.data_model.get_node("Warehouse/SocketLink/extractTray") =}
-    state send_back_tray = {= self.data_model.get_node("Warehouse/SocketLink/sendBackTray") =}
-    state show_message = {= self.data_model.get_node("Warehouse/showMessage") =}
+reactor Warehouse(tick_period = 50 msec) extends FrostReactor{
+    state wh
+    state ctrl
+    state tray_in_bay
+    state bay_busy
+    state bay_ready
+    state bay_queue_size
+    state tray_calls_count
 
-    state warehouse_info = {= self.data_model.get_node("Warehouse/Status/warehouseInfo") =}
-    state bay_info = {= self.data_model.get_node("Warehouse/Status/bayInfo") =}
-    state tray_in_bay = {= self.data_model.get_node("Warehouse/Status/trayInBay") =}
-    state bay_queue_size = {= self.data_model.get_node("Warehouse/Status/bayQueueSize") =}
-    state bay_busy = {= self.data_model.get_node("Warehouse/Status/bayBusy") =}
-    state bay_ready_for_pickplace = {= self.data_model.get_node("Warehouse/Status/bayReadyForPickPlace") =}
-    state tray_calls_count = {= self.data_model.get_node("Warehouse/Statistics/TrayCallsCount") =}
-    state tray_to_extract
-    state tray_to_sendback
-    timer work(0ms, 1000ms)
-    logical action delay
-    
+    timer tick(0, tick_period)
+
     reaction(startup){=
-        self.data_model.get_node("Warehouse/SocketLink/extract").callback = lambda TrayNumber: self.tray_to_extract.write(TrayNumber) if 1 <= TrayNumber <= 8 else -1
-        self.data_model.get_node("Warehouse/SocketLink/sendback").callback = lambda TrayNumber: self.tray_to_sendback.write(TrayNumber) if 1 <= TrayNumber <= 8 else -1
-        self.show_message.callback = self.show_Message
-        self.tray_to_extract = NumericalVariableNode(name = "tray_to_extract", value = 0, measure_unit = "NoneMeasureUnits.NONE")
-        self.tray_to_sendback = NumericalVariableNode(name = "tray_to_sendback", value = 0, measure_unit = "NoneMeasureUnits.NONE")
+        dm = self.data_model
+        self.wh = VerticalWarehouse(dt=self.tick_period / 1e9)
+        self.ctrl = WarehouseController(self.wh)
+
+        self.tray_in_bay = dm.get_node("Warehouse/Status/trayInBay")
+        self.bay_busy = dm.get_node("Warehouse/Status/bayBusy")
+        self.bay_ready = dm.get_node("Warehouse/Status/bayReadyForPickPlace")
+        self.bay_queue_size = dm.get_node("Warehouse/Status/bayQueueSize")
+        self.tray_calls_count = dm.get_node("Warehouse/Statistics/TrayCallsCount")
+
+        dm.get_node("Warehouse/SocketLink/extract").callback = self.extract
+        dm.get_node("Warehouse/SocketLink/sendback").callback = self.sendback
+        dm.get_node("Warehouse/SocketLink/enqueueTray").callback = self.enqueue
+        dm.get_node("Warehouse/SocketLink/requestInfoBay").callback = self.ctrl.request_info_bay
+        dm.get_node("Warehouse/SocketLink/clearBay").callback = self.clear_bay
+        dm.get_node("Warehouse/showMessage").callback = lambda message: self.logger.info(message)
+        self.publish_status()
     =}
 
-    method extract_Tray(TrayNumber){=
-        if self.bay_busy.value == True:
+    method extract(TrayNumber){=
+        ok = self.ctrl.extract(int(TrayNumber))
+        if ok:
+            self.tray_calls_count.value = self.tray_calls_count.value + 1
+        return ok
+    =}
+
+    method sendback(TrayNumber){=
+        # TrayNumber must be the tray in the bay. 0 means "whatever is in the bay".
+        if int(TrayNumber) not in (0, self.wh.tray_in_bay):
             return False
-        self.tray_in_bay.value = TrayNumber
-        self.tray_calls_count.value = self.tray_calls_count.value + 1
-        self.bay_busy.value = True
-        self.bay_ready_for_pickplace.value = True
-        return True
+        return self.ctrl.sendback()
     =}
 
-    method sendback_Tray(TrayNumber){=
-        self.tray_in_bay.value = 0
-        self.bay_busy.value = False
-        self.bay_ready_for_pickplace.value = False
-        return TrayNumber
+    method enqueue(TrayNumber){=
+        return int(TrayNumber) if self.ctrl.enqueue(int(TrayNumber)) else 0
     =}
 
-    method show_Message(message){=
-        print(message)
+    method clear_bay(){=
+        ok = self.ctrl.clear_bay()
+        self.publish_status()
+        return ok
     =}
 
-    reaction(work)-> delay{=
-        if self.tray_to_extract and self.tray_to_extract.value > 0:
-            delay.schedule(SEC(5), [self.extract_Tray, self.tray_to_extract.value])
-            self.tray_to_extract.value = 0
-        elif self.tray_to_sendback and self.tray_to_sendback.value > 0:
-            delay.schedule(SEC(5), [self.sendback_Tray, self.tray_to_sendback.value])
-            self.tray_to_sendback.value = 0
+    method publish_status(){=
+        n = self.wh.tray_in_bay
+        self.tray_in_bay.value = n
+        self.bay_busy.value = n > 0
+        self.bay_ready.value = n > 0
+        self.bay_queue_size.value = self.wh.queue_occupancy()
     =}
 
-    reaction(delay){=
-        callback = delay.value[0]
-        args = delay.value[1:]
-        callback(*args)
+    reaction(tick){=
+        if not self.ctrl.is_busy:
+            return
+        if not self.ctrl.tick():
+            self.logger.error("Warehouse mission aborted: pick/place failed")
+        if not self.ctrl.is_busy:
+            self.publish_status()
     =}
 
+    reaction(new_method_request) -> channel_out{=
+        for bank_index, message in new_method_request.value:
+            self._set_channel_out_port(self.protocol_mng.handle_message(message), channel_out)
+    =}
 }

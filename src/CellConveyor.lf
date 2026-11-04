@@ -2,7 +2,7 @@ target Python{
     files: [Conveyor/conveyor_utils.py]
 }
 
-import MetaConveyor from "MetaConveyor.lf"
+import MetaConveyor from "base/MetaConveyor.lf"
 import Conveyor from "Conveyor/conveyor.lf"
 
 reactor CellConveyor extends MetaConveyor{
@@ -51,10 +51,14 @@ reactor CellConveyor extends MetaConveyor{
 
     method _update_model_pallet_destination(pallet, value){=
         self.logger.debug(f"Updating model pallet {pallet} destination to {value}")
-        if value == 0 or value is None:
+        if value == 0:
             self.messages_to_conveyor.append([pallet, str(0)])
-        else:
-            self.messages_to_conveyor.append([pallet, self.convert_destination(value)])
+            return True
+        target = self.convert_destination(value)
+        if target is None:
+            self.logger.error(f"Pallet {pallet}: invalid destination {value!r} rejected (valid: 0, 9, 17-19, 25-27, 33-35, 40, 41)")
+            return False
+        self.messages_to_conveyor.append([pallet, target])
         return True
     =}
 
@@ -70,18 +74,25 @@ reactor CellConveyor extends MetaConveyor{
     =}
 
     method convert_destination(destination){=
-        if destination is None:
-            raise ValueError("Destination cannot be None")
-        temp = int(destination / 8)
-        position = "" if temp == 5 else str(destination % 8)
-        letter = self.dict_bay_conveyor.get(temp)
-        return str(letter) if temp == 5 else str(letter + "_" + position)
+        if isinstance(destination, bool) or not isinstance(destination, (int, float)) or destination != int(destination):
+            return None
+        bay, pos = divmod(int(destination), 8)
+        if (bay, pos) in ((5, 0), (5, 1)):  # load bay: 40 (41 accepted)
+            return self.Bay5
+        if (bay, pos) == (1, 1) or (bay in (2, 3, 4) and 1 <= pos <= 3):
+            return f"{self.dict_bay_conveyor[bay]}_{pos}"
+        return None
     =}
 
     method setPalletDest(palletNumber, destination){=
         self.logger.info(f"Setting destination for pallet {palletNumber} to {destination}")
-        self.pallets[palletNumber-1].get_property("destination").value = destination
-        return True
+        if not isinstance(palletNumber, int) or not 1 <= palletNumber <= len(self.pallets):
+            self.logger.error(f"setPalletDestination: unknown pallet {palletNumber!r}")
+            return False
+        if destination != 0 and self.convert_destination(destination) is None:
+            self.logger.error(f"setPalletDestination: invalid destination {destination!r} for pallet {palletNumber}")
+            return False
+        return self.pallets[palletNumber-1].get_property("destination").write(destination)
     =}
 
     method move_pallet_to_LTU(palletNumber){=
@@ -90,42 +101,38 @@ reactor CellConveyor extends MetaConveyor{
     =}
 
     method free_pallet_to(destination){=
-        for pallet in self.pallets:
-            if pallet.get_property("reserved").value != 0:
-                continue
-            self.pallets[int(pallet.name[-1])-1].get_property("destination").value = destination
-            return (True, int(pallet.name[-1]))
+        for i, pallet in enumerate(self.pallets, 1):
+            if pallet.get_property("reserved").value == 0:
+                return (True, i) if self.setPalletDest(i, destination) else (False, 0)
         return (False, 0)
     =}
 
     method reserve_pallet_to(destination, reservationId){=
-        for pallet in self.pallets:
+        for i, pallet in enumerate(self.pallets, 1):
             if pallet.get_property("reserved").value != 0:
                 continue
+            if not self.setPalletDest(i, destination):
+                return [False, 0]
             pallet.get_property("reserved").value = reservationId
-            self.setPalletDest(int(pallet.name[-1]), destination)
-            return [True, int(pallet.name[-1])]
+            return [True, i]
         return [False, 0]
     =}
 
     method free_pallet_of_type_to(palletType, destination){=
-        for pallet in self.pallets:
-            if pallet.get_property("type").value != palletType:
-                continue
-            self.setPalletDest(int(pallet.name[-1]), destination)
-            return [True, int(pallet.name[-1])]
+        for i, pallet in enumerate(self.pallets, 1):
+            if pallet.get_property("type").value == palletType:
+                return [True, i] if self.setPalletDest(i, destination) else [False, 0]
         return [False, 0]
     =}
 
     method free_pallet_of_type_to_with_reservation(palletType, destination, reservationId){=
-        for pallet in self.pallets:
-            if pallet.get_property("type").value != palletType:
+        for i, pallet in enumerate(self.pallets, 1):
+            if pallet.get_property("type").value != palletType or pallet.get_property("reserved").value != 0:
                 continue
-            if pallet.get_property("reserved").value != 0:
-                continue
+            if not self.setPalletDest(i, destination):
+                return [False, 0]
             pallet.get_property("reserved").value = reservationId
-            self.setPalletDest(int(pallet.name[-1]), destination)
-            return [True, int(pallet.name[-1])]
+            return [True, i]
         return [False, 0]
     =}
 

@@ -27,7 +27,7 @@ root:
           cfg:
             - !!WriteVariableNode
               variable: "RBKairos/Mission_Methods/Ongoing_Mission_Name"
-              value: "$name"
+              value: "${name}"
             - !!WriteVariableNode
               variable: "RBKairos/Mission_Methods/Control_Busy"
               value: True

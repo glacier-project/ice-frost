@@ -1,6 +1,6 @@
 target Python{
     files: [
-        "Conveyor/conveyor_utils.py",
+        "../Conveyor/conveyor_utils.py",
     ],
 }
 

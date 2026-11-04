@@ -167,7 +167,7 @@ reactors:
     parameters:
       data_model_path: "resources/data_model/cell5.yml"
       path: "src/fmu/QualityCell.fmu"
-      time_step: 1000
+      step_size: 1.0
     reactors:
       message_filter:
         logging_level: ERROR

@@ -57,7 +57,7 @@ reactor Controller extends FrostBase{
         dest, pallet_id = self.pallets_to_be_created.pop(0)
         
         self.pallet_names.append(pallet_id)
-        self.pallet_destinations[pallet_id] = "0"
+        self.pallet_destinations[pallet_id] = self.pending_destinations.pop(pallet_id, "0")
         self.actions[pallet_id] = None
 
         message = [[dest.value], [ControllerCommand.create, None], [pallet_id]]
@@ -100,7 +100,16 @@ reactor Controller extends FrostBase{
         self.logger.debug(f"Pallet destinations: {self.pallet_destinations}, Actions: {self.actions}")
     =}
 
+    state initial_pallets = {= [] =}  // [[segment, pallet id], ...]; empty: random layout
+    state pending_destinations = {= {} =}
+
     method random_init(){=
+        if self.initial_pallets:
+            layout = [[SegmentName(seg), int(p)] for seg, p in self.initial_pallets]
+            if sorted(p for _, p in layout) != list(range(1, 11)):
+                raise ValueError(f"initial_pallets must place pallets 1..10 once each: {self.initial_pallets}")
+            self.pallets_to_be_created.extend(layout)
+            return
         import random
         segments = [SegmentName.Segment_1, SegmentName.Segment_2, SegmentName.Segment_3, SegmentName.Segment_6, SegmentName.Segment_7, SegmentName.Segment_8]
         for i in range(1, 11):
@@ -495,11 +504,9 @@ reactor Controller extends FrostBase{
 
     #Multiple switch bay
     method prepare_bay_message(pallet_id, bay_status, bay_name){=
-        pos = bay_status.index(pallet_id)
-        dest = self.pallet_destinations[pallet_id]
-        self.actions[pallet_id] = calculate_next_action(bay_name, self.pallet_destinations[pallet_id], bay_status, pallet_id)
+        pos = int(bay_name[-1]) - 1
         action = self.actions[pallet_id]
-        if pos == 3 and action == BayAction.forward:
+        if pos == len(bay_status) - 1 and action == BayAction.forward:
             raise Exception(f"Controller error: pallet {pallet_id} at position {pos} cannot move forward from bay {bay_name}")
 
         if pos == 0 and action == BayAction.back:
@@ -786,7 +793,10 @@ reactor Controller extends FrostBase{
         destination = from_frost.value[1]
         # Validate palletNum and destination
         if palletNum not in self.pallet_names:
-            raise Exception(f"Controller error: pallet {palletNum} not recognized")       
+            if any(p == palletNum for _, p in self.pallets_to_be_created):
+                self.pending_destinations[palletNum] = destination
+                return 0
+            raise Exception(f"Controller error: pallet {palletNum} not recognized")
         if destination not in BayName.values() and destination != "0":
             raise Exception(f"Controller error: invalid destination {destination} for pallet {palletNum}")
 

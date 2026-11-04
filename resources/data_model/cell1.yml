@@ -31,7 +31,7 @@ root:
           cfg:
             - !!WriteVariableNode
               variable: "Cell1/Board"
-              value: "$board"
+              value: "${board}"
             - !!WriteVariableNode
               variable: "Cell1/FlyingProbeTester/Busy"
               value: True

@@ -35,7 +35,7 @@ root:
                 cfg:
                   - !!WriteVariableNode
                     variable: "Cell2/MES/CurrentMission"
-                    value: "$mission_name"
+                    value: "${mission_name}"
                   - !!WriteVariableNode
                     variable: "Cell2/MES/MESBusy"
                     value: True
@@ -67,7 +67,7 @@ root:
                     value: True
                   - !!WriteVariableNode
                     variable: "Cell2/MES/TextToWrite"
-                    value: "$text"
+                    value: "${text}"
                   - !!WaitConditionNode
                     variable: "Cell2/MES/MESBusy"
                     operator: "=="

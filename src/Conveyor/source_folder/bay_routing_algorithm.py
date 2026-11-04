@@ -4,16 +4,14 @@ def compute_intra_bay_route(position, destination, bay_status, pallet_id):
     bay_row = int(position[-1]) - 1  # Extract bay row from position (e.g., 'Bay2_1' -> 0)
     dest_row = int(destination[-1]) - 1  # Extract destination row similarly
 
-    if bay_row - dest_row > 0:
+    if dest_row < bay_row:
         # Moving back (towards exit)
         if check_availability(bay_status, bay_row, pallet_id):
-            bay_status[bay_row - 1] = pallet_id  # Mark next position as occupied
-            bay_status[bay_row] = 0  # Free the current bay
+            bay_status[bay_row - 1] = pallet_id
             return BayAction.back
-    elif bay_row - dest_row < 0:
-        if check_availability_from_to(buffer=bay_status, from_value=bay_row, to_value=dest_row, pallet_id=pallet_id):
-            bay_status[dest_row - 1] = pallet_id  # Mark bay as occupied
-            bay_status[bay_row] = 0  # Free the current bay
+    elif dest_row > bay_row:
+        if check_availability_from_to(buffer=bay_status, from_value=bay_row + 1, to_value=dest_row + 1, pallet_id=pallet_id):
+            bay_status[bay_row + 1] = pallet_id
             return BayAction.forward
 
     return BayAction.none  # Bay is occupied
