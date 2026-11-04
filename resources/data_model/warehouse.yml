@@ -1,4 +1,4 @@
-name: "Warehouse" # name of the machine
+name: "warehouse"
 machine_category: "unknown" # category of the machine
 machine_type: "unknown" # type of the machine
 machine_model: "unknown" # model of the machine
@@ -38,7 +38,6 @@ root:
             - !!BooleanVariableNode
               name: "Accepted"
               description: "Index"
-              measure_unit: "NoneMeasureUnits.NONE"
         - !!CompositeMethodNode
           name: "extractTray"
           description: "extract Tray"
@@ -57,11 +56,11 @@ root:
             - !!CallMethodNode
               method: "Warehouse/SocketLink/extract"
               args:
-                  -  $TrayNumber
+                  -  ${TrayNumber}
             - !!WaitConditionNode
               variable: "Warehouse/Status/trayInBay"
               operator: "=="
-              rhs: $TrayNumber 
+              rhs: ${TrayNumber} 
             - !!ReadVariableNode
               variable: "Warehouse/Status/trayInBay"
               store_as: "Tray_extracted"   
@@ -98,7 +97,7 @@ root:
             - !!CallMethodNode
               method: "Warehouse/SocketLink/sendback"
               args:
-                - $TrayNumber
+                - ${TrayNumber}
             - !!WaitConditionNode
               variable: "Warehouse/Status/trayInBay"
               operator: "=="
