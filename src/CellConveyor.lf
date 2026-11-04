@@ -2,7 +2,7 @@ target Python{
     files: [Conveyor/conveyor_utils.py]
 }
 
-import MetaConveyor from "MetaConveyor.lf"
+import MetaConveyor from "base/MetaConveyor.lf"
 import Conveyor from "Conveyor/conveyor.lf"
 
 reactor CellConveyor extends MetaConveyor{

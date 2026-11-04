@@ -1,0 +1,72 @@
+target Python
+
+import FrostReactor from <frost/FrostReactor.lf>
+
+// Machine running named missions: busy for durations[mission] seconds, then result, counter, idle.
+reactor MissionMachine(poll_period = 100 msec) extends FrostReactor{
+    state durations = {= {} =}     # mission -> seconds, or a list (one per occurrence)
+    state occurrences = {= {} =}
+    state default_duration = 10.0
+    state busy
+    state mission
+    state result
+    state counter
+    state running = ""
+
+    timer poll(0, poll_period)
+    logical action done
+
+    method mission_nodes(){=
+        '''Return the paths (busy, mission name, result, counter). Use "" for a node the model lacks (not busy).'''
+        raise NotImplementedError
+    =}
+
+    method mission_started(name, duration){= pass =}
+    method mission_finished(name){= pass =}
+    method mission_result(name){= return True =}
+
+    reaction(startup){=
+        if self.data_model.name != self.name:
+            # several instances share one data model file: rename it to the instance (no public API)
+            self.data_model._name = self.name
+            for node in self.data_model._nodes.values():
+                for cf_node in (node.cfg.nodes() if isinstance(node, CompositeMethodNode) else []):
+                    if hasattr(cf_node, "sender_id"):
+                        cf_node.sender_id = self.name
+            self.protocol_mng = FrostProtocolMng(self.data_model)
+            self.message_builder = self.protocol_mng.get_message_builder()
+        get = lambda path: self.data_model.get_node(path) if path else None
+        self.busy, self.mission, self.result, self.counter = map(get, self.mission_nodes())
+        if self.mission is not None and not self.busy.value:
+            self.mission.value = ""
+    =}
+
+    reaction(poll) -> done{=
+        if self.running or not self.busy.value:
+            return
+        self.running = (self.mission.value if self.mission is not None else "") or "?"
+        duration = self.durations.get(self.running, self.default_duration)
+        if isinstance(duration, list):
+            k = self.occurrences.get(self.running, 0)
+            duration = duration[min(k, len(duration) - 1)]
+        self.occurrences[self.running] = self.occurrences.get(self.running, 0) + 1
+        duration = float(duration)
+        self.logger.info(f"mission {self.running} started ({duration} s)")
+        self.mission_started(self.running, duration)
+        done.schedule(int(duration * 1e9))
+    =}
+
+    reaction(done){=
+        name = self.running
+        self.mission_finished(name)
+        if self.result is not None:
+            self.result.value = self.mission_result(name)
+        if self.counter is not None:
+            self.counter.value = self.counter.value + 1
+        if self.mission is not None:
+            self.mission.value = ""
+        self.running = ""
+        self.busy.value = False
+        self.logger.info(f"mission {name} finished")
+    =}
+}
