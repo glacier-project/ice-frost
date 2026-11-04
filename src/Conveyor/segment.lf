@@ -33,7 +33,7 @@ reactor Segment extends FrostBase{
 
         if isinstance(value, Pallet):
             delay.schedule(MSEC(self.segment_time), value)
-            to_frost_with_delay.schedule(MSEC(2000), value)
+            to_frost_with_delay.schedule(0, value)
     =}
 
     reaction(delay) -> ask_to_controller{=
