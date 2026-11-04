@@ -1,88 +1,79 @@
-# Introduction
+# Conveyor
 
-The conveyor belt system is composed of multiple reactors, instantiated via `conveyor.lf`. Key components include segments, switches, and more. The controller orchestrates commands and manages events for these components.
+The simulated conveyor is `CellConveyor.lf`, which extends `base/MetaConveyor.lf` (the data model of the
+conveyor OPC UA server) and instantiates the belt of `Conveyor/conveyor.lf`: segments, switches,
+interchanges and bays, orchestrated by `Conveyor/controller.lf`. Pallets with no destination keep looping
+on the ring. Against the real plant, `OpcuaConveyor.lf` uses the same `MetaConveyor` on the real server.
 
-In Frost, the conveyor reactor is instantiated within `Cell_Conveyor.lf`. Pallets move automatically along the ring structure.
-
-### Conveyor Layout
+### Layout
 ```
-Data Model Version
-  Bay 1        Bay 2        Bay 3       Bay 4  Bay G
-   |            |          |            |       |
-   |            |          |            |       |
+Data model
+  Bay 1        Bay 2        Bay 3       Bay 4    LoadUnloadZone
+   |            |          |            |             |
    ◼ Segment1  ◼ Segment2 ◼  Segment3 ◼  Segment4  ◼
-   |            |          |            |             |          
-   |            |          |            |             |          
-   ◼  Segment8 ◼ Segment7 ◼  Segment6 ◼  Segment5  ◼ 
+   |            |          |            |             |
+   ◼  Segment8 ◼ Segment7 ◼  Segment6 ◼  Segment5  ◼
 
-
-Model Version
+Model (switches)
    Z         P         O         N
    |         |         |         |
-   |         |         |         |
    M ------- L ------- I ------- H ------- G--- F
-   |         |         |         |              |
    |         |         |         |              |
    E ------- D ------- C ------- B ------------ A
 ```
 
+### Timings
+
+Travel and transfer times are parameters of the belt reactors, set per reactor in
+`resources/frost_config.yml` (`conveyor` → `conveyor_belt` → `Segment_N: segment_time` [ms], interchanges
+`interchange_time`, ...). The values in the `.lf` files are only defaults.
+
 ---
 
-## Sending a Pallet to a Destination
+## Sending a pallet to a destination
 
-To assign a destination, use the `CompositeMethodNode` method `setPalletDestination`.
+Call the method `setPalletDestination`:
 
-**Path:**
 ```plaintext
-Cell_Conveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setDestination
+Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination
 ```
-**Parameters:**  
-- `palletNumber` (integer)  
-- `destination` (integer)
 
----
+- `palletNumber` (integer, 1..10)
+- `destination` (integer, see below)
 
-## Allowed Destinations
+It returns `False` (and logs an error) for an unknown pallet or an invalid destination, and nothing moves.
+The same check applies to any write of `Objects/ConveyorHMI/ConveyorObjects/Pallets/Pallet<N>/destination`.
+A pallet does not need to be freed before it gets a new destination.
 
-Use the node above to send a pallet to a destination or move it to the main belt.
+## Destinations
 
-**Destinations:**
+A destination is `bay * 8 + position`:
 
-- `0`: Main belt
+| Code | Place |
+| --- | --- |
+| `0` | Main belt |
+| `9` | Bay 1, SPEA (cell 1), single position |
+| `17`, `18`, `19` | Bay 2, milling (cell 2), positions 1, 2, 3 |
+| `25`, `26`, `27` | Bay 3, assembly (cell 4), positions 1, 2, 3 |
+| `33`, `34`, `35` | Bay 4, quality (cell 5), positions 1, 2, 3 |
+| `40` (or `41`) | Load/unload bay (`40` is the code the line uses) |
 
-**Single Position Bays:**
-- `11`: SPEA (BAY Z)
-- `5`: LoadUnloadBay (BAY G)
+Position 1 is the bay entrance. A pallet can move between positions of the same bay (e.g. `34` -> `35`),
+one position at a time, only into free positions.
 
-**Multiple Position Bays:**
-- `2`: Milling (BAY P)
-- `3`: Assembly (BAY O)
-- `4`: Quality (BAY N)
-
-Multiple position bays have three available positions (1, 2, 3).  
-To target a specific position, combine the bay number and position number.
-
-**Example:**  
-Send a pallet to position 2 in the Quality cell (cell 5): `42` (`4` = Quality, `2` = position)
-
----
-
-### Message Example
+Example: pallet 4 to position 2 of the quality bay (cell 5) is `setPalletDestination(4, 34)` (`4 * 8 + 2`):
 
 ```yaml
-sender: "Scheduler"
-target: "Cell_Conveyor"
+sender: "scheduler"
+target: "conveyor"
 header:
   type: "REQUEST"
   version: [1, 0, 0]
   namespace: "METHOD"
   msg_name: "INVOKE"
 payload:
-  node: "CellConveyor/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
-  args: [4, 42]
+  node: "Objects/ConveyorHMI/ConveyorDataExchange/Commands/ConveyorCommandsPointer/setPalletDestination"
+  args: [4, 34]
 ```
 
-Refer to the recipe in `recipes/recipes/conveyor.yaml` for additional examples.
-
-> **Note:** You do not need to free a pallet before assigning it a new destination.
-
+A complete recipe: `resources/scheduler_tasks/demo-lego-scheduler.yml`.
